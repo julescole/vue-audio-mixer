@@ -1,0 +1,75 @@
+
+.vue-audio-mixer-channel-label{
+  margin-top: 10px;
+  width: 85px;
+  font-size: 10px;
+  padding-top:5px;
+  padding-bottom: 5px;
+
+  height: 1em;
+  overflow: auto;
+  clear: both;
+  float: left;
+  background: $channel-label-background-colour;
+  color: $channel-label-text-colour;
+  text-align: center;
+  
+  border: none;
+  box-sizing: content-box;    
+}
+
+
+.vue-audio-mixer-channel-strip{
+
+  background: transparent !important; 
+  background:$channel-strip-background-colour;
+  position: relative;
+  overflow: auto;
+  display: block;
+  float: left;
+  opacity:1;
+  width:100%; 
+     
+}
+
+.vue-audio-mixer-channel{
+  height: 435px;
+  margin: 5px;
+  padding: 5px;
+  padding-top: 50px;
+
+  box-sizing: content-box;
+  position: relative;
+  float: left;
+  display: block;
+  background: $channel-background-colour;
+ 
+  &:last-child { // master track 
+      background: $master-channel-background-colour !important; 
+      .vue-audio-mixer-channel-label{
+        background: $master-channel-label-background-colour !important;  
+      }
+  }    
+}
+
+
+.vue-audio-mixer-channel-slider{ 
+  top: 230px;
+  left: -135px;
+
+  display:block; 
+  float:left; 
+   -ms-transform: rotate(270deg); /* IE 9 */
+  -webkit-transform: rotate(270deg); /* Chrome, Safari, Opera */
+  transform: rotate(270deg);
+  position: absolute; 
+}
+
+
+.vue-audio-mixer-channel-meter-canvas{
+  margin-right: 50px; 
+  margin-left:10px;
+  
+  display:block;
+  float: left;
+}

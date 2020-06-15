@@ -1,0 +1,258 @@
+
+$size:18px;
+$recordsize:48px;
+$ratio:1.2;
+$transition-time:0.1s;
+
+.vue-audio-mixer-progress-bar{
+  margin: 5px;
+  background: $progress-bar-background-colour; 
+  height: 30px;
+  position: relative;
+  display: block;
+  clear:both;
+}
+.vue-audio-mixer-progress-cursor{
+  width: 2px;
+  height: 100%;
+  background: $progress-bar-cursor-colour; 
+  position: absolute;
+  left:0;
+} 
+
+.vue-audio-mixer-transport{
+  overflow: auto;
+  clear: both;
+  display: block;
+  text-align: center;
+  width: 150px;
+  position: relative;
+  margin: 0 auto 0 auto;
+}
+
+.vue-audio-mixer-timer{
+
+  font-family: 'Share Tech Mono', ;
+  color: $transport-time-text-colour;
+  font-size: 2em;
+  padding: 10px;
+  overflow: auto;
+  position: relative;
+  display: block;
+  clear:both;
+  background: $transport-time-background;
+  text-align: center;
+  margin:5px;
+  span{
+    display: inline-block;
+    text-align: left;
+    span{// keep number the same
+      width: 32.6px;
+    }
+  } 
+  .progress-time{
+    width:150px;
+  }
+  .total{
+    margin-left:5px;
+    width:140px;
+  }
+} 
+
+button{
+  border:none;
+  padding:0;
+  background: transparent;
+
+}
+
+.vue-audio-mixer-transport-play-button {
+
+  &:focus, &:active {
+    outline: none;
+  }
+
+  display:block;
+  width: 0; 
+  float: left;
+  height: 0; 
+  border-top: $size solid transparent;
+  border-bottom: $size solid transparent;
+  border-left: ($size*$ratio) solid $transport-buttons-colour;
+  margin: ($size ) auto 30px auto;
+  position:relative;
+  z-index:1;
+  transition: all $transition-time;
+  -webkit-transition: all $transition-time;
+  -moz-transition: all $transition-time;
+  left:100px;
+  position:relative;
+
+  &:before {
+    content:'';
+    position:absolute;
+    top:($size*-1.5);
+    left:($size*-2.3);
+    bottom:($size*-1.5);
+    right:($size*-0.7);
+    border-radius:50%;
+    border: 2px solid $transport-buttons-colour;
+    z-index:-1;
+    transition: all $transition-time;
+    -webkit-transition: all $transition-time;
+    -moz-transition: all $transition-time;
+
+
+  }
+  &:after {
+
+    content:'';
+    opacity:0;
+    transition: opacity ($transition-time * 2);
+    -webkit-transition: opacity ($transition-time * 2);
+    -moz-transition: opacity ($transition-time * 2);
+    z-index: 2;
+  }
+  
+  &:hover, &:focus {
+    &:before {
+       transform: scale(1.1);
+       -webkit-transform: scale(1.1);
+       -moz-transform: scale(1.1);
+    }
+  }
+
+
+  
+  
+  &.vue-audio-mixer-transport-play-button-active {
+    border-color:transparent;
+
+    span:nth-child(1), span:nth-child(2) {
+      content:'';
+      opacity:1;
+      width:($size/7); 
+      height:($size*1.6);
+      background:$transport-buttons-colour;
+      position:absolute;
+      right: ($size*0.1);
+      top: ($size*-0.8);
+      border-left:($size*0.4) solid $transport-buttons-colour;
+    } 
+
+    span:nth-child(1){
+      right: ($size*0.1);
+
+    } 
+    span:nth-child(2) {
+      right: ($size*0.9);
+    }
+
+   
+  }
+}
+
+
+.vue-audio-mixer-transport-start-button {
+
+  display:block;
+  float: left;
+  width: 0; 
+  height: 0; 
+  border-top: $size solid transparent;
+  border-bottom: $size solid transparent;
+  border-right: ($size*$ratio) solid $transport-buttons-colour; 
+  margin: $size auto $size auto;
+  position:relative;
+  z-index:1;
+  transition: all $transition-time;
+  -webkit-transition: all $transition-time;
+  -moz-transition: all $transition-time; 
+  
+  &:before {
+    content:'';
+    position:absolute;
+    top:($size*-1.5);
+    left:($size*-0.9);
+    bottom:($size*-1.5);
+    right:($size*-2.1);
+    border-radius:50%;
+    border: 2px solid $transport-buttons-colour;
+    z-index:2;
+    transition: all $transition-time;
+    -webkit-transition: all $transition-time;
+    -moz-transition: all $transition-time;
+  }
+  &:after {
+     content: "";
+     display: block;
+     width: 5px;
+     height: 20px;
+     background: $transport-buttons-colour;
+     margin-top: -10px;
+     margin-left: -4px;
+  }
+  
+  &:hover, &:focus {
+    &:before {
+       transform: scale(1.1);
+       -webkit-transform: scale(1.1);
+       -moz-transform: scale(1.1);
+    }
+  }
+  
+}
+
+.vue-audio-mixer-transport-record-button {
+
+  display:block;
+  width: 0; 
+  float: left;
+  height: 0; 
+  border: ($size/2) solid $transport-buttons-colour;
+ 
+  border-radius: 75%;
+  margin: 50px auto 30px auto;
+  position:relative;
+  z-index:1;
+  transition: all $transition-time;
+  -webkit-transition: all $transition-time;
+  -moz-transition: all $transition-time;
+  left:125px;
+  
+  &:before {
+    content:'';
+    position:absolute;
+    top:($size*-1.5);
+    left:-30px;
+    bottom:($size*-1.5);
+    right:-30px;
+    border-radius:50%;
+    border: 2px solid $transport-buttons-colour;
+    z-index:2;
+    transition: all $transition-time;
+    -webkit-transition: all $transition-time;
+    -moz-transition: all $transition-time;
+  }
+  &:after {
+    content:'';
+    opacity:0;
+    transition: opacity ($transition-time * 2);
+    -webkit-transition: opacity ($transition-time * 2);
+    -moz-transition: opacity ($transition-time * 2);
+  }
+  
+  &:hover, &:focus {
+    &:before {
+       transform: scale(1.1);
+       -webkit-transform: scale(1.1);
+       -moz-transform: scale(1.1);
+    }
+  }
+  
+  &.vue-audio-mixer-transport-record-button-active {
+    border-color:red;
+    
+  }
+  
+}

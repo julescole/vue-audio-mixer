@@ -1,0 +1,14 @@
+.vue-audio-mixer{
+
+  min-width: 105px;
+  overflow: auto;
+  margin:0 auto;
+  margin-top:2rem;
+  font-family: 'Open Sans', sans-serif;
+
+  * {
+      -webkit-touch-callout: none;
+      -webkit-user-select: none; /* Disable selection/copy in UIWebView */
+  }
+
+}

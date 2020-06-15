@@ -1,0 +1,16 @@
+.vue-audio-mixer-channel-panner{
+    width: 19px;
+    height: 10px;
+    position: absolute;
+    vertical-align: middle;
+    top: 4px;
+    right: 30px;
+    border: 0px;
+    background: none;
+    font: bold 7px Arial;
+    text-align: center;
+    color: $channel-panner-text-colour;
+    padding: 0px;
+    -webkit-appearance: none;
+    cursor: pointer;
+}

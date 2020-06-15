@@ -1,0 +1,65 @@
+*{
+    box-sizing: content-box;
+}
+
+.vue-audio-mixer-channel-mute-button{
+    position: absolute;
+    left:10px;
+    top:5px;
+    font-size: 10px;    
+    cursor: pointer;
+}
+
+.vue-audio-mixer-channel-mute-button-label{
+   width: 18px;
+   text-align: center;
+   cursor: pointer;
+
+}
+
+.vue-audio-mixer-channel-mute-button label input{
+  display:none;
+}
+
+.vue-audio-mixer-channel-mute-button {
+    margin:4px;
+    background-color:$channel-mute-button-background-colour;
+    border-radius:4px;
+    border:1px solid $channel-mute-button-border-colour;
+    overflow:auto;
+    float:left;
+    box-sizing: content-box;
+}
+
+.vue-audio-mixer-channel-mute-button label {
+    float:left; 
+    margin-bottom: 0;
+    box-sizing: content-box;
+}
+
+.vue-audio-mixer-channel-mute-button label span {
+    text-align:center;
+    padding:3px;
+    display:block;
+    border-radius:4px;
+    box-sizing: content-box;
+}
+
+.vue-audio-mixer-channel-mute-button label input {
+    position:absolute;
+    top:-20px;
+}
+
+.vue-audio-mixer-channel-mute-button input:hover + span {
+    opacity: 0.8;
+}
+
+.vue-audio-mixer-channel-mute-button input:checked + span {
+    background-color:$channel-mute-button-background-colour-active;
+    color:$channel-mute-button-text-colour-active;
+}
+
+.vue-audio-mixer-channel-mute-button input:checked:hover + span {
+    opacity: 0.8;
+    color:$channel-mute-button-text-colour-hover;
+}
