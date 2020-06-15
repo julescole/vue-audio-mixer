@@ -39,7 +39,6 @@
 
 import VueKnobControl from 'vue-knob-control'
 import EventBus from './../event-bus';
-import variables from './../scss/includes/_variables.scss';
 
 export default {
   name: 'Channel',
@@ -71,8 +70,7 @@ export default {
           mute        : false,
           meterHeight : 400,
           meterWidth  : 10,
-          titleModel : '',
-          colourVals:variables
+          titleModel : ''
       };
   },
 

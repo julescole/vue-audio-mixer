@@ -3,6 +3,7 @@ import vue from 'rollup-plugin-vue'; // Handle .vue SFC files
 import buble from 'rollup-plugin-buble'; // Transpile/polyfill with reasonable browser support
 import resolve from '@rollup/plugin-node-resolve';
 import scss from 'rollup-plugin-scss'
+import replace from 'rollup-plugin-replace'
 
 export default {
     input: 'src/index.js', // Path relative to package.json
@@ -19,6 +20,10 @@ export default {
         scss(),
 
         buble(), // Transpile to ES5
-        resolve()
+        resolve(),
+        replace({
+          'process.env.NODE_ENV': JSON.stringify('production'),
+          'process.env.VUE_ENV': JSON.stringify('browser')
+        })
     ],
 };

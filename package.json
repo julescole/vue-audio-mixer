@@ -1,6 +1,24 @@
 {
   "name": "vue-audio-mixer",
-  "version": "0.1.0",
+  "version": "0.1.5",
+  "description": "An audio mixer component for vue.js",
+  "author": "Julian Cole <julian@juliancole.co.uk>",
+  "keywords": [
+    "vue",
+    "audio",
+    "mixer",
+    "music",
+    "mixingdesk"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/julescole/vue-audio-mixer"
+  },
+  "homepage": "https://github.com/julescole/vue-audio-mixer",
+  "bugs": {
+    "url": "https://github.com/julescole/vue-audio-mixer/issues"
+  },
+  "license": "MIT",
   "main": "dist/vue-audio-mixer.umd.js",
   "module": "dist/vue-audio-mixer.esm.js",
   "unpkg": "dist/vue-audio-mixer.min.js",

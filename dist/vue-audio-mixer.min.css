@@ -1,53 +1,52 @@
 @import url("https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap");
 @import url("https://fonts.googleapis.com/css2?family=Open+Sans&display=swap");
+:export {
+  colourschemeone: #4ba7b7; }
+
 .vue-audio-mixer-channel-label {
   margin-top: 10px;
-  overflow: auto;
-  clear: both;
-  float: left;
-  background: #240505;
   width: 85px;
-  color: #FFF;
-  text-align: center;
   font-size: 10px;
   padding-top: 5px;
   padding-bottom: 5px;
   height: 1em;
+  overflow: auto;
+  clear: both;
+  float: left;
+  background: #4ba7b7;
+  color: #FFFFFF;
+  text-align: center;
   border: none;
   box-sizing: content-box; }
 
-.vue-audio-mixer-channel-container {
+.vue-audio-mixer-channel-strip {
   background: transparent !important;
   background: #16191c;
   position: relative;
   overflow: auto;
   display: block;
   float: left;
-  opacity: 1; }
-
-.vue-audio-mixer-channel-strip {
-  position: relative;
-  overflow: hidden;
-  display: block;
-  float: left;
+  opacity: 1;
   width: 100%; }
 
 .vue-audio-mixer-channel {
+  height: 435px;
+  margin: 5px;
+  padding: 5px;
+  padding-top: 50px;
   box-sizing: content-box;
   position: relative;
   float: left;
   display: block;
-  background: rgba(41, 44, 48, 0.2);
-  height: 435px;
-  margin: 5px;
-  padding: 5px;
-  padding-top: 50px; }
+  background: rgba(41, 44, 48, 0.2); }
   .vue-audio-mixer-channel:last-child {
-    background: #240505 !important; }
+    background: #4ba7b7 !important; }
     .vue-audio-mixer-channel:last-child .vue-audio-mixer-channel-label {
       background: #000 !important; }
 
 .vue-audio-mixer-channel-slider {
+  top: 230px;
+  left: -135px;
   display: block;
   float: left;
   -ms-transform: rotate(270deg);
@@ -55,15 +54,13 @@
   -webkit-transform: rotate(270deg);
   /* Chrome, Safari, Opera */
   transform: rotate(270deg);
-  position: absolute;
-  top: 230px;
-  left: -135px; }
+  position: absolute; }
 
 .vue-audio-mixer-channel-meter-canvas {
-  display: block;
-  float: left;
   margin-right: 50px;
-  margin-left: 10px; }
+  margin-left: 10px;
+  display: block;
+  float: left; }
 
 @keyframes rotate {
   0% {
@@ -165,11 +162,13 @@
   position: absolute;
   left: 10px;
   top: 5px;
-  font-size: 10px; }
+  font-size: 10px;
+  cursor: pointer; }
 
 .vue-audio-mixer-channel-mute-button-label {
   width: 18px;
-  text-align: center; }
+  text-align: center;
+  cursor: pointer; }
 
 .vue-audio-mixer-channel-mute-button label input {
   display: none; }
@@ -200,22 +199,22 @@
   top: -20px; }
 
 .vue-audio-mixer-channel-mute-button input:hover + span {
-  background-color: #efE0E0; }
+  opacity: 0.8; }
 
 .vue-audio-mixer-channel-mute-button input:checked + span {
   background-color: #911;
-  color: #fff; }
+  color: #FFF; }
 
 .vue-audio-mixer-channel-mute-button input:checked:hover + span {
-  background-color: #c11;
-  color: #fff; }
+  opacity: 0.8;
+  color: #FFF; }
 
 .vue-audio-mixer-channel-panner {
   width: 19px;
   height: 10px;
   position: absolute;
   vertical-align: middle;
-  top: 0;
+  top: 4px;
   right: 30px;
   border: 0px;
   background: none;
@@ -223,7 +222,8 @@
   text-align: center;
   color: white;
   padding: 0px;
-  -webkit-appearance: none; }
+  -webkit-appearance: none;
+  cursor: pointer; }
 
 .vue-audio-mixer-channel-slider-input {
   align-self: center;
@@ -231,7 +231,7 @@
   padding: 0;
   width: 400px;
   background: transparent;
-  background: repeating-linear-gradient(90deg, #3b3e41, #3b3e41 0.0625em, transparent 0.0625em, transparent 2em) no-repeat 50% 1.5em border-box, repeating-linear-gradient(90deg, #3b3e41, #3b3e41 0.0625em, transparent 0.0625em, transparent 2em) no-repeat 50% 0em border-box;
+  background: repeating-linear-gradient(90deg, #000, #3b3e41 0.0625em, transparent 0.0625em, transparent 2em) no-repeat 50% 1.5em border-box, repeating-linear-gradient(90deg, #000, #3b3e41 0.0625em, transparent 0.0625em, transparent 2em) no-repeat 50% 0em border-box;
   background-size: 390px 0.625em, 390px 0.625em, 100% 2.25em;
   font-size: 1em;
   cursor: pointer;
@@ -388,10 +388,10 @@ button {
   width: 0;
   float: left;
   height: 0;
-  border-top: 20px solid transparent;
-  border-bottom: 20px solid transparent;
-  border-left: 24px solid #d5d5d5;
-  margin: 20px auto 30px auto;
+  border-top: 18px solid transparent;
+  border-bottom: 18px solid transparent;
+  border-left: 21.6px solid #d5d5d5;
+  margin: 18px auto 30px auto;
   position: relative;
   z-index: 1;
   transition: all 0.1s;
@@ -399,13 +399,15 @@ button {
   -moz-transition: all 0.1s;
   left: 100px;
   position: relative; }
+  .vue-audio-mixer-transport-play-button:focus, .vue-audio-mixer-transport-play-button:active {
+    outline: none; }
   .vue-audio-mixer-transport-play-button:before {
     content: '';
     position: absolute;
-    top: -30px;
-    left: -46px;
-    bottom: -30px;
-    right: -14px;
+    top: -27px;
+    left: -41.4px;
+    bottom: -27px;
+    right: -12.6px;
     border-radius: 50%;
     border: 2px solid #d5d5d5;
     z-index: -1;
@@ -428,17 +430,17 @@ button {
     .vue-audio-mixer-transport-play-button.vue-audio-mixer-transport-play-button-active span:nth-child(1), .vue-audio-mixer-transport-play-button.vue-audio-mixer-transport-play-button-active span:nth-child(2) {
       content: '';
       opacity: 1;
-      width: 2.85714px;
-      height: 32px;
+      width: 2.57143px;
+      height: 28.8px;
       background: #d5d5d5;
       position: absolute;
-      right: 2px;
-      top: -16px;
-      border-left: 8px solid #d5d5d5; }
+      right: 1.8px;
+      top: -14.4px;
+      border-left: 7.2px solid #d5d5d5; }
     .vue-audio-mixer-transport-play-button.vue-audio-mixer-transport-play-button-active span:nth-child(1) {
-      right: 2px; }
+      right: 1.8px; }
     .vue-audio-mixer-transport-play-button.vue-audio-mixer-transport-play-button-active span:nth-child(2) {
-      right: 18px; }
+      right: 16.2px; }
 
 .vue-audio-mixer-transport-start-button {
   display: block;
@@ -448,7 +450,7 @@ button {
   border-top: 18px solid transparent;
   border-bottom: 18px solid transparent;
   border-right: 21.6px solid #d5d5d5;
-  margin: 20px auto 18px auto;
+  margin: 18px auto 18px auto;
   position: relative;
   z-index: 1;
   transition: all 0.1s;
@@ -457,10 +459,10 @@ button {
   .vue-audio-mixer-transport-start-button:before {
     content: '';
     position: absolute;
-    top: -30px;
-    left: -18px;
-    bottom: -30px;
-    right: -42px;
+    top: -27px;
+    left: -16.2px;
+    bottom: -27px;
+    right: -37.8px;
     border-radius: 50%;
     border: 2px solid #d5d5d5;
     z-index: 2;
@@ -485,7 +487,7 @@ button {
   width: 0;
   float: left;
   height: 0;
-  border: 10px solid #d5d5d5;
+  border: 9px solid #d5d5d5;
   border-radius: 75%;
   margin: 50px auto 30px auto;
   position: relative;
@@ -497,9 +499,9 @@ button {
   .vue-audio-mixer-transport-record-button:before {
     content: '';
     position: absolute;
-    top: -30px;
+    top: -27px;
     left: -30px;
-    bottom: -30px;
+    bottom: -27px;
     right: -30px;
     border-radius: 50%;
     border: 2px solid #d5d5d5;

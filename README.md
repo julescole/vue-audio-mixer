@@ -2,7 +2,7 @@
 
 - [Demo](#demo)
 - [Install](#install)
-- [Support us](#support)
+- [Support us](#support-us)
 
 ## Demo
 
@@ -32,16 +32,24 @@ export default {
 
 Or use directly from a CDN
 ``` html
+<!DOCTYPE html>
+<html>
+<head>
+    <link rel="stylesheet" type="text/css" href="https://unpkg.com/vue-audio-mixer/dist/vue-audio-mixer.min.css">
+</head>
+<body>
+
 <div id="app">
   <vue-audio-mixer :config="config" ></vue-audio-mixer>
 </div>
 <script src="https://unpkg.com/vue"></script>
-<script src="https://unpkg.com/vue-audio-mixer"></script>
+<script src="https://unpkg.com/vue-audio-mixer/dist/vue-audio-mixer.min.js"></script>
+
 <script>
 const app = new Vue({
   el: '#app',
   data : function(){     
-	return {
+    return {
       config: {
         "tracks":[
             {
@@ -66,18 +74,20 @@ const app = new Vue({
                 "muted":true
             }
         ],
-        "masterGainValue":0.2,
-        "masterMuted":false,
-        "masterPanValue":43
+        "master":{
+            "pan":0,
+            "gain":"0.85",
+            "muted":false
+        }
       }
     }  
     
-  },
-  components: {
-  	VueAudioMixer
   }
 })
-</script>
+</script> 
+
+</body>
+</html>
 
 
 ```
