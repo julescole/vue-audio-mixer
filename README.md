@@ -18,16 +18,59 @@ npm install vue-audio-mixer --save
 ```
 
 
-``` javascript
+``` html
+<template>
+  <div id="app">
+    <vue-audio-mixer :config="config" ></vue-audio-mixer>
+  </div>
+</template>
+
+<script>
+
 import VueAudioMixer from 'vue-audio-mixer';
+import 'vue-audio-mixer/dist/vue-audio-mixer.min.css'; 
 
 export default {
-  // ...
+  name: 'App',
   components: {
     VueAudioMixer
+  },
+  data : function(){     
+    return {
+      config: {
+        "tracks":[
+            {
+                "title":"Strings1",
+                "url":"https://api.soundcloud.com/tracks/515722791/stream?client_id=ae1dadcc70f054f451de8c6358bcf396",
+                "pan":-60,
+                "gain":0.5,
+                "muted":false
+            },
+            {
+                "title":"Strings2",
+                "url":"https://api.soundcloud.com/tracks/515722791/stream?client_id=ae1dadcc70f054f451de8c6358bcf396",
+                "pan":81,
+                "gain":"1.08",
+                "muted":true
+            },
+            {
+                "title":"Strings3",
+                "url":"https://api.soundcloud.com/tracks/515722791/stream?client_id=ae1dadcc70f054f451de8c6358bcf396",
+                "pan":-49,
+                "gain":"0.85",
+                "muted":true
+            }
+        ],
+        "master":{
+            "pan":0,
+            "gain":"0.85",
+            "muted":false
+        }
+      }
+    }  
   }
-  // ...
 }
+</script>
 ```
 
 Or use directly from a CDN
