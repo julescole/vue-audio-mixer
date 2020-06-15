@@ -21,7 +21,7 @@ npm install vue-audio-mixer --save
 ``` html
 <template>
   <div id="app">
-    <vue-audio-mixer :config="config" ></vue-audio-mixer>
+    <vue-audio-mixer :config="config" @input="outputConfig"></vue-audio-mixer>
   </div>
 </template>
 
@@ -37,6 +37,7 @@ export default {
   },
   data : function(){     
     return {
+      newconfig:{},
       config: {
         "tracks":[
             {
@@ -68,6 +69,13 @@ export default {
         }
       }
     }  
+  },
+  methods:{
+    // output the current mixer settings to the console
+    outputConfig(input)
+    {
+      console.log(input);
+    }
   }
 }
 </script>
