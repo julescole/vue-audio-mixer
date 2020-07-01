@@ -1,16 +1,17 @@
 
-$size:18px;
+$size:8px;
 $recordsize:48px;
 $ratio:1.2;
 $transition-time:0.1s;
 
 .vue-audio-mixer-progress-bar{
-  margin: 5px;
+  margin-top: 1px;
   background: $progress-bar-background-colour; 
-  height: 30px;
+  height: 5px;
   position: relative;
   display: block;
   clear:both;
+  cursor: pointer;
 }
 .vue-audio-mixer-progress-cursor{
   width: 2px;
@@ -20,38 +21,50 @@ $transition-time:0.1s;
   left:0;
 } 
 
+.time_and_transport{
+  position: relative; 
+  width:100%;
+
+}
+
 .vue-audio-mixer-transport{
   overflow: auto;
   clear: both;
   display: block;
-  text-align: center;
+  text-align: right;
   width: 150px;
+  height:30px;
+  overflow: hidden;
   position: relative;
   margin: 0 auto 0 auto;
+  position: absolute;
+  top:2px;
+  padding-left:10px;
 }
 
 .vue-audio-mixer-timer{
 
   font-family: 'Share Tech Mono', ;
   color: $transport-time-text-colour;
-  font-size: 2em;
+  font-size: 1em;
   padding: 10px;
   overflow: auto;
   position: relative;
   display: block;
   clear:both;
   background: $transport-time-background;
-  text-align: center;
-  margin:5px;
+  text-align: right;
+  margin:0px;
   span{
     display: inline-block;
     text-align: left;
     span{// keep number the same
-      width: 32.6px;
+      width: 18px;
     }
   } 
   .progress-time{
-    width:150px;
+    width:100%;
+    text-align: center;
   }
   .total{
     margin-left:5px;
@@ -71,6 +84,7 @@ button{
   &:focus, &:active {
     outline: none;
   }
+  cursor: pointer;
 
   display:block;
   width: 0; 
@@ -85,7 +99,7 @@ button{
   transition: all $transition-time;
   -webkit-transition: all $transition-time;
   -moz-transition: all $transition-time;
-  left:100px;
+  left:#{$size + 40};
   position:relative;
 
   &:before {
@@ -157,6 +171,7 @@ button{
 
   display:block;
   float: left;
+  margin-left: 5px;
   width: 0; 
   height: 0; 
   border-top: $size solid transparent;
@@ -165,6 +180,7 @@ button{
   margin: $size auto $size auto;
   position:relative;
   z-index:1;
+  cursor: pointer;
   transition: all $transition-time;
   -webkit-transition: all $transition-time;
   -moz-transition: all $transition-time; 
@@ -186,11 +202,11 @@ button{
   &:after {
      content: "";
      display: block;
-     width: 5px;
-     height: 20px;
+     width: 2px;
+     height: 10px;
      background: $transport-buttons-colour;
-     margin-top: -10px;
-     margin-left: -4px;
+     margin-top: -5px;
+     margin-left: -2px;
   }
   
   &:hover, &:focus {

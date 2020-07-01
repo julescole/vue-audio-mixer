@@ -2,26 +2,38 @@
     box-sizing: content-box;
 }
 
-.vue-audio-mixer-channel-mute-button{
+.vue-audio-mixer-channel-mute-button, .vue-audio-mixer-channel-solo-button{
     position: absolute;
-    left:10px;
+    left:2px;
     top:5px;
-    font-size: 10px;    
     cursor: pointer;
 }
 
-.vue-audio-mixer-channel-mute-button-label{
+
+.vue-audio-mixer-theme-small{
+    .vue-audio-mixer-channel-solo-button{
+        left:25px;
+    }
+}
+
+.vue-audio-mixer-theme-medium{
+    .vue-audio-mixer-channel-solo-button{
+        left:35px;
+    }
+}
+
+.vue-audio-mixer-channel-mute-button-label, .vue-audio-mixer-channel-solo-button-label{
    width: 18px;
    text-align: center;
    cursor: pointer;
 
 }
 
-.vue-audio-mixer-channel-mute-button label input{
+.vue-audio-mixer-channel-mute-button label input, .vue-audio-mixer-channel-solo-button label input{
   display:none;
 }
 
-.vue-audio-mixer-channel-mute-button {
+.vue-audio-mixer-channel-mute-button, .vue-audio-mixer-channel-solo-button {
     margin:4px;
     background-color:$channel-mute-button-background-colour;
     border-radius:4px;
@@ -31,35 +43,56 @@
     box-sizing: content-box;
 }
 
-.vue-audio-mixer-channel-mute-button label {
+.vue-audio-mixer-channel-mute-button label,.vue-audio-mixer-channel-solo-button label {
     float:left; 
     margin-bottom: 0;
     box-sizing: content-box;
 }
 
-.vue-audio-mixer-channel-mute-button label span {
+
+.vue-audio-mixer-theme-small{
+    .vue-audio-mixer-channel-mute-button label span, .vue-audio-mixer-channel-solo-button label span {
+        width:8px;
+        font-size: 7px;    
+    }
+}
+
+.vue-audio-mixer-theme-medium{
+    .vue-audio-mixer-channel-mute-button label span, .vue-audio-mixer-channel-solo-button label span {
+        width:14px;
+        font-size: 12px;    
+    }
+}
+
+.vue-audio-mixer-channel-mute-button label span, .vue-audio-mixer-channel-solo-button label span {
     text-align:center;
     padding:3px;
+    width:8px;
     display:block;
     border-radius:4px;
     box-sizing: content-box;
 }
 
-.vue-audio-mixer-channel-mute-button label input {
+.vue-audio-mixer-channel-mute-button label input, .vue-audio-mixer-channel-solo-button label input {
     position:absolute;
     top:-20px;
 }
 
-.vue-audio-mixer-channel-mute-button input:hover + span {
+.vue-audio-mixer-channel-mute-button input:hover + span, .vue-audio-mixer-channel-solo-button input:hover + span {
     opacity: 0.8;
 }
 
-.vue-audio-mixer-channel-mute-button input:checked + span {
+.vue-audio-mixer-channel-mute-button input:checked + span{
     background-color:$channel-mute-button-background-colour-active;
     color:$channel-mute-button-text-colour-active;
 }
 
-.vue-audio-mixer-channel-mute-button input:checked:hover + span {
+.vue-audio-mixer-channel-solo-button input:checked + span {
+    background-color:$channel-solo-button-background-colour-active;
+    color:$channel-solo-button-text-colour-active;
+}
+
+.vue-audio-mixer-channel-mute-button input:checked:hover + span, .vue-audio-mixer-channel-solo-button input:checked:hover + span {
     opacity: 0.8;
     color:$channel-mute-button-text-colour-hover;
 }

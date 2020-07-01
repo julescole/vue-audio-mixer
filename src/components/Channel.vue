@@ -2,20 +2,33 @@
 
   <div class="vue-audio-mixer-channel">
 
-    <canvas :id="'canvas'+_uid"  width="25" height="400" style="display: block;" class="vue-audio-mixer-channel-meter-canvas"></canvas>
+    <canvas :id="'canvas'+_uid"  width="25" :height="meterHeight" style="display: block;" class="vue-audio-mixer-channel-meter-canvas"></canvas>
+    <div class="slider_value">{{formattedGain}}</div>
 
     <div class="vue-audio-mixer-channel-slider"> 
       <input class="vue-audio-mixer-channel-slider-input" type="range" min="0" max="1.5" step="0.01" v-on:input="changeGain" v-model="gain" />
     </div>
 
-    <div class="vue-audio-mixer-channel-mute-button">
+    <div class="vue-audio-mixer-channel-mute-button" v-show="showMute">
       <label>
         <input v-model="mute" type="checkbox" />
         <span class="vue-audio-mixer-channel-mute-button-label">M</span>
       </label>
     </div>
+
+    <div class="logo" v-if="isMaster && !showMute">
+      <img src="https://www.midiland.de/images/midiland%20pro%20logo2.gif"/>
+    </div>
+
+    <div class="vue-audio-mixer-channel-solo-button" v-show="!isMaster">
+      <label>
+        <input v-model="solo" type="checkbox" />
+        <span class="vue-audio-mixer-channel-solo-button-label">S</span>
+      </label>
+    </div>
     
     <VueKnobControl
+      v-if="showPan"
       :min="-90"
       :max="90"
       :size="40"
@@ -39,6 +52,7 @@
 
 import VueKnobControl from 'vue-knob-control'
 import EventBus from './../event-bus';
+import variables from '../scss/includes/_variables.scss';
 
 export default {
   name: 'Channel',
@@ -54,7 +68,11 @@ export default {
     'scriptProcessorNode',
     'defaultPan',
     'defaultGain',
-    'defaultMuted'
+    'defaultMuted',
+    'showPan',
+    'showMute',
+    'isMaster',
+    'themeSize'
   ],
   components:{
     VueKnobControl
@@ -67,11 +85,33 @@ export default {
           ctx         : false,
           gain        : 0.8,
           pan         : 0,
+          solo        : false,
           mute        : false,
-          meterHeight : 400,
-          meterWidth  : 10,
-          titleModel : ''
+          mutedBySolo : false,
+          meterHeight : parseInt(variables.channelHeight),
+          titleModel  : ''
       };
+  },
+
+  computed:{
+
+    meterWidth()
+    {
+      return parseInt(variables['meterWidth'+this.themeSize]);
+    },
+
+
+    meterWidthBetween()
+    {
+      return parseInt(variables['meterWidthBetween'+this.themeSize]);
+    },
+
+
+    formattedGain()
+    {
+      return this.pad(Math.round((this.gain*100)),3);
+    }
+
   },
 
   watch:{
@@ -84,6 +124,15 @@ export default {
         this.muteChange();
     },
 
+    mutedBySolo: function(){
+        this.muteChange();
+    },
+
+    solo: function(newVal){
+        let solodTrack = newVal ? this.trackIndex : false;
+        this.soloChange(solodTrack);
+    },
+
     titleModel:function(){
       this.titleChange();
     }
@@ -93,15 +142,15 @@ export default {
   created(){
     this.titleModel = 'Track '+(this.trackIndex+1);
     EventBus.$on('ended', this.ended);
+    EventBus.$on('soloChange', this.detectedSoloChange);
     this.scriptProcessorNode.onaudioprocess = () => {
       this.drawMeter();
     }
-
-   
   },
 
   beforeDestroy() {
     EventBus.$off('ended',this.ended);
+    EventBus.$off('soloChange',this.detectedSoloChange);
   },
 
   mounted(){
@@ -125,6 +174,21 @@ export default {
   },
   methods: {
 
+    detectedSoloChange(index)
+    {
+      if(index && this.trackIndex !== undefined && index != this.trackIndex){
+        this.mutedBySolo = index;
+      }else{
+        this.mutedBySolo = false;
+      }
+    },
+
+    pad(n, width, z) {
+      z = z || '0';
+      n = n + '';
+      return n.length >= width ? n : new Array(width - n.length + 1).join(z) + n;
+    },
+
     ended(index){
 
       if(index == this.index){
@@ -145,7 +209,11 @@ export default {
     },
 
     muteChange() {
-      this.$emit('muteChange',this.mute);
+      this.$emit('muteChange',(this.mute || this.mutedBySolo));
+    },
+
+    soloChange(value) {
+        EventBus.$emit('soloChange',value);
     },
 
     titleChange() {
@@ -179,7 +247,7 @@ export default {
       this.ctx.fillStyle="#15181b";
       // create background to meters
       this.ctx.fillRect(0,0,this.meterWidth,this.meterHeight+200);
-      this.ctx.fillRect(this.meterWidth+5,0,this.meterWidth,this.meterHeight+200);
+      this.ctx.fillRect(this.meterWidth+this.meterWidthBetween,0,this.meterWidth,this.meterHeight+200);
 
     },
 
@@ -231,14 +299,14 @@ export default {
 
       // create the meters (ctx.meterHeight/100) is 1% of the meter height
       this.ctx.fillRect(0,this.meterHeight-(average*(this.meterHeight/100)),this.meterWidth,this.meterHeight+200);
-      this.ctx.fillRect(this.meterWidth+5,this.meterHeight-(average2*(this.meterHeight/100)),this.meterWidth,this.meterHeight+200);
+      this.ctx.fillRect(this.meterWidth+(this.meterHeight/100),this.meterHeight-(average2*(this.meterHeight/100)),this.meterWidth,this.meterHeight+200);
 
       // create the bouncers
 
       if(average > 0)
         this.ctx.fillRect(0,this.meterHeight-(this.leftBouncer.average*(this.meterHeight/100))-2,this.meterWidth,this.leftBouncer.opacity);
       if(average2 > 0)
-        this.ctx.fillRect(this.meterWidth+5,this.meterHeight-(this.rightBouncer.average*(this.meterHeight/100))-2,this.meterWidth,this.rightBouncer.opacity);
+        this.ctx.fillRect(this.meterWidth+(this.meterHeight/100),this.meterHeight-(this.rightBouncer.average*(this.meterHeight/100))-2,this.meterWidth,this.rightBouncer.opacity);
 
     
     }

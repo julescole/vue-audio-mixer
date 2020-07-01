@@ -9,10 +9,14 @@
       :defaultGain="gain" 
       @gainChange="changeGain" 
       @muteChange="muteChange" 
+      @soloChange="soloChange" 
       @panChange="changePan" 
       :leftAnalyser="leftAnalyser" 
       :rightAnalyser="rightAnalyser" 
       :scriptProcessorNode="scriptProcessorNode" 
+      :showPan="showPan"
+      :showMute="true"
+      :themeSize="themeSize"
   />
 </template>
 
@@ -30,7 +34,9 @@ export default {
       'defaultPan',
       'defaultGain',
       'defaultMuted',
-      'trackIndex'
+      'trackIndex',
+      'showPan',
+      'themeSize'
   ],
   components:{Channel},
   data : function(){       
@@ -109,6 +115,10 @@ export default {
 
         this.$emit('muteChange', {index:this.trackIndex,muted:this.muted});
 
+    },
+
+    soloChange(value){
+        this.$emit('soloChange', {index:this.trackIndex});
     },
 
     changeGain(gain)

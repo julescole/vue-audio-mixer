@@ -1,48 +1,61 @@
 <template>
 
-  <div class="vue-audio-mixer" :style="{width:mixerwidth}">
+  <div class="vue-audio-mixer" :class="themeClass" >
 
     <Loader v-if="loading" :percentLoaded="loadingPercent" />
 
     <div v-show="!loading">
 
-      <div class="vue-audio-mixer-channel-strip" >
+      <div class="vue-audio-mixer-channel-strip" ref="channelstrip" >
+          <div>
+            <MixerChannel 
+              v-for="(track,index) in tracks" 
+              :title="track.title" 
+              :defaultPan="track.pan" 
+              :defaultGain="track.gain" 
+              :defaultMuted="track.muted" 
+              :context="context" 
+              :output="gainNode" 
+              :url="track.url" 
+              :key="index" 
+              :trackIndex="index" 
+              @panChange="changePan" 
+              @gainChange="changeGain" 
+              @muteChange="changeMute" 
+              @soloChange="changeSolo"
+              :showPan="showPan"
+              :themeSize="themeSize"
+            />
 
-          <MixerChannel 
-            v-for="(track,index) in tracks" 
-            :title="track.title" 
-            :defaultPan="track.pan" 
-            :defaultGain="track.gain" 
-            :defaultMuted="track.muted" 
-            :context="context" 
-            :output="gainNode" 
-            :url="track.url" 
-            :key="index" 
-            :trackIndex="index" 
-            @panChange="changePan" 
-            @gainChange="changeGain" 
-            @muteChange="changeMute" 
-          />
+            <!-- master channel -->
+            <Channel  
+              title="Master" 
+              :defaultPan="masterPanValue" 
+              :defaultGain="masterGainValue" 
+              :defaultMuted="masterMuted" 
+              @muteChange="changeMasterMute" 
+              @gainChange="changeMasterGain"  
+              @panChange="changeMasterPan" 
+              :leftAnalyser="leftAnalyser" 
+              :rightAnalyser="rightAnalyser" 
+              :scriptProcessorNode="scriptProcessorNode"
+              :showPan="showPan"
+              :showMute="false"
+              :isMaster="true"
+              :themeSize="themeSize"
+            />
+          </div>
 
-          <!-- master channel -->
-          <Channel  
-            title="Master" 
-            :defaultPan="masterPanValue" 
-            :defaultGain="masterGainValue" 
-            :defaultMuted="masterMuted" 
-            @muteChange="changeMasterMute" 
-            @gainChange="changeMasterGain"  
-            @panChange="changeMasterPan" 
-            :leftAnalyser="leftAnalyser" 
-            :rightAnalyser="rightAnalyser" 
-            :scriptProcessorNode="scriptProcessorNode"
-          />
+          <ProgressBar :progressPercent="progressPercent" @percent="playFromPercent" />
+          <div class="time_and_transport">
+            <TimeDisplay :showTotalTime="false" :progressTime="progress" :totalTime="totalDuration" />
+            <TransportButtons :playing="playing" @stop="stop" @togglePlay="togglePlay" />
+            <button class="custom_button">In den Warenkorb</button>
+          </div>
+
 
       </div>
-
-      <TimeDisplay :progressTime="progress" :totalTime="totalDuration" />
-      <ProgressBar :progressPercent="progressPercent" @percent="playFromPercent" />
-      <TransportButtons :playing="playing" @stop="stop" @togglePlay="togglePlay" />
+     
      
     </div>
    
@@ -60,6 +73,10 @@ import ProgressBar from './ProgressBar.vue';
 import TransportButtons from './TransportButtons.vue';
 import Loader from './Loader.vue';
 import EventBus from './../event-bus';
+import variables from '../scss/includes/_variables.scss';
+
+import Vue from 'vue';
+const Events = new Vue();
 
 export default {
   name: 'app',
@@ -76,6 +93,7 @@ export default {
   },
   data : function(){       
       return {
+        showPan                    : false,
         context                    : false,
         gainNode                   : false,
         scriptProcessorNode        : false,
@@ -144,6 +162,26 @@ export default {
 
   computed: {
 
+    themeClass() {
+      let className = 'vue-audio-mixer-theme-'+(this.themeSize.toLowerCase());
+      let toReturn = {};
+      toReturn[className] = true;
+      return toReturn;
+    },
+
+    themeSize()
+    {
+      switch(true)
+      {
+        case this.tracks.length > 4:
+          return 'Small'
+          break;
+        default:
+          return 'Medium'
+      }
+
+    },
+
     // the starter config for the current settings
     trackSettings()
     {
@@ -158,12 +196,6 @@ export default {
       };
 
     },
-
-    mixerwidth()
-    {
-      return (this.tracks.length * 105) + 105 + 'px';
-    },
-
 
     progress(){
       return this.currentTime - this.startedAt;
@@ -236,9 +268,6 @@ export default {
         this.pausedAt = this.progress;
         EventBus.$emit('stop');
       }else{
-
-
-
         this.startedAt = Date.now() - this.progress;
         EventBus.$emit('play',this.pausedAt);
       }
@@ -278,6 +307,10 @@ export default {
 
     changeMute(value){
       this.tracks[value.index].muted = value.muted;
+    },
+
+    changeSolo(value){
+
     },
 
  

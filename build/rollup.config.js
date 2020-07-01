@@ -4,6 +4,8 @@ import buble from 'rollup-plugin-buble'; // Transpile/polyfill with reasonable b
 import resolve from '@rollup/plugin-node-resolve';
 import scss from 'rollup-plugin-scss'
 import replace from 'rollup-plugin-replace'
+import scssVariable from 'rollup-plugin-sass-variables'
+import postcss from 'rollup-plugin-postcss'
 
 export default {
     input: 'src/index.js', // Path relative to package.json
@@ -17,7 +19,9 @@ export default {
             css: true, // Dynamically inject css as a <style> tag
             compileTemplate: true // Explicitly convert template to render function
         }),
-        scss(),
+         scss(),
+    postcss(),
+    scssVariable(),
 
         buble(), // Transpile to ES5
         resolve(),

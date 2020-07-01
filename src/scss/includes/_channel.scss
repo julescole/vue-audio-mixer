@@ -1,11 +1,10 @@
 
 .vue-audio-mixer-channel-label{
   margin-top: 10px;
-  width: 85px;
+  width: 100%;
   font-size: 10px;
   padding-top:5px;
   padding-bottom: 5px;
-
   height: 1em;
   overflow: auto;
   clear: both;
@@ -13,38 +12,54 @@
   background: $channel-label-background-colour;
   color: $channel-label-text-colour;
   text-align: center;
-  
   border: none;
   box-sizing: content-box;    
 }
 
+.logo{
+  position: absolute;
+  top:10px;
+  left:5px;
+  right:5px;
+  img{
+    width:100%;
+  }
+}
+
 
 .vue-audio-mixer-channel-strip{
-
   background: transparent !important; 
   background:$channel-strip-background-colour;
   position: relative;
   overflow: auto;
   display: block;
-  float: left;
   opacity:1;
-  width:100%; 
-     
+  display: inline-block;
 }
 
+
+
+.vue-audio-mixer-theme-small{
+  .vue-audio-mixer-channel{
+    margin-right: #{$margin-between-channels-small}px;
+  }
+}
+.vue-audio-mixer-theme-medium{
+  .vue-audio-mixer-channel{
+    margin-right: #{$margin-between-channels-medium}px;
+  }
+}
 .vue-audio-mixer-channel{
-  height: 435px;
-  margin: 5px;
+  height: #{$channel-height + 40}px; 
   padding: 5px;
   padding-top: 50px;
-
   box-sizing: content-box;
   position: relative;
   float: left;
   display: block;
   background: $channel-background-colour;
- 
   &:last-child { // master track 
+    margin-right: 0px;
       background: $master-channel-background-colour !important; 
       .vue-audio-mixer-channel-label{
         background: $master-channel-label-background-colour !important;  
@@ -54,22 +69,32 @@
 
 
 .vue-audio-mixer-channel-slider{ 
-  top: 230px;
-  left: -135px;
-
+  right: 17px;
+  top: 40px;
   display:block; 
   float:left; 
    -ms-transform: rotate(270deg); /* IE 9 */
   -webkit-transform: rotate(270deg); /* Chrome, Safari, Opera */
   transform: rotate(270deg);
   position: absolute; 
+  transform-origin: right;
 }
 
 
+.vue-audio-mixer-theme-small{
+  .vue-audio-mixer-channel-meter-canvas{
+      margin-right: #{$channel-width-small}px; 
+  }
+}
+
+.vue-audio-mixer-theme-medium{
+  .vue-audio-mixer-channel-meter-canvas{
+      margin-right: #{$channel-width-medium}px; 
+  }
+}
+
 .vue-audio-mixer-channel-meter-canvas{
-  margin-right: 50px; 
-  margin-left:10px;
-  
+  margin-left:2px;
   display:block;
   float: left;
 }

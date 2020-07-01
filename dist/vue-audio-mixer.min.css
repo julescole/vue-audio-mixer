@@ -1,8 +1,5 @@
 @import url("https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap");
 @import url("https://fonts.googleapis.com/css2?family=Open+Sans&display=swap");
-:export {
-  colourschemeone: #4ba7b7; }
-
 .vue-audio-mixer-channel-label {
   margin-top: 10px;
   width: 85px;
@@ -30,8 +27,8 @@
   width: 100%; }
 
 .vue-audio-mixer-channel {
-  height: 435px;
-  margin: 5px;
+  height: 400px;
+  margin: 1px;
   padding: 5px;
   padding-top: 50px;
   box-sizing: content-box;
@@ -373,7 +370,8 @@
     .vue-audio-mixer-timer span span {
       width: 32.6px; }
   .vue-audio-mixer-timer .progress-time {
-    width: 150px; }
+    width: 150px;
+    text-align: center; }
   .vue-audio-mixer-timer .total {
     margin-left: 5px;
     width: 140px; }

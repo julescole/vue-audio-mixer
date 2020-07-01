@@ -68,6 +68,8 @@
     "rollup-plugin-node-resolve": "^5.2.0",
     "rollup-plugin-postcss": "^3.1.2",
     "rollup-plugin-replace": "^2.2.0",
+    "rollup-plugin-sass": "^1.2.2",
+    "rollup-plugin-sass-variables": "^0.1.1",
     "rollup-plugin-scss": "^2.5.0",
     "rollup-plugin-serve": "^1.0.1",
     "rollup-plugin-vue": "^5.1.6",
@@ -75,5 +77,8 @@
     "vue": "^2.6.10",
     "vue-knob-control": "^1.6.0",
     "vue-template-compiler": "^2.6.10"
+  },
+  "dependencies": {
+    "rollup-plugin-postcss-export": "^1.0.3"
   }
 }
