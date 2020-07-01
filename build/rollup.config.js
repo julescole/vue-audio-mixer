@@ -6,6 +6,8 @@ import scss from 'rollup-plugin-scss'
 import replace from 'rollup-plugin-replace'
 import scssVariable from 'rollup-plugin-sass-variables'
 import postcss from 'rollup-plugin-postcss'
+import common from 'rollup-plugin-commonjs'
+import babel from 'rollup-plugin-babel'
 
 export default {
     input: 'src/index.js', // Path relative to package.json
@@ -14,20 +16,40 @@ export default {
         exports: 'named',
     },
     plugins: [
-        commonjs(),
+
+        vue({
+          css: true
+        }),
+        scss(),
+        postcss(),
+        scssVariable(),
+
+        replace({
+          'process.env.NODE_ENV': JSON.stringify('production')
+        }),
+        resolve({
+          mainFields: ['module', 'main']
+        }),
+        common(),
+        babel({exclude: 'node_modules/**'})
+
+
+
+
+
+        /*commonjs(),
         vue({
             css: true, // Dynamically inject css as a <style> tag
             compileTemplate: true // Explicitly convert template to render function
         }),
-         scss(),
-    postcss(),
-    scssVariable(),
-
+        scss(),
+        postcss(),
+        scssVariable(),
         buble(), // Transpile to ES5
         resolve(),
         replace({
           'process.env.NODE_ENV': JSON.stringify('production'),
           'process.env.VUE_ENV': JSON.stringify('browser')
-        })
+        })*/
     ],
 };

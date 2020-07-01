@@ -17,7 +17,6 @@
     </div>
 
     <div class="logo" v-if="isMaster && !showMute">
-      <img src="https://www.midiland.de/images/midiland%20pro%20logo2.gif"/>
     </div>
 
     <div class="vue-audio-mixer-channel-solo-button" v-show="!isMaster">
@@ -72,7 +71,7 @@ export default {
     'showPan',
     'showMute',
     'isMaster',
-    'themeSize'
+    'mixerVars'
   ],
   components:{
     VueKnobControl
@@ -97,13 +96,13 @@ export default {
 
     meterWidth()
     {
-      return parseInt(variables['meterWidth'+this.themeSize]);
+      return parseInt(variables['meterWidth'+this.mixerVars.theme_size]);
     },
 
 
     meterWidthBetween()
     {
-      return parseInt(variables['meterWidthBetween'+this.themeSize]);
+      return parseInt(variables['meterWidthBetween'+this.mixerVars.theme_size]);
     },
 
 
@@ -141,16 +140,16 @@ export default {
 
   created(){
     this.titleModel = 'Track '+(this.trackIndex+1);
-    EventBus.$on('ended', this.ended);
-    EventBus.$on('soloChange', this.detectedSoloChange);
+    EventBus.$on(this.mixerVars.instance_id+'ended', this.ended);
+    EventBus.$on(this.mixerVars.instance_id+'soloChange', this.detectedSoloChange);
     this.scriptProcessorNode.onaudioprocess = () => {
       this.drawMeter();
     }
   },
 
   beforeDestroy() {
-    EventBus.$off('ended',this.ended);
-    EventBus.$off('soloChange',this.detectedSoloChange);
+    EventBus.$off(this.mixerVars.instance_id+'ended',this.ended);
+    EventBus.$off(this.mixerVars.instance_id+'soloChange',this.detectedSoloChange);
   },
 
   mounted(){
@@ -213,11 +212,11 @@ export default {
     },
 
     soloChange(value) {
-        EventBus.$emit('soloChange',value);
+        EventBus.$emit(this.mixerVars.instance_id+'soloChange',value);
     },
 
     titleChange() {
-      this.$emit('titleChange',this.titleModel);
+      this.$emit(this.mixerVars.instance_id+'titleChange',this.titleModel);
     },
 
 
@@ -299,14 +298,14 @@ export default {
 
       // create the meters (ctx.meterHeight/100) is 1% of the meter height
       this.ctx.fillRect(0,this.meterHeight-(average*(this.meterHeight/100)),this.meterWidth,this.meterHeight+200);
-      this.ctx.fillRect(this.meterWidth+(this.meterHeight/100),this.meterHeight-(average2*(this.meterHeight/100)),this.meterWidth,this.meterHeight+200);
+      this.ctx.fillRect(this.meterWidth+this.meterWidthBetween,this.meterHeight-(average2*(this.meterHeight/100)),this.meterWidth,this.meterHeight+200);
 
       // create the bouncers
 
       if(average > 0)
         this.ctx.fillRect(0,this.meterHeight-(this.leftBouncer.average*(this.meterHeight/100))-2,this.meterWidth,this.leftBouncer.opacity);
       if(average2 > 0)
-        this.ctx.fillRect(this.meterWidth+(this.meterHeight/100),this.meterHeight-(this.rightBouncer.average*(this.meterHeight/100))-2,this.meterWidth,this.rightBouncer.opacity);
+        this.ctx.fillRect(this.meterWidth+this.meterWidthBetween,this.meterHeight-(this.rightBouncer.average*(this.meterHeight/100))-2,this.meterWidth,this.rightBouncer.opacity);
 
     
     }

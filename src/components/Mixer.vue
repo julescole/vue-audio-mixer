@@ -24,7 +24,7 @@
               @muteChange="changeMute" 
               @soloChange="changeSolo"
               :showPan="showPan"
-              :themeSize="themeSize"
+              :mixerVars="mixerVars"
             />
 
             <!-- master channel -->
@@ -42,14 +42,28 @@
               :showPan="showPan"
               :showMute="false"
               :isMaster="true"
-              :themeSize="themeSize"
+              :mixerVars="mixerVars"
             />
           </div>
 
-          <ProgressBar :progressPercent="progressPercent" @percent="playFromPercent" />
+          <ProgressBar 
+            :progressPercent="progressPercent" 
+            @percent="playFromPercent" 
+            :mixerVars="mixerVars"
+          />
           <div class="time_and_transport">
-            <TimeDisplay :showTotalTime="false" :progressTime="progress" :totalTime="totalDuration" />
-            <TransportButtons :playing="playing" @stop="stop" @togglePlay="togglePlay" />
+            <TimeDisplay 
+            :showTotalTime="false" 
+            :progressTime="progress" 
+            :totalTime="totalDuration" 
+            :mixerVars="mixerVars"
+            />
+            <TransportButtons 
+            :playing="playing" 
+            @stop="stop" 
+            @togglePlay="togglePlay" 
+            :mixerVars="mixerVars"
+            />
             <button class="custom_button">In den Warenkorb</button>
           </div>
 
@@ -75,8 +89,7 @@ import Loader from './Loader.vue';
 import EventBus from './../event-bus';
 import variables from '../scss/includes/_variables.scss';
 
-import Vue from 'vue';
-const Events = new Vue();
+
 
 export default {
   name: 'app',
@@ -131,9 +144,9 @@ export default {
     this.gainNode.connect(this.context.destination);
     this.scriptProcessorNode = this.context.createScriptProcessor(2048, 1, 1);
     this.setupAudioNodes();
-    EventBus.$on('track_loaded', this.trackLoaded);
-    EventBus.$on('stop', this.stopped);
-    EventBus.$on('play', this.started);
+    EventBus.$on(this.mixerVars.instance_id+'track_loaded', this.trackLoaded);
+    EventBus.$on(this.mixerVars.instance_id+'stop', this.stopped);
+    EventBus.$on(this.mixerVars.instance_id+'play', this.started);
 
     setInterval(() => {
       if(this.playing)
@@ -143,15 +156,15 @@ export default {
   },
 
   beforeDestroy() {
-    EventBus.$off('track_loaded',this.trackLoaded);
-    EventBus.$off('stop',this.stopped);
-    EventBus.$off('play',this.started);
+    EventBus.$off(this.mixerVars.instance_id+'track_loaded',this.trackLoaded);
+    EventBus.$off(this.mixerVars.instance_id+'stop',this.stopped);
+    EventBus.$off(this.mixerVars.instance_id+'play',this.started);
   },
 
   watch: {
     progressPercent: function(newVal){
       if(newVal >= 100)
-         EventBus.$emit('stop');
+         EventBus.$emit(this.mixerVars.instance_id+'stop');
     },
 
     trackSettings(newVal)
@@ -161,6 +174,14 @@ export default {
   },
 
   computed: {
+
+    mixerVars()
+    {
+      return {
+        'theme_size' : this.themeSize,
+        'instance_id': this._uid
+      }
+    },
 
     themeClass() {
       let className = 'vue-audio-mixer-theme-'+(this.themeSize.toLowerCase());
@@ -222,13 +243,13 @@ export default {
 
       if(this.playing){
         this.restart = true;
-        EventBus.$emit('stop');
+        EventBus.$emit(this.mixerVars.instance_id+'stop');
       }
       this.pausedAt =  (this.totalDuration/100) * percent;
       this.startedAt = Date.now() - this.pausedAt;
 
       if(this.restart)
-        setTimeout( () => { EventBus.$emit('play',this.pausedAt) }, 10);
+        setTimeout( () => { EventBus.$emit(this.mixerVars.instance_id+'play',this.pausedAt) }, 10);
 
       this.restart = false;
     },
@@ -266,10 +287,10 @@ export default {
     {
       if(this.playing){
         this.pausedAt = this.progress;
-        EventBus.$emit('stop');
+        EventBus.$emit(this.mixerVars.instance_id+'stop');
       }else{
         this.startedAt = Date.now() - this.progress;
-        EventBus.$emit('play',this.pausedAt);
+        EventBus.$emit(this.mixerVars.instance_id+'play',this.pausedAt);
       }
       
     },
@@ -278,7 +299,7 @@ export default {
     {
       this.pausedAt = 0
       this.startedAt = this.currentTime;
-      EventBus.$emit('stop');
+      EventBus.$emit(this.mixerVars.instance_id+'stop');
     },
 
     trackLoaded(duration){

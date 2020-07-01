@@ -41,8 +41,31 @@
   display: none;
 }
 
+.vue-audio-mixer-theme-small{
+  .vue-audio-mixer-channel-slider-input::-webkit-slider-thumb {
+      font-size: #{$channel-slider-thumb-size-small}em; 
+  }
+  .vue-audio-mixer-channel-slider-input::-moz-range-thumb {
+      font-size: #{$channel-slider-thumb-size-small}em; 
+  }
+  .vue-audio-mixer-channel-slider-input:-ms-thumb {
+      font-size: #{$channel-slider-thumb-size-small}em; 
+  }
+}
+
+.vue-audio-mixer-theme-medium{
+  .vue-audio-mixer-channel-slider-input::-webkit-slider-thumb {
+      font-size: #{$channel-slider-thumb-size-medium}em; 
+  }
+  .vue-audio-mixer-channel-slider-input::-moz-range-thumb {
+      font-size: #{$channel-slider-thumb-size-medium}em; 
+  }
+  .vue-audio-mixer-channel-slider-input:-ms-thumb {
+      font-size: #{$channel-slider-thumb-size-medium}em; 
+  }
+}
+
 .vue-audio-mixer-channel-slider-input::-webkit-slider-thumb {
-  font-size: 0.4em;
   margin-top: -0.90em;
   border: none;
   width: 4em;
@@ -53,7 +76,6 @@
   background-size: 0.825em 100%;
 }
 .vue-audio-mixer-channel-slider-input::-moz-range-thumb {
-  font-size: 0.4em;
   border: none;
   width: 4em;
   height: 2em;
@@ -63,7 +85,6 @@
   background-size: 0.825em 100%;
 }
 .vue-audio-mixer-channel-slider-input::-ms-thumb {
-  font-size: 0.4em;
   margin-top: -0.15em;
   border: none;
   width: 4em;

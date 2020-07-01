@@ -16,7 +16,7 @@
       :scriptProcessorNode="scriptProcessorNode" 
       :showPan="showPan"
       :showMute="true"
-      :themeSize="themeSize"
+      :mixerVars="mixerVars"
   />
 </template>
 
@@ -36,7 +36,7 @@ export default {
       'defaultMuted',
       'trackIndex',
       'showPan',
-      'themeSize'
+      'mixerVars'
   ],
   components:{Channel},
   data : function(){       
@@ -78,14 +78,14 @@ export default {
     this.gain  = this.defaultGain;
 
     this.scriptProcessorNode = this.context.createScriptProcessor(2048, 1, 1);
-    EventBus.$on('play', this.playSound);
-    EventBus.$on('stop', this.stopSound);
+    EventBus.$on(this.mixerVars.instance_id+'play', this.playSound);
+    EventBus.$on(this.mixerVars.instance_id+'stop', this.stopSound);
     this.loadSound();
   },
 
   beforeDestroy() {
-    EventBus.$off('play',this.playSound);
-    EventBus.$off('stop',this.stopSound);
+    EventBus.$off(this.mixerVars.instance_id+'play',this.playSound);
+    EventBus.$off(this.mixerVars.instance_id+'stop',this.stopSound);
   },
 
 
@@ -161,7 +161,7 @@ export default {
             this.context.decodeAudioData(request.response, (buffer) => { // sound loaded
                 // when the audio is decoded play the sound
                 this.buffer=buffer;
-                EventBus.$emit('track_loaded', this.buffer.duration);
+                EventBus.$emit(this.mixerVars.instance_id+'track_loaded', this.buffer.duration);
                 this.setupAudioNodes();
 
             }, this.onError);
@@ -289,9 +289,9 @@ export default {
         this.splitter.disconnect();
 
         if(this.playFrom)
-            EventBus.$emit('play', this.playFrom);
+            EventBus.$emit(this.mixerVars.instance_id+'play', this.playFrom);
 
-        EventBus.$emit('ended',this._uid);
+        EventBus.$emit(this.mixerVars.instance_id+'ended',this._uid);
 
     },
 

@@ -10,7 +10,7 @@ function createCommonjsModule(fn, module) {
 
 var vueKnobControl_umd = createCommonjsModule(function (module, exports) {
 (function webpackUniversalModuleDefinition(root, factory) {
-	{ module.exports = factory(); }
+	module.exports = factory();
 })((typeof self !== 'undefined' ? self : commonjsGlobal), function() {
 return /******/ (function(modules) { // webpackBootstrap
 /******/ 	// The module cache
@@ -68,13 +68,13 @@ return /******/ (function(modules) { // webpackBootstrap
 /******/ 	// mode & 4: return value when already ns object
 /******/ 	// mode & 8|1: behave like require
 /******/ 	__webpack_require__.t = function(value, mode) {
-/******/ 		if(mode & 1) { value = __webpack_require__(value); }
-/******/ 		if(mode & 8) { return value; }
-/******/ 		if((mode & 4) && typeof value === 'object' && value && value.__esModule) { return value; }
+/******/ 		if(mode & 1) value = __webpack_require__(value);
+/******/ 		if(mode & 8) return value;
+/******/ 		if((mode & 4) && typeof value === 'object' && value && value.__esModule) return value;
 /******/ 		var ns = Object.create(null);
 /******/ 		__webpack_require__.r(ns);
 /******/ 		Object.defineProperty(ns, 'default', { enumerable: true, value: value });
-/******/ 		if(mode & 2 && typeof value != 'string') { for(var key in value) { __webpack_require__.d(ns, key, function(key) { return value[key]; }.bind(null, key)); } }
+/******/ 		if(mode & 2 && typeof value != 'string') for(var key in value) __webpack_require__.d(ns, key, function(key) { return value[key]; }.bind(null, key));
 /******/ 		return ns;
 /******/ 	};
 /******/
@@ -126,11 +126,11 @@ exports.f = __webpack_require__("1897") ? Object.defineProperty : function defin
   anObject(O);
   P = toPrimitive(P, true);
   anObject(Attributes);
-  if (IE8_DOM_DEFINE) { try {
+  if (IE8_DOM_DEFINE) try {
     return dP(O, P, Attributes);
-  } catch (e) { /* empty */ } }
-  if ('get' in Attributes || 'set' in Attributes) { throw TypeError('Accessors not supported!'); }
-  if ('value' in Attributes) { O[P] = Attributes.value; }
+  } catch (e) { /* empty */ }
+  if ('get' in Attributes || 'set' in Attributes) throw TypeError('Accessors not supported!');
+  if ('value' in Attributes) O[P] = Attributes.value;
   return O;
 };
 
@@ -205,11 +205,11 @@ module.exports = function (object, names) {
   var i = 0;
   var result = [];
   var key;
-  for (key in O) { if (key != IE_PROTO) { has(O, key) && result.push(key); } }
+  for (key in O) if (key != IE_PROTO) has(O, key) && result.push(key);
   // Don't enum bug & hidden keys
-  while (names.length > i) { if (has(O, key = names[i++])) {
+  while (names.length > i) if (has(O, key = names[i++])) {
     ~arrayIndexOf(result, key) || result.push(key);
-  } }
+  }
   return result;
 };
 
@@ -244,7 +244,7 @@ module.exports = __webpack_require__("1897") ? Object.defineProperties : functio
   var length = keys.length;
   var i = 0;
   var P;
-  while (length > i) { dP.f(O, P = keys[i++], Properties[P]); }
+  while (length > i) dP.f(O, P = keys[i++], Properties[P]);
   return O;
 };
 
@@ -307,7 +307,7 @@ var createDict = function () {
   iframeDocument.write(lt + 'script' + gt + 'document.F=Object' + lt + '/script' + gt);
   iframeDocument.close();
   createDict = iframeDocument.F;
-  while (i--) { delete createDict[PROTOTYPE][enumBugKeys[i]]; }
+  while (i--) delete createDict[PROTOTYPE][enumBugKeys[i]];
   return createDict();
 };
 
@@ -319,7 +319,7 @@ module.exports = Object.create || function create(O, Properties) {
     Empty[PROTOTYPE] = null;
     // add "__proto__" for Object.getPrototypeOf polyfill
     result[IE_PROTO] = O;
-  } else { result = createDict(); }
+  } else result = createDict();
   return Properties === undefined ? result : dPs(result, Properties);
 };
 
@@ -340,7 +340,7 @@ module.exports = Object.create || function create(O, Properties) {
 
 var isObject = __webpack_require__("d3b2");
 module.exports = function (it) {
-  if (!isObject(it)) { throw TypeError(it + ' is not an object!'); }
+  if (!isObject(it)) throw TypeError(it + ' is not an object!');
   return it;
 };
 
@@ -352,7 +352,7 @@ module.exports = function (it) {
 
 // 7.2.1 RequireObjectCoercible(argument)
 module.exports = function (it) {
-  if (it == undefined) { throw TypeError("Can't call method on  " + it); }
+  if (it == undefined) throw TypeError("Can't call method on  " + it);
   return it;
 };
 
@@ -373,10 +373,10 @@ var gOPD = Object.getOwnPropertyDescriptor;
 exports.f = __webpack_require__("1897") ? gOPD : function getOwnPropertyDescriptor(O, P) {
   O = toIObject(O);
   P = toPrimitive(P, true);
-  if (IE8_DOM_DEFINE) { try {
+  if (IE8_DOM_DEFINE) try {
     return gOPD(O, P);
-  } catch (e) { /* empty */ } }
-  if (has(O, P)) { return createDesc(!pIE.f.call(O, P), O[P]); }
+  } catch (e) { /* empty */ }
+  if (has(O, P)) return createDesc(!pIE.f.call(O, P), O[P]);
 };
 
 
@@ -498,12 +498,12 @@ module.exports = function(useSourceMap) {
 	// import a list of modules into the list
 	list.i = function(modules, mediaQuery) {
 		if(typeof modules === "string")
-			{ modules = [[null, modules, ""]]; }
+			modules = [[null, modules, ""]];
 		var alreadyImportedModules = {};
 		for(var i = 0; i < this.length; i++) {
 			var id = this[i][0];
 			if(typeof id === "number")
-				{ alreadyImportedModules[id] = true; }
+				alreadyImportedModules[id] = true;
 		}
 		for(i = 0; i < modules.length; i++) {
 			var item = modules[i];
@@ -588,9 +588,9 @@ __webpack_require__("83d9").inspectSource = function (it) {
 
 (module.exports = function (O, key, val, safe) {
   var isFunction = typeof val == 'function';
-  if (isFunction) { has(val, 'name') || hide(val, 'name', key); }
-  if (O[key] === val) { return; }
-  if (isFunction) { has(val, SRC) || hide(val, SRC, O[key] ? '' + O[key] : TPL.join(String(key))); }
+  if (isFunction) has(val, 'name') || hide(val, 'name', key);
+  if (O[key] === val) return;
+  if (isFunction) has(val, SRC) || hide(val, SRC, O[key] ? '' + O[key] : TPL.join(String(key)));
   if (O === global) {
     O[key] = val;
   } else if (!safe) {
@@ -618,7 +618,7 @@ var isObject = __webpack_require__("d3b2");
 var anObject = __webpack_require__("59fb");
 var check = function (O, proto) {
   anObject(O);
-  if (!isObject(proto) && proto !== null) { throw TypeError(proto + ": can't set as prototype!"); }
+  if (!isObject(proto) && proto !== null) throw TypeError(proto + ": can't set as prototype!");
 };
 module.exports = {
   set: Object.setPrototypeOf || ('__proto__' in {} ? // eslint-disable-line
@@ -630,8 +630,8 @@ module.exports = {
       } catch (e) { buggy = true; }
       return function setPrototypeOf(O, proto) {
         check(O, proto);
-        if (buggy) { O.__proto__ = proto; }
-        else { set(O, proto); }
+        if (buggy) O.__proto__ = proto;
+        else set(O, proto);
         return O;
       };
     }({}, false) : undefined),
@@ -645,7 +645,7 @@ module.exports = {
 /***/ (function(module, exports) {
 
 var core = module.exports = { version: '2.6.9' };
-if (typeof __e == 'number') { __e = core; } // eslint-disable-line no-undef
+if (typeof __e == 'number') __e = core; // eslint-disable-line no-undef
 
 
 /***/ }),
@@ -694,7 +694,7 @@ var toNumber = function (argument) {
     var third, radix, maxCode;
     if (first === 43 || first === 45) {
       third = it.charCodeAt(2);
-      if (third === 88 || third === 120) { return NaN; } // Number('+0x1') should be NaN, old V8 fix
+      if (third === 88 || third === 120) return NaN; // Number('+0x1') should be NaN, old V8 fix
     } else if (first === 48) {
       switch (it.charCodeAt(1)) {
         case 66: case 98: radix = 2; maxCode = 49; break; // fast equal /^0b[01]+$/i
@@ -705,7 +705,7 @@ var toNumber = function (argument) {
         code = digits.charCodeAt(i);
         // parseInt parses a string to a first unavailable symbol
         // but ToNumber should return NaN if a string contains unavailable symbols
-        if (code < 48 || code > maxCode) { return NaN; }
+        if (code < 48 || code > maxCode) return NaN;
       } return parseInt(digits, radix);
     }
   } return +it;
@@ -743,7 +743,7 @@ if (!$Number(' 0o1') || !$Number('0b1') || $Number('+0x1')) {
 /***/ (function(module, exports) {
 
 module.exports = function (it) {
-  if (typeof it != 'function') { throw TypeError(it + ' is not a function!'); }
+  if (typeof it != 'function') throw TypeError(it + ' is not a function!');
   return it;
 };
 
@@ -758,11 +758,11 @@ var isObject = __webpack_require__("d3b2");
 // instead of the ES6 spec version, we didn't implement @@toPrimitive case
 // and the second argument - flag - preferred type is a string
 module.exports = function (it, S) {
-  if (!isObject(it)) { return it; }
+  if (!isObject(it)) return it;
   var fn, val;
-  if (S && typeof (fn = it.toString) == 'function' && !isObject(val = fn.call(it))) { return val; }
-  if (typeof (fn = it.valueOf) == 'function' && !isObject(val = fn.call(it))) { return val; }
-  if (!S && typeof (fn = it.toString) == 'function' && !isObject(val = fn.call(it))) { return val; }
+  if (S && typeof (fn = it.toString) == 'function' && !isObject(val = fn.call(it))) return val;
+  if (typeof (fn = it.valueOf) == 'function' && !isObject(val = fn.call(it))) return val;
+  if (!S && typeof (fn = it.toString) == 'function' && !isObject(val = fn.call(it))) return val;
   throw TypeError("Can't convert object to primitive value");
 };
 
@@ -776,8 +776,8 @@ module.exports = function (it, S) {
 
 // load the styles
 var content = __webpack_require__("4225");
-if(typeof content === 'string') { content = [[module.i, content, '']]; }
-if(content.locals) { module.exports = content.locals; }
+if(typeof content === 'string') content = [[module.i, content, '']];
+if(content.locals) module.exports = content.locals;
 // add the styles to the DOM
 var add = __webpack_require__("9417").default;
 var update = add("452294a1", content, true, {"sourceMap":false,"shadowMode":false});
@@ -1003,7 +1003,7 @@ function applyToSingletonTag (styleElement, index, remove, obj) {
   } else {
     var cssNode = document.createTextNode(css);
     var childNodes = styleElement.childNodes;
-    if (childNodes[index]) { styleElement.removeChild(childNodes[index]); }
+    if (childNodes[index]) styleElement.removeChild(childNodes[index]);
     if (childNodes.length) {
       styleElement.insertBefore(cssNode, childNodes[index]);
     } else {
@@ -1061,14 +1061,14 @@ module.exports = function (IS_INCLUDES) {
     var value;
     // Array#includes uses SameValueZero equality algorithm
     // eslint-disable-next-line no-self-compare
-    if (IS_INCLUDES && el != el) { while (length > index) {
+    if (IS_INCLUDES && el != el) while (length > index) {
       value = O[index++];
       // eslint-disable-next-line no-self-compare
-      if (value != value) { return true; }
+      if (value != value) return true;
     // Array#indexOf ignores holes, Array#includes - not
-    } } else { for (;length > index; index++) { if (IS_INCLUDES || index in O) {
-      if (O[index] === el) { return IS_INCLUDES || index || 0; }
-    } } } return !IS_INCLUDES && -1;
+    } else for (;length > index; index++) if (IS_INCLUDES || index in O) {
+      if (O[index] === el) return IS_INCLUDES || index || 0;
+    } return !IS_INCLUDES && -1;
   };
 };
 
@@ -1082,7 +1082,7 @@ module.exports = function (IS_INCLUDES) {
 var aFunction = __webpack_require__("8769");
 module.exports = function (fn, that, length) {
   aFunction(fn);
-  if (that === undefined) { return fn; }
+  if (that === undefined) return fn;
   switch (length) {
     case 1: return function (a) {
       return fn.call(that, a);
@@ -1122,7 +1122,7 @@ var $export = function (type, name, source) {
   var exports = IS_GLOBAL ? core : core[name] || (core[name] = {});
   var expProto = exports[PROTOTYPE] || (exports[PROTOTYPE] = {});
   var key, own, out, exp;
-  if (IS_GLOBAL) { source = name; }
+  if (IS_GLOBAL) source = name;
   for (key in source) {
     // contains in native
     own = !IS_FORCED && target && target[key] !== undefined;
@@ -1131,10 +1131,10 @@ var $export = function (type, name, source) {
     // bind timers to global for call from export context
     exp = IS_BIND && own ? ctx(out, global) : IS_PROTO && typeof out == 'function' ? ctx(Function.call, out) : out;
     // extend global
-    if (target) { redefine(target, key, out, type & $export.U); }
+    if (target) redefine(target, key, out, type & $export.U);
     // export
-    if (exports[key] != out) { hide(exports, key, exp); }
-    if (IS_PROTO && expProto[key] != out) { expProto[key] = out; }
+    if (exports[key] != out) hide(exports, key, exp);
+    if (IS_PROTO && expProto[key] != out) expProto[key] = out;
   }
 };
 global.core = core;
@@ -1170,7 +1170,7 @@ var exporter = function (KEY, exec, ALIAS) {
     return !!spaces[KEY]() || non[KEY]() != non;
   });
   var fn = exp[KEY] = FORCE ? exec(trim) : spaces[KEY];
-  if (ALIAS) { exp[ALIAS] = fn; }
+  if (ALIAS) exp[ALIAS] = fn;
   $export($export.P + $export.F * FORCE, 'String', exp);
 };
 
@@ -1179,8 +1179,8 @@ var exporter = function (KEY, exec, ALIAS) {
 // 3 -> String#trim
 var trim = exporter.trim = function (string, TYPE) {
   string = String(defined(string));
-  if (TYPE & 1) { string = string.replace(ltrim, ''); }
-  if (TYPE & 2) { string = string.replace(rtrim, ''); }
+  if (TYPE & 1) string = string.replace(ltrim, '');
+  if (TYPE & 2) string = string.replace(rtrim, '');
   return string;
 };
 
@@ -1407,7 +1407,7 @@ var mapRange = function mapRange(x, inMin, inMax, outMin, outMax) {
           want the value arc to start drawing from the 'zero' point, but, in the case
           that the minimum and maximum values are both above zero, we set the 'zero point'
           at the supplied minimum, so the value arc renders as the user would expect */
-      if (this.min > 0 && this.max > 0) { return mapRange(this.min, this.min, this.max, MIN_RADIANS, MAX_RADIANS); }else { return mapRange(0, this.min, this.max, MIN_RADIANS, MAX_RADIANS); }
+      if (this.min > 0 && this.max > 0) return mapRange(this.min, this.min, this.max, MIN_RADIANS, MAX_RADIANS);else return mapRange(0, this.min, this.max, MIN_RADIANS, MAX_RADIANS);
     },
     valueRadians: function valueRadians() {
       return mapRange(this.value, this.min, this.max, MIN_RADIANS, MAX_RADIANS);
@@ -1735,7 +1735,7 @@ var global = module.exports = typeof window != 'undefined' && window.Math == Mat
   ? window : typeof self != 'undefined' && self.Math == Math ? self
   // eslint-disable-next-line no-new-func
   : Function('return this')();
-if (typeof __g == 'number') { __g = global; } // eslint-disable-line no-undef
+if (typeof __g == 'number') __g = global; // eslint-disable-line no-undef
 
 
 /***/ })
@@ -2448,7 +2448,7 @@ prototypeAccessors.child.get = function () {
 Object.defineProperties( VNode.prototype, prototypeAccessors );
 
 var createEmptyVNode = function (text) {
-  if ( text === void 0 ) { text = ''; }
+  if ( text === void 0 ) text = '';
 
   var node = new VNode();
   node.text = text;
@@ -2515,10 +2515,8 @@ methodsToPatch.forEach(function (method) {
   // cache original method
   var original = arrayProto[method];
   def(arrayMethods, method, function mutator () {
-    var arguments$1 = arguments;
-
     var args = [], len = arguments.length;
-    while ( len-- ) { args[ len ] = arguments$1[ len ]; }
+    while ( len-- ) args[ len ] = arguments[ len ];
 
     var result = original.apply(this, args);
     var ob = this.__ob__;
@@ -4051,7 +4049,7 @@ function bindObjectProps (
         }
       };
 
-      for (var key in value) { loop( key ); }
+      for (var key in value) loop( key );
     }
   }
   return data
@@ -5781,7 +5779,7 @@ function initProps (vm, propsOptions) {
     }
   };
 
-  for (var key in propsOptions) { loop( key ); }
+  for (var key in propsOptions) loop( key );
   toggleObserving(true);
 }
 
@@ -9239,249 +9237,206 @@ if (inBrowser) {
   }, 0);
 }
 
-var EventBus = new Vue();
+const EventBus = new Vue();
 
-function styleInject(css, ref) {
-  if ( ref === void 0 ) { ref = {}; }
-  var insertAt = ref.insertAt;
-
-  if (!css || typeof document === 'undefined') { return; }
-
-  var head = document.head || document.getElementsByTagName('head')[0];
-  var style = document.createElement('style');
-  style.type = 'text/css';
-
-  if (insertAt === 'top') {
-    if (head.firstChild) {
-      head.insertBefore(style, head.firstChild);
-    } else {
-      head.appendChild(style);
-    }
-  } else {
-    head.appendChild(style);
-  }
-
-  if (style.styleSheet) {
-    style.styleSheet.cssText = css;
-  } else {
-    style.appendChild(document.createTextNode(css));
-  }
-}
-
-var css_248z = "";
-styleInject(css_248z);
+var variables = {"marginBetweenChannelsSmall":"1","channelHeight":"200","meterWidthSmall":"5","meterWidthBetweenSmall":"2","channelWidthSmall":"15","channelSliderThumbSizeSmall":"0.4","marginBetweenChannelsMedium":"2","meterWidthMedium":"10","meterWidthBetweenMedium":"5","channelWidthMedium":"30","channelSliderThumbSizeMedium":"0.6","colourSchemeOne":"#4ba7b7","colourSchemeTwo":"#4ba7b7","channelLabelBackgroundColour":"#4ba7b7","masterChannelLabelBackgroundColour":"#000","channelLabelTextColour":"#FFFFFF","channelStripBackgroundColour":"#16191c","channelBackgroundColour ":"rgba(41,44,48,0.2)","masterChannelBackgroundColour":"#4ba7b7","channelMuteButtonBackgroundColour":"#666B73","channelMuteButtonBackgroundColourActive":"#911","channelMuteButtonBorderColour":"#000","channelMuteButtonTextColourHover":"#FFF","channelMuteButtonTextColourActive":"#FFF","channelSoloButtonBackgroundColourActive":"#1cdd20","channelSoloButtonTextColourActive":"#FFF","channelPannerTextColour":"rgb(255, 255, 255)","loaderInnerColour":"#1d7a9c","loaderOuterColour":"#00a7cc","loaderTextColour":"#1d7a9c","sliderInputBackground":"repeating-linear-gradient(90deg, #000, #3b3e41 0.0625em, transparent 0.0625em, transparent 0.75em) no-repeat 50% 0.75em border-box, ","sliderTrackColour":"#15181b","sliderThumbBackground":"radial-gradient(#ebe1e0 10%, rgba(235, 225, 224, 0.2) 10%, rgba(235, 225, 224, 0) 72%) no-repeat 50% 50%, radial-gradient(at 100% 50%, #e9dfde, #eae1de 71%, rgba(0, 0, 0, 0) 71%) no-repeat 2.5em 50%, linear-gradient(90deg, #e9dfde, #d0c8c6) no-repeat 100% 50%, radial-gradient(at 0 50%, #d0c6c5, #c6baba 71%, rgba(0, 0, 0, 0) 71%) no-repeat 0.75em 50%, linear-gradient(90deg, #e3d9d8, #d0c6c5) no-repeat 0 50%, linear-gradient(#cdc0c0, #fcf5ef, #fcf5ef, #cdc0c0)","progressBarBackgroundColour":"#4c4c4c","progressBarCursorColour":"#b6c8e1","transportTimeBackground":"#000","transportTimeTextColour":"#fff","transportButtonsColour":"#d5d5d5"};
 
 //
-
 var script = {
   name: 'Channel',
-  props: [
-    'index',
-    'trackIndex', 
-    'title',
-    'context', 
-    'url',
-    'output',
-    'leftAnalyser',
-    'rightAnalyser',
-    'scriptProcessorNode',
-    'defaultPan',
-    'defaultGain',
-    'defaultMuted'
-  ],
-  components:{
-    VueKnobControl: VueKnobControl
+  props: ['index', 'trackIndex', 'title', 'context', 'url', 'output', 'leftAnalyser', 'rightAnalyser', 'scriptProcessorNode', 'defaultPan', 'defaultGain', 'defaultMuted', 'showPan', 'showMute', 'isMaster', 'mixerVars'],
+  components: {
+    VueKnobControl
   },
-  data : function(){       
-      return {
-          leftBouncer : {average:0,opacity:1},
-          rightBouncer: {average:0,opacity:1},
-          gradient    : false,
-          ctx         : false,
-          gain        : 0.8,
-          pan         : 0,
-          mute        : false,
-          meterHeight : 500,
-          meterWidth  : 10,
-          titleModel : ''
-      };
+  data: function () {
+    return {
+      leftBouncer: {
+        average: 0,
+        opacity: 1
+      },
+      rightBouncer: {
+        average: 0,
+        opacity: 1
+      },
+      gradient: false,
+      ctx: false,
+      gain: 0.8,
+      pan: 0,
+      solo: false,
+      mute: false,
+      mutedBySolo: false,
+      meterHeight: parseInt(variables.channelHeight),
+      titleModel: ''
+    };
   },
-
-  watch:{
-
-    pan: function(){
-        this.changePan();
+  computed: {
+    meterWidth() {
+      return parseInt(variables['meterWidth' + this.mixerVars.theme_size]);
     },
 
-    mute: function(){
-        this.muteChange();
+    meterWidthBetween() {
+      return parseInt(variables['meterWidthBetween' + this.mixerVars.theme_size]);
     },
 
-    titleModel:function(){
-      this.titleChange();
+    formattedGain() {
+      return this.pad(Math.round(this.gain * 100), 3);
     }
 
   },
-
-  created: function created(){
-    var this$1 = this;
-
-    this.titleModel = 'Track '+(this.trackIndex+1);
-    EventBus.$on('ended', this.ended);
-    this.scriptProcessorNode.onaudioprocess = function () {
-      this$1.drawMeter();
-    };
-
-    console.log(css_248z);
-
-    console.log(css_248z.colourschemeone);
-
-   
-  },
-
-  beforeDestroy: function beforeDestroy() {
-    EventBus.$off('ended',this.ended);
-  },
-
-  mounted: function mounted(){
-
-      this.ctx = document.getElementById('canvas'+this._uid).getContext("2d");
-      this.gradient = this.ctx.createLinearGradient(0,0,0,400);
-      this.gradient.addColorStop(1,'#31e2fc');
-      this.gradient.addColorStop(0.75,'#38fedd');
-      this.gradient.addColorStop(0.25,'#38fedd');
-      this.gradient.addColorStop(0,'#31e0fc');
-
-      this.pan = this.defaultPan === undefined ? 0 : this.defaultPan;
-      this.gain = this.defaultGain === undefined ? 0 : this.defaultGain;
-      this.mute = this.defaultMuted === undefined ? false : this.defaultMuted;
-    
+  watch: {
+    pan: function () {
       this.changePan();
-      this.changeGain();
-
-      this.drawMeter();
-
+    },
+    mute: function () {
+      this.muteChange();
+    },
+    mutedBySolo: function () {
+      this.muteChange();
+    },
+    solo: function (newVal) {
+      let solodTrack = newVal ? this.trackIndex : false;
+      this.soloChange(solodTrack);
+    },
+    titleModel: function () {
+      this.titleChange();
+    }
   },
+
+  created() {
+    this.titleModel = 'Track ' + (this.trackIndex + 1);
+    EventBus.$on(this.mixerVars.instance_id + 'ended', this.ended);
+    EventBus.$on(this.mixerVars.instance_id + 'soloChange', this.detectedSoloChange);
+
+    this.scriptProcessorNode.onaudioprocess = () => {
+      this.drawMeter();
+    };
+  },
+
+  beforeDestroy() {
+    EventBus.$off(this.mixerVars.instance_id + 'ended', this.ended);
+    EventBus.$off(this.mixerVars.instance_id + 'soloChange', this.detectedSoloChange);
+  },
+
+  mounted() {
+    this.ctx = document.getElementById('canvas' + this._uid).getContext("2d");
+    this.gradient = this.ctx.createLinearGradient(0, 0, 0, 400);
+    this.gradient.addColorStop(1, '#31e2fc');
+    this.gradient.addColorStop(0.75, '#38fedd');
+    this.gradient.addColorStop(0.25, '#38fedd');
+    this.gradient.addColorStop(0, '#31e0fc');
+    this.pan = this.defaultPan === undefined ? 0 : this.defaultPan;
+    this.gain = this.defaultGain === undefined ? 0 : this.defaultGain;
+    this.mute = this.defaultMuted === undefined ? false : this.defaultMuted;
+    this.changePan();
+    this.changeGain();
+    this.drawMeter();
+  },
+
   methods: {
-
-    ended: function ended(index){
-      var this$1 = this;
-
-
-      if(index == this.index){
-        setTimeout( function () { this$1.clearCanvas();}, 10);
-      }
-
-    },
-
-    changeGain: function changeGain()
-    {
-      if(!this.mute){
-        this.$emit('gainChange',this.gain);
+    detectedSoloChange(index) {
+      if (index && this.trackIndex !== undefined && index != this.trackIndex) {
+        this.mutedBySolo = index;
+      } else {
+        this.mutedBySolo = false;
       }
     },
 
-    changePan: function changePan() {
-      this.$emit('panChange',this.pan);
+    pad(n, width, z) {
+      z = z || '0';
+      n = n + '';
+      return n.length >= width ? n : new Array(width - n.length + 1).join(z) + n;
     },
 
-    muteChange: function muteChange() {
-      this.$emit('muteChange',this.mute);
+    ended(index) {
+      if (index == this.index) {
+        setTimeout(() => {
+          this.clearCanvas();
+        }, 10);
+      }
     },
 
-    titleChange: function titleChange() {
-      this.$emit('titleChange',this.titleModel);
+    changeGain() {
+      if (!this.mute) {
+        this.$emit('gainChange', this.gain);
+      }
     },
 
-
-
-    
-
-
-
-    getAverageVolume: function getAverageVolume(array) {
-        var values = 0;
-        var average;
-        var length = array.length;
-        // get all the frequency amplitudes
-        for (var i = 0; i < length; i++) {
-            values += array[i];
-        }
-        average = values / length;
-        return average;
+    changePan() {
+      this.$emit('panChange', this.pan);
     },
 
+    muteChange() {
+      this.$emit('muteChange', this.mute || this.mutedBySolo);
+    },
 
-    clearCanvas: function clearCanvas(){
+    soloChange(value) {
+      EventBus.$emit(this.mixerVars.instance_id + 'soloChange', value);
+    },
 
-       // clear the current state
+    titleChange() {
+      this.$emit(this.mixerVars.instance_id + 'titleChange', this.titleModel);
+    },
+
+    getAverageVolume(array) {
+      var values = 0;
+      var average;
+      var length = array.length; // get all the frequency amplitudes
+
+      for (var i = 0; i < length; i++) {
+        values += array[i];
+      }
+
+      average = values / length;
+      return average;
+    },
+
+    clearCanvas() {
+      // clear the current state
       this.ctx.clearRect(0, 0, 60, this.meterHeight);
+      this.ctx.fillStyle = "#15181b"; // create background to meters
 
-      this.ctx.fillStyle="#15181b";
-      // create background to meters
-      this.ctx.fillRect(0,0,this.meterWidth,this.meterHeight+200);
-      this.ctx.fillRect(this.meterWidth+5,0,this.meterWidth,this.meterHeight+200);
-
+      this.ctx.fillRect(0, 0, this.meterWidth, this.meterHeight + 200);
+      this.ctx.fillRect(this.meterWidth + this.meterWidthBetween, 0, this.meterWidth, this.meterHeight + 200);
     },
 
-   
-
-    drawMeter: function drawMeter(){
-
+    drawMeter() {
       // get the average for the first channel
-      var array =  new Uint8Array(this.leftAnalyser.frequencyBinCount);
+      var array = new Uint8Array(this.leftAnalyser.frequencyBinCount);
       this.leftAnalyser.getByteFrequencyData(array);
-      var average = this.getAverageVolume(array);
+      var average = this.getAverageVolume(array); // get the average for the second channel
 
-      // get the average for the second channel
-      var array2 =  new Uint8Array(this.rightAnalyser.frequencyBinCount);
+      var array2 = new Uint8Array(this.rightAnalyser.frequencyBinCount);
       this.rightAnalyser.getByteFrequencyData(array2);
-      var average2 = this.getAverageVolume(array2);
+      var average2 = this.getAverageVolume(array2); // bouncers left
 
-      // bouncers left
-      if(average > this.leftBouncer.average){
+      if (average > this.leftBouncer.average) {
         this.leftBouncer.average = average;
         this.leftBouncer.opacity = 1;
-      }
-      else {
-        if(this.leftBouncer.opacity > 0.1) // fade out
-          { this.leftBouncer.opacity = this.leftBouncer.opacity -0.1; }
-        else
-          { this.leftBouncer.opacity = 0; }
+      } else {
+        if (this.leftBouncer.opacity > 0.1) // fade out
+          this.leftBouncer.opacity = this.leftBouncer.opacity - 0.1;else this.leftBouncer.opacity = 0;
         this.leftBouncer.average--; // make it fall
-      }
+      } // bouncers right
 
-      // bouncers right
-      if(average2 > this.rightBouncer.average){
+
+      if (average2 > this.rightBouncer.average) {
         this.rightBouncer.opacity = 1;
         this.rightBouncer.average = average2;
-      }
-      else {
-        if(this.rightBouncer.opacity > 0.1)// fade out
-          { this.rightBouncer.opacity = this.rightBouncer.opacity -0.1; }
-        else
-          { this.rightBouncer.opacity = 0; }
-        this.rightBouncer.average--;// make it fall
+      } else {
+        if (this.rightBouncer.opacity > 0.1) // fade out
+          this.rightBouncer.opacity = this.rightBouncer.opacity - 0.1;else this.rightBouncer.opacity = 0;
+        this.rightBouncer.average--; // make it fall
       }
 
-      this.clearCanvas();
+      this.clearCanvas(); // set the fill style
 
-      // set the fill style
-      this.ctx.fillStyle=this.gradient;
+      this.ctx.fillStyle = this.gradient; // create the meters (ctx.meterHeight/100) is 1% of the meter height
 
+      this.ctx.fillRect(0, this.meterHeight - average * (this.meterHeight / 100), this.meterWidth, this.meterHeight + 200);
+      this.ctx.fillRect(this.meterWidth + this.meterWidthBetween, this.meterHeight - average2 * (this.meterHeight / 100), this.meterWidth, this.meterHeight + 200); // create the bouncers
 
-      // create the meters (ctx.meterHeight/100) is 1% of the meter height
-      this.ctx.fillRect(0,this.meterHeight-(average*(this.meterHeight/100)),this.meterWidth,this.meterHeight+200);
-      this.ctx.fillRect(this.meterWidth+5,this.meterHeight-(average2*(this.meterHeight/100)),this.meterWidth,this.meterHeight+200);
-
-      // create the bouncers
-
-      if(average > 0)
-        { this.ctx.fillRect(0,this.meterHeight-(this.leftBouncer.average*(this.meterHeight/100))-2,this.meterWidth,this.leftBouncer.opacity); }
-      if(average2 > 0)
-        { this.ctx.fillRect(this.meterWidth+5,this.meterHeight-(this.rightBouncer.average*(this.meterHeight/100))-2,this.meterWidth,this.rightBouncer.opacity); }
-
-    
+      if (average > 0) this.ctx.fillRect(0, this.meterHeight - this.leftBouncer.average * (this.meterHeight / 100) - 2, this.meterWidth, this.leftBouncer.opacity);
+      if (average2 > 0) this.ctx.fillRect(this.meterWidth + this.meterWidthBetween, this.meterHeight - this.rightBouncer.average * (this.meterHeight / 100) - 2, this.meterWidth, this.rightBouncer.opacity);
     }
 
   }
@@ -9494,7 +9449,7 @@ function normalizeComponent(template, style, script, scopeId, isFunctionalTempla
         shadowMode = false;
     }
     // Vue.extend constructor export interop.
-    var options = typeof script === 'function' ? script.options : script;
+    const options = typeof script === 'function' ? script.options : script;
     // render functions
     if (template && template.render) {
         options.render = template.render;
@@ -9509,7 +9464,7 @@ function normalizeComponent(template, style, script, scopeId, isFunctionalTempla
     if (scopeId) {
         options._scopeId = scopeId;
     }
-    var hook;
+    let hook;
     if (moduleIdentifier) {
         // server build
         hook = function (context) {
@@ -9547,7 +9502,7 @@ function normalizeComponent(template, style, script, scopeId, isFunctionalTempla
     if (hook) {
         if (options.functional) {
             // register for functional component in vue file
-            var originalRender = options.render;
+            const originalRender = options.render;
             options.render = function renderWithStyleInjection(h, context) {
                 hook.call(context);
                 return originalRender(h, context);
@@ -9555,7 +9510,7 @@ function normalizeComponent(template, style, script, scopeId, isFunctionalTempla
         }
         else {
             // inject component registration as beforeCreate hook
-            var existing = options.beforeCreate;
+            const existing = options.beforeCreate;
             options.beforeCreate = existing ? [].concat(existing, hook) : [hook];
         }
     }
@@ -9563,20 +9518,20 @@ function normalizeComponent(template, style, script, scopeId, isFunctionalTempla
 }
 
 /* script */
-var __vue_script__ = script;
+const __vue_script__ = script;
 
 /* template */
-var __vue_render__ = function () {var _vm=this;var _h=_vm.$createElement;var _c=_vm._self._c||_h;return _c('div',{staticClass:"vue-audio-mixer-channel"},[_c('canvas',{staticClass:"vue-audio-mixer-channel-meter-canvas",staticStyle:{"display":"block"},attrs:{"id":'canvas'+_vm._uid,"width":"25","height":"400"}}),_vm._v(" "),_c('div',{staticClass:"vue-audio-mixer-channel-slider"},[_c('input',{directives:[{name:"model",rawName:"v-model",value:(_vm.gain),expression:"gain"}],staticClass:"vue-audio-mixer-channel-slider-input",attrs:{"type":"range","min":"0","max":"1.5","step":"0.01"},domProps:{"value":(_vm.gain)},on:{"input":_vm.changeGain,"__r":function($event){_vm.gain=$event.target.value;}}})]),_vm._v(" "),_c('div',{staticClass:"vue-audio-mixer-channel-mute-button"},[_c('label',[_c('input',{directives:[{name:"model",rawName:"v-model",value:(_vm.mute),expression:"mute"}],attrs:{"type":"checkbox"},domProps:{"checked":Array.isArray(_vm.mute)?_vm._i(_vm.mute,null)>-1:(_vm.mute)},on:{"change":function($event){var $$a=_vm.mute,$$el=$event.target,$$c=$$el.checked?(true):(false);if(Array.isArray($$a)){var $$v=null,$$i=_vm._i($$a,$$v);if($$el.checked){$$i<0&&(_vm.mute=$$a.concat([$$v]));}else {$$i>-1&&(_vm.mute=$$a.slice(0,$$i).concat($$a.slice($$i+1)));}}else {_vm.mute=$$c;}}}}),_vm._v(" "),_c('span',{staticClass:"vue-audio-mixer-channel-mute-button-label"},[_vm._v("M")])])]),_vm._v(" "),_c('VueKnobControl',{staticClass:"vue-audio-mixer-channel-panner",attrs:{"min":-90,"max":90,"size":40,"stroke-width":7,"primaryColor":"#c40303","secondaryColor":"#adadad","textColor":"#000"},model:{value:(_vm.pan),callback:function ($$v) {_vm.pan=$$v;},expression:"pan"}}),_vm._v(" "),_c('div',{staticClass:"vue-audio-mixer-channel-label",staticStyle:{"height":"14px"}},[_c('label',{attrs:{"data-label":"0"}},[_vm._v(" "+_vm._s(_vm.title))])])],1)};
+var __vue_render__ = function () {var _vm=this;var _h=_vm.$createElement;var _c=_vm._self._c||_h;return _c('div',{staticClass:"vue-audio-mixer-channel"},[_c('canvas',{staticClass:"vue-audio-mixer-channel-meter-canvas",staticStyle:{"display":"block"},attrs:{"id":'canvas'+_vm._uid,"width":"25","height":_vm.meterHeight}}),_vm._v(" "),_c('div',{staticClass:"slider_value"},[_vm._v(_vm._s(_vm.formattedGain))]),_vm._v(" "),_c('div',{staticClass:"vue-audio-mixer-channel-slider"},[_c('input',{directives:[{name:"model",rawName:"v-model",value:(_vm.gain),expression:"gain"}],staticClass:"vue-audio-mixer-channel-slider-input",attrs:{"type":"range","min":"0","max":"1.5","step":"0.01"},domProps:{"value":(_vm.gain)},on:{"input":_vm.changeGain,"__r":function($event){_vm.gain=$event.target.value;}}})]),_vm._v(" "),_c('div',{directives:[{name:"show",rawName:"v-show",value:(_vm.showMute),expression:"showMute"}],staticClass:"vue-audio-mixer-channel-mute-button"},[_c('label',[_c('input',{directives:[{name:"model",rawName:"v-model",value:(_vm.mute),expression:"mute"}],attrs:{"type":"checkbox"},domProps:{"checked":Array.isArray(_vm.mute)?_vm._i(_vm.mute,null)>-1:(_vm.mute)},on:{"change":function($event){var $$a=_vm.mute,$$el=$event.target,$$c=$$el.checked?(true):(false);if(Array.isArray($$a)){var $$v=null,$$i=_vm._i($$a,$$v);if($$el.checked){$$i<0&&(_vm.mute=$$a.concat([$$v]));}else {$$i>-1&&(_vm.mute=$$a.slice(0,$$i).concat($$a.slice($$i+1)));}}else {_vm.mute=$$c;}}}}),_vm._v(" "),_c('span',{staticClass:"vue-audio-mixer-channel-mute-button-label"},[_vm._v("M")])])]),_vm._v(" "),(_vm.isMaster && !_vm.showMute)?_c('div',{staticClass:"logo"}):_vm._e(),_vm._v(" "),_c('div',{directives:[{name:"show",rawName:"v-show",value:(!_vm.isMaster),expression:"!isMaster"}],staticClass:"vue-audio-mixer-channel-solo-button"},[_c('label',[_c('input',{directives:[{name:"model",rawName:"v-model",value:(_vm.solo),expression:"solo"}],attrs:{"type":"checkbox"},domProps:{"checked":Array.isArray(_vm.solo)?_vm._i(_vm.solo,null)>-1:(_vm.solo)},on:{"change":function($event){var $$a=_vm.solo,$$el=$event.target,$$c=$$el.checked?(true):(false);if(Array.isArray($$a)){var $$v=null,$$i=_vm._i($$a,$$v);if($$el.checked){$$i<0&&(_vm.solo=$$a.concat([$$v]));}else {$$i>-1&&(_vm.solo=$$a.slice(0,$$i).concat($$a.slice($$i+1)));}}else {_vm.solo=$$c;}}}}),_vm._v(" "),_c('span',{staticClass:"vue-audio-mixer-channel-solo-button-label"},[_vm._v("S")])])]),_vm._v(" "),(_vm.showPan)?_c('VueKnobControl',{staticClass:"vue-audio-mixer-channel-panner",attrs:{"min":-90,"max":90,"size":40,"stroke-width":7,"primaryColor":"#c40303","secondaryColor":"#adadad","textColor":"#000"},model:{value:(_vm.pan),callback:function ($$v) {_vm.pan=$$v;},expression:"pan"}}):_vm._e(),_vm._v(" "),_c('div',{staticClass:"vue-audio-mixer-channel-label",staticStyle:{"height":"14px"}},[_c('label',{attrs:{"data-label":"0"}},[_vm._v(" "+_vm._s(_vm.title))])])],1)};
 var __vue_staticRenderFns__ = [];
 
   /* style */
-  var __vue_inject_styles__ = undefined;
+  const __vue_inject_styles__ = undefined;
   /* scoped */
-  var __vue_scope_id__ = undefined;
+  const __vue_scope_id__ = undefined;
   /* module identifier */
-  var __vue_module_identifier__ = undefined;
+  const __vue_module_identifier__ = undefined;
   /* functional template */
-  var __vue_is_functional_template__ = false;
+  const __vue_is_functional_template__ = false;
   /* style inject */
   
   /* style inject SSR */
@@ -9585,7 +9540,7 @@ var __vue_staticRenderFns__ = [];
   
 
   
-  var __vue_component__ = /*#__PURE__*/normalizeComponent(
+  const __vue_component__ = /*#__PURE__*/normalizeComponent(
     { render: __vue_render__, staticRenderFns: __vue_staticRenderFns__ },
     __vue_inject_styles__,
     __vue_script__,
@@ -9599,296 +9554,244 @@ var __vue_staticRenderFns__ = [];
   );
 
 //
-
 var script$1 = {
   name: 'MixerChannel',
-  props: [
-      'title',
-      'context', 
-      'url',
-      'output',
-      'defaultPan',
-      'defaultGain',
-      'defaultMuted',
-      'trackIndex'
-  ],
-  components:{Channel: __vue_component__},
-  data : function(){       
-      return {
-        sourceNode         : false,
-        scriptProcessorNode: false,
-        gainNode           : false,
-        pannerNode         : false,
-        
-        muted              : false,
-        leftAnalyser       : false,
-        
-        leftBouncer        : {average:0,opacity:1},
-        rightAnalyser      : false,
-        rightBouncer       : {average:0,opacity:1},
-        splitter           : false,
-        ctx                : false,
-        gradient           : false,
-        buffer             : false,
-        meterHeight        : 400,
-        meterWidth         : 10,
-        playFrom           : false,
-        playing            : false,
-        gainValue          : 0,
-        pan                : 0,
-        gain               : 0.8,
-        loaded             : false,
-      };
+  props: ['title', 'context', 'url', 'output', 'defaultPan', 'defaultGain', 'defaultMuted', 'trackIndex', 'showPan', 'mixerVars'],
+  components: {
+    Channel: __vue_component__
   },
-
-  watch:{
-
-
+  data: function () {
+    return {
+      sourceNode: false,
+      scriptProcessorNode: false,
+      gainNode: false,
+      pannerNode: false,
+      muted: false,
+      leftAnalyser: false,
+      leftBouncer: {
+        average: 0,
+        opacity: 1
+      },
+      rightAnalyser: false,
+      rightBouncer: {
+        average: 0,
+        opacity: 1
+      },
+      splitter: false,
+      ctx: false,
+      gradient: false,
+      buffer: false,
+      meterHeight: 400,
+      meterWidth: 10,
+      playFrom: false,
+      playing: false,
+      gainValue: 0,
+      pan: 0,
+      gain: 0.8,
+      loaded: false
+    };
   },
+  watch: {},
 
-  created: function created(){
+  created() {
     this.muted = this.defaultMuted;
-    this.pan   = this.defaultPan;
-    this.gain  = this.defaultGain;
-
+    this.pan = this.defaultPan;
+    this.gain = this.defaultGain;
     this.scriptProcessorNode = this.context.createScriptProcessor(2048, 1, 1);
-    EventBus.$on('play', this.playSound);
-    EventBus.$on('stop', this.stopSound);
+    EventBus.$on(this.mixerVars.instance_id + 'play', this.playSound);
+    EventBus.$on(this.mixerVars.instance_id + 'stop', this.stopSound);
     this.loadSound();
   },
 
-  beforeDestroy: function beforeDestroy() {
-    EventBus.$off('play',this.playSound);
-    EventBus.$off('stop',this.stopSound);
+  beforeDestroy() {
+    EventBus.$off(this.mixerVars.instance_id + 'play', this.playSound);
+    EventBus.$off(this.mixerVars.instance_id + 'stop', this.stopSound);
   },
 
+  mounted() {},
 
-
-  mounted: function mounted(){
-
-  },
   methods: {
-
     /*
     * MUTE CHANGE
     * Event when mute changes
     */
+    muteChange(value) {
+      if (value) {
+        this.gainValue = this.gainNode.gain.value; // store gain value
 
-    muteChange: function muteChange(value){
+        this.gainNode.gain.value = 0; // mute the gain node
 
+        this.muted = true;
+      } else {
+        this.muted = false;
+        this.gainNode.gain.value = this.gainValue; // restore previous gain value
+      }
 
-        if(value){
-            this.gainValue = this.gainNode.gain.value; // store gain value
-            this.gainNode.gain.value = 0; // mute the gain node
-            this.muted = true;
-        }
-        else {
-            this.muted = false;
-            this.gainNode.gain.value = this.gainValue; // restore previous gain value
-        }
-
-        this.$emit('muteChange', {index:this.trackIndex,muted:this.muted});
-
+      this.$emit('muteChange', {
+        index: this.trackIndex,
+        muted: this.muted
+      });
     },
 
-    changeGain: function changeGain(gain)
-    {
-        this.gainValue = gain;
-        this.gain = gain;
+    soloChange(value) {
+      this.$emit('soloChange', {
+        index: this.trackIndex
+      });
+    },
 
-      if(!this.muted){
+    changeGain(gain) {
+      this.gainValue = gain;
+      this.gain = gain;
+
+      if (!this.muted) {
         this.gainNode.gain.value = gain;
       }
 
-        this.$emit('gainChange', {index:this.trackIndex,gain:gain});
+      this.$emit('gainChange', {
+        index: this.trackIndex,
+        gain: gain
+      });
     },
 
-    
+    changePan(pan) {
+      this.pan = pan;
+      var xDeg = parseInt(pan);
+      var zDeg = xDeg + 90;
 
-    changePan: function changePan(pan) {
-        this.pan = pan;
-        var xDeg = parseInt(pan);
-        var zDeg = xDeg + 90;
-        if (zDeg > 90) {
-            zDeg = 180 - zDeg;
-        }
-        var x = Math.sin(xDeg * (Math.PI / 180));
-        var z = Math.sin(zDeg * (Math.PI / 180));
-        this.pannerNode.setPosition(x, 0, z);
+      if (zDeg > 90) {
+        zDeg = 180 - zDeg;
+      }
 
-        this.$emit('panChange', {index:this.trackIndex,pan:pan});
+      var x = Math.sin(xDeg * (Math.PI / 180));
+      var z = Math.sin(zDeg * (Math.PI / 180));
+      this.pannerNode.setPosition(x, 0, z);
+      this.$emit('panChange', {
+        index: this.trackIndex,
+        pan: pan
+      });
     },
-   
+
     // load the specified sound
-    loadSound: function loadSound() {
-        var this$1 = this;
+    loadSound() {
+      var request = new XMLHttpRequest();
+      request.open('GET', this.url, true);
+      request.responseType = 'arraybuffer'; // When loaded decode the data
 
-        var request = new XMLHttpRequest();
-        request.open('GET', this.url, true);
-        request.responseType = 'arraybuffer';
+      request.onload = () => {
+        // decode the data
+        this.context.decodeAudioData(request.response, buffer => {
+          // sound loaded
+          // when the audio is decoded play the sound
+          this.buffer = buffer;
+          EventBus.$emit(this.mixerVars.instance_id + 'track_loaded', this.buffer.duration);
+          this.setupAudioNodes();
+        }, this.onError);
+      };
 
-        // When loaded decode the data
-        request.onload = function () { 
-            // decode the data
-            this$1.context.decodeAudioData(request.response, function (buffer) { // sound loaded
-                // when the audio is decoded play the sound
-                this$1.buffer=buffer;
-                EventBus.$emit('track_loaded', this$1.buffer.duration);
-                this$1.setupAudioNodes();
-
-            }, this$1.onError);
-        };
-        request.send();
-    },
-   
-    playSound: function playSound(playfrom) {
-
-        if(playfrom === undefined)
-            { playfrom = 0; }
-
-        this.setupAudioNodes();
-
-
-        this.sourceNode.start(0,playfrom/1000);
-
+      request.send();
     },
 
-    stopSound: function stopSound() {
-        this.sourceNode.stop(0);
+    playSound(playfrom) {
+      if (playfrom === undefined) playfrom = 0;
+      this.setupAudioNodes();
+      this.sourceNode.start(0, playfrom / 1000);
     },
- 
+
+    stopSound() {
+      this.sourceNode.stop(0);
+    },
+
     // log if an error occurs
-    onError: function onError(e) {
-        console.log(e);
+    onError(e) {
+      console.log(e);
     },
 
-    getAverageVolume: function getAverageVolume(array) {
-        var values = 0;
-        var average;
- 
-        var length = array.length;
- 
-        // get all the frequency amplitudes
-        for (var i = 0; i < length; i++) {
-            values += array[i];
-        }
- 
-        average = values / length;
-        return average;
+    getAverageVolume(array) {
+      var values = 0;
+      var average;
+      var length = array.length; // get all the frequency amplitudes
+
+      for (var i = 0; i < length; i++) {
+        values += array[i];
+      }
+
+      average = values / length;
+      return average;
     },
 
-
-    setupAudioNodes: function setupAudioNodes() {
-        var this$1 = this;
-
- 
-
-
-        // create a buffer source node
-        this.sourceNode = this.context.createBufferSource();
-        this.sourceNode.buffer = this.buffer;
-
-       
-
-
-       // this.sourceNode.loop = false; // false to stop looping
+    setupAudioNodes() {
+      // create a buffer source node
+      this.sourceNode = this.context.createBufferSource();
+      this.sourceNode.buffer = this.buffer; // this.sourceNode.loop = false; // false to stop looping
       //  this.sourceNode.muted = false; 
+      // setup a analyzers
 
+      this.leftAnalyser = this.context.createAnalyser();
+      this.leftAnalyser.smoothingTimeConstant = 0.0;
+      this.leftAnalyser.fftSize = 1024;
+      this.rightAnalyser = this.context.createAnalyser();
+      this.rightAnalyser.smoothingTimeConstant = 0.0;
+      this.rightAnalyser.fftSize = 1024; // Create a gain node.
 
+      this.gainNode = this.context.createGain(); // Create a panner node.
 
-        // setup a analyzers
-        this.leftAnalyser = this.context.createAnalyser();
-        this.leftAnalyser.smoothingTimeConstant = 0.0;
-        this.leftAnalyser.fftSize = 1024;
- 
-        this.rightAnalyser = this.context.createAnalyser();
-        this.rightAnalyser.smoothingTimeConstant = 0.0;
-        this.rightAnalyser.fftSize = 1024;
+      this.pannerNode = this.context.createPanner();
+      this.pannerNode.panningModel = "equalpower"; // setup a javascript node
+      // create splitter
 
+      this.splitter = this.context.createChannelSplitter(2); // connect everything together
 
+      this.pannerNode.connect(this.splitter);
+      this.gainNode.connect(this.pannerNode);
+      this.scriptProcessorNode.connect(this.gainNode);
+      this.sourceNode.connect(this.gainNode);
+      this.splitter.connect(this.leftAnalyser, 0, 0);
+      this.splitter.connect(this.rightAnalyser, 1, 0);
+      this.pannerNode.connect(this.output); //this.leftAnalyser.connect(this.scriptProcessorNode);
+      // initial values
 
-        // Create a gain node.
-        this.gainNode = this.context.createGain();
+      this.muteChange(this.muted);
+      this.changeGain(this.gain);
+      this.changePan(this.pan);
 
-        // Create a panner node.
-        this.pannerNode = this.context.createPanner();
-        this.pannerNode.panningModel = "equalpower";
-        
-        // setup a javascript node
+      this.sourceNode.onended = () => {
+        this.onended();
+      };
 
-        // create splitter
-        this.splitter = this.context.createChannelSplitter(2);
-
-
-
-        // connect everything together
-        this.pannerNode.connect(this.splitter);
-        this.gainNode.connect(this.pannerNode);
-        this.scriptProcessorNode.connect(this.gainNode);
-        this.sourceNode.connect(this.gainNode);
-        this.splitter.connect(this.leftAnalyser,0,0);
-        this.splitter.connect(this.rightAnalyser,1,0);
-        this.pannerNode.connect(this.output);
-
-
-        //this.leftAnalyser.connect(this.scriptProcessorNode);
-
-
-        // initial values
-        this.muteChange(this.muted);
-        this.changeGain(this.gain);
-        this.changePan(this.pan);
-
-
-
-        this.sourceNode.onended = function () {
-          this$1.onended();
-        };
-
-        this.loaded = true;
-      
+      this.loaded = true;
     },
 
-
-    onended: function onended()
-    {
-
-        // disconnect everything
-        this.scriptProcessorNode.disconnect();
-        this.sourceNode.disconnect();
-        this.gainNode.disconnect();
-        this.pannerNode.disconnect();
-        this.leftAnalyser.disconnect();
-        this.rightAnalyser.disconnect();
-        this.splitter.disconnect();
-
-        if(this.playFrom)
-            { EventBus.$emit('play', this.playFrom); }
-
-        EventBus.$emit('ended',this._uid);
-
-    },
-
-    
+    onended() {
+      // disconnect everything
+      this.scriptProcessorNode.disconnect();
+      this.sourceNode.disconnect();
+      this.gainNode.disconnect();
+      this.pannerNode.disconnect();
+      this.leftAnalyser.disconnect();
+      this.rightAnalyser.disconnect();
+      this.splitter.disconnect();
+      if (this.playFrom) EventBus.$emit(this.mixerVars.instance_id + 'play', this.playFrom);
+      EventBus.$emit(this.mixerVars.instance_id + 'ended', this._uid);
+    }
 
   }
 };
 
 /* script */
-var __vue_script__$1 = script$1;
+const __vue_script__$1 = script$1;
 
 /* template */
-var __vue_render__$1 = function () {var _vm=this;var _h=_vm.$createElement;var _c=_vm._self._c||_h;return (_vm.loaded)?_c('Channel',{attrs:{"index":_vm._uid,"trackIndex":_vm.trackIndex,"title":_vm.title,"defaultPan":_vm.pan,"defaultMuted":_vm.muted,"defaultGain":_vm.gain,"leftAnalyser":_vm.leftAnalyser,"rightAnalyser":_vm.rightAnalyser,"scriptProcessorNode":_vm.scriptProcessorNode},on:{"gainChange":_vm.changeGain,"muteChange":_vm.muteChange,"panChange":_vm.changePan}}):_vm._e()};
+var __vue_render__$1 = function () {var _vm=this;var _h=_vm.$createElement;var _c=_vm._self._c||_h;return (_vm.loaded)?_c('Channel',{attrs:{"index":_vm._uid,"trackIndex":_vm.trackIndex,"title":_vm.title,"defaultPan":_vm.pan,"defaultMuted":_vm.muted,"defaultGain":_vm.gain,"leftAnalyser":_vm.leftAnalyser,"rightAnalyser":_vm.rightAnalyser,"scriptProcessorNode":_vm.scriptProcessorNode,"showPan":_vm.showPan,"showMute":true,"mixerVars":_vm.mixerVars},on:{"gainChange":_vm.changeGain,"muteChange":_vm.muteChange,"soloChange":_vm.soloChange,"panChange":_vm.changePan}}):_vm._e()};
 var __vue_staticRenderFns__$1 = [];
 
   /* style */
-  var __vue_inject_styles__$1 = undefined;
+  const __vue_inject_styles__$1 = undefined;
   /* scoped */
-  var __vue_scope_id__$1 = undefined;
+  const __vue_scope_id__$1 = undefined;
   /* module identifier */
-  var __vue_module_identifier__$1 = undefined;
+  const __vue_module_identifier__$1 = undefined;
   /* functional template */
-  var __vue_is_functional_template__$1 = false;
+  const __vue_is_functional_template__$1 = false;
   /* style inject */
   
   /* style inject SSR */
@@ -9897,7 +9800,7 @@ var __vue_staticRenderFns__$1 = [];
   
 
   
-  var __vue_component__$1 = /*#__PURE__*/normalizeComponent(
+  const __vue_component__$1 = /*#__PURE__*/normalizeComponent(
     { render: __vue_render__$1, staticRenderFns: __vue_staticRenderFns__$1 },
     __vue_inject_styles__$1,
     __vue_script__$1,
@@ -9924,65 +9827,63 @@ var __vue_staticRenderFns__$1 = [];
 //
 //
 //
-
-
 var script$2 = {
   name: 'timedisplay',
-  props: [
-      'progressTime',
-      'totalTime',
-      'showTotalTime'
-  ],
-  data : function(){       
-      return {
-      };
+  props: ['progressTime', 'totalTime', 'showTotalTime', 'showMins'],
+  data: function () {
+    return {};
   },
-  computed:{
-    totalLength: function totalLength(){
+  computed: {
+    totalLength() {
       return this.formatTime(this.totalTime);
     },
 
-    progressFormatted: function progressFormatted(){
+    progressFormatted() {
       return this.formatTime(this.progressTime);
-    },
+    }
+
   },
-  methods:{
-     formatTime: function formatTime(millis){
-        //        let hours = Math.floor(millis / 36e5);
-        var  mins = Math.floor((millis % 36e5) / 6e4);
-        var  secs = Math.floor((millis % 6e4) / 1000);
-        var  mill = Math.floor(millis % 1000);
-        var returns = [this.pad(mins,2),this.pad(secs,2),this.pad(mill, 2).substring(2, 0)];
-        return returns;
+  methods: {
+    formatTime(millis) {
+      //        let hours = Math.floor(millis / 36e5);
+      let mins = Math.floor(millis % 36e5 / 6e4);
+      let secs = Math.floor(millis % 6e4 / 1000);
+      let mill = Math.floor(millis % 1000);
+
+      if (!this.showMins) {
+        var returns = [0, this.pad(secs + mins * 60, 2), this.pad(mill, 2).substring(2, 0)];
+      } else {
+        var returns = [this.pad(mins, 2), this.pad(secs, 2), this.pad(mill, 2).substring(2, 0)];
+      }
+
+      return returns;
     },
+
     /* PAD 
     * pad string with leading zeros
     */
-    pad: function(str, max) {
-        str = str.toString();
-        return str.length < max ? this.pad("0" + str, max) : str;
-    },
+    pad: function (str, max) {
+      str = str.toString();
+      return str.length < max ? this.pad("0" + str, max) : str;
+    }
   }
-
-
-
 };
 
 /* script */
-var __vue_script__$2 = script$2;
+const __vue_script__$2 = script$2;
 
 /* template */
-var __vue_render__$2 = function () {var _vm=this;var _h=_vm.$createElement;var _c=_vm._self._c||_h;return _c('div',{staticClass:"vue-audio-mixer-timer"},[_c('span',{staticClass:"progress-time"},[_c('span',[_vm._v(_vm._s(_vm.progressFormatted[0]))]),_vm._v(":"),_c('span',[_vm._v(_vm._s(_vm.progressFormatted[1]))]),_vm._v(":"),_c('span',[_vm._v(_vm._s(_vm.progressFormatted[2]))])]),_vm._v(" "),(_vm.showTotalTime)?_c('span',[_vm._v(" / ")]):_vm._e(),_vm._v(" "),(_vm.showTotalTime)?_c('span',{staticClass:"total"},[_c('span',[_vm._v(_vm._s(_vm.totalLength[0]))]),_vm._v(":"),_c('span',[_vm._v(_vm._s(_vm.totalLength[1]))]),_vm._v(":"),_c('span',[_vm._v(_vm._s(_vm.totalLength[2]))])]):_vm._e()])};
+var __vue_render__$2 = function () {var _vm=this;var _h=_vm.$createElement;var _c=_vm._self._c||_h;return _c('div',{staticClass:"vue-audio-mixer-timer"},[_c('span',{staticClass:"progress-time"},[(_vm.showMins)?_c('span',[_vm._v(_vm._s(_vm.progressFormatted[0]))]):_vm._e(),_c('span',[_vm._v(_vm._s(_vm.progressFormatted[1]))]),_vm._v(":"),_c('span',[_vm._v(_vm._s(_vm.progressFormatted[2]))])]),_vm._v(" "),(_vm.showTotalTime)?_c('span',[_vm._v(" / ")]):_vm._e(),_vm._v(" "),(_vm.showTotalTime)?_c('span',{staticClass:"total"},[(_vm.showMins)?_c('span',[_vm._v(_vm._s(_vm.totalLength[0])+":")]):_vm._e(),_c('span',[_vm._v(_vm._s(_vm.totalLength[1]))]),_vm._v(":"),_c('span',[_vm._v(_vm._s(_vm.totalLength[2]))])]):_vm._e()])};
 var __vue_staticRenderFns__$2 = [];
 
   /* style */
-  var __vue_inject_styles__$2 = undefined;
+  const __vue_inject_styles__$2 = undefined;
   /* scoped */
-  var __vue_scope_id__$2 = undefined;
+  const __vue_scope_id__$2 = undefined;
   /* module identifier */
-  var __vue_module_identifier__$2 = undefined;
+  const __vue_module_identifier__$2 = undefined;
   /* functional template */
-  var __vue_is_functional_template__$2 = false;
+  const __vue_is_functional_template__$2 = false;
   /* style inject */
   
   /* style inject SSR */
@@ -9991,7 +9892,7 @@ var __vue_staticRenderFns__$2 = [];
   
 
   
-  var __vue_component__$2 = /*#__PURE__*/normalizeComponent(
+  const __vue_component__$2 = /*#__PURE__*/normalizeComponent(
     { render: __vue_render__$2, staticRenderFns: __vue_staticRenderFns__$2 },
     __vue_inject_styles__$2,
     __vue_script__$2,
@@ -10018,105 +9919,87 @@ var __vue_staticRenderFns__$2 = [];
 //
 //
 //
-
-
 var script$3 = {
   name: 'time',
-  props: [
-      'progressPercent'
-  ],
-  created: function created(){
+  props: ['progressPercent'],
+
+  created() {
     window.addEventListener("mouseup", this.triggerMouseUpEvent);
     window.addEventListener("touchend", this.triggerMouseUpEvent);
   },
-  beforeDestroy: function beforeDestroy() {
+
+  beforeDestroy() {
     window.removeEventListener("mouseup", this.triggerMouseUpEvent);
     window.removeEventListener("touchend", this.triggerMouseUpEvent);
   },
-  data : function(){       
-      return {
-        progressBarPosition:0,
-        dragging:false,
-        restart:false
-      };
+
+  data: function () {
+    return {
+      progressBarPosition: 0,
+      dragging: false,
+      restart: false
+    };
   },
   watch: {
-
-    progressPercent: function(newVal){
-      if(this.$refs['vue-audio-mixer-progress-bar'])
-        { this.progressBarPosition =  (this.$refs['vue-audio-mixer-progress-bar'].offsetWidth/100) * newVal +'px'; }
-    },
-
+    progressPercent: function (newVal) {
+      if (this.$refs['vue-audio-mixer-progress-bar']) this.progressBarPosition = this.$refs['vue-audio-mixer-progress-bar'].offsetWidth / 100 * newVal + 'px';
+    }
   },
-  computed:{
-    totalLength: function totalLength(){
+  computed: {
+    totalLength() {
       return this.formatTime(this.totalTime);
     },
 
-    progressFormatted: function progressFormatted(){
+    progressFormatted() {
       return this.formatTime(this.progressTime);
     }
 
-    
   },
-  methods:{
-    startDrag: function startDrag(e){
+  methods: {
+    startDrag(e) {
       this.dragging = true;
       this.progressBarClick(e);
     },
 
-    doDrag: function doDrag(e){
-      if(this.dragging)
-        { this.progressBarClick(e); }
+    doDrag(e) {
+      if (this.dragging) this.progressBarClick(e);
     },
 
-    triggerMouseUpEvent: function triggerMouseUpEvent(){
+    triggerMouseUpEvent() {
       this.dragging = false;
     },
 
-    progressBarClick: function progressBarClick(e)
-    {
-
-      var target = this.$refs['vue-audio-mixer-progress-bar'];
+    progressBarClick(e) {
+      let target = this.$refs['vue-audio-mixer-progress-bar'];
       var rect = target.getBoundingClientRect();
       var x = e.clientX - rect.left; //x position within the element.
-      var percent = (100/e.target.offsetWidth) * x;
 
+      var percent = 100 / e.target.offsetWidth * x;
       percent = Math.round(percent);
+      if (percent < 0 || percent > 100) return false; // only if mouse inside box
 
-      if(percent < 0 || percent > 100)
-        { return false; }
-       // only if mouse inside box
-
-
-      if(!this.dragging)
-        { this.$emit('percent', percent); }
-
-      this.progressBarPosition = Math.round(x) +'px';
-
-
+      if (!this.dragging) this.$emit('percent', percent);
+      this.progressBarPosition = Math.round(x) + 'px';
     }
+
   }
-
-
-
 };
 
 /* script */
-var __vue_script__$3 = script$3;
+const __vue_script__$3 = script$3;
 
 /* template */
 var __vue_render__$3 = function () {var _vm=this;var _h=_vm.$createElement;var _c=_vm._self._c||_h;return _c('div',{ref:"vue-audio-mixer-progress-bar",staticClass:"vue-audio-mixer-progress-bar",on:{"mousemove":_vm.doDrag,"mousedown":_vm.startDrag,"click":_vm.progressBarClick}},[_c('div',{staticClass:"vue-audio-mixer-progress-cursor",style:({left: _vm.progressBarPosition})})])};
 var __vue_staticRenderFns__$3 = [];
 
   /* style */
-  var __vue_inject_styles__$3 = undefined;
+  const __vue_inject_styles__$3 = undefined;
   /* scoped */
-  var __vue_scope_id__$3 = undefined;
+  const __vue_scope_id__$3 = undefined;
   /* module identifier */
-  var __vue_module_identifier__$3 = undefined;
+  const __vue_module_identifier__$3 = undefined;
   /* functional template */
-  var __vue_is_functional_template__$3 = false;
+  const __vue_is_functional_template__$3 = false;
   /* style inject */
   
   /* style inject SSR */
@@ -10125,7 +10008,7 @@ var __vue_staticRenderFns__$3 = [];
   
 
   
-  var __vue_component__$3 = /*#__PURE__*/normalizeComponent(
+  const __vue_component__$3 = /*#__PURE__*/normalizeComponent(
     { render: __vue_render__$3, staticRenderFns: __vue_staticRenderFns__$3 },
     __vue_inject_styles__$3,
     __vue_script__$3,
@@ -10150,35 +10033,29 @@ var __vue_staticRenderFns__$3 = [];
 //
 //
 //
-
-
 var script$4 = {
   name: 'transportbuttons',
-  props: [
-      'playing'
-  ],
-  data : function(){       
-      return {
-      };
-  },
-
+  props: ['playing'],
+  data: function () {
+    return {};
+  }
 };
 
 /* script */
-var __vue_script__$4 = script$4;
+const __vue_script__$4 = script$4;
 
 /* template */
 var __vue_render__$4 = function () {var _vm=this;var _h=_vm.$createElement;var _c=_vm._self._c||_h;return _c('div',{staticClass:"vue-audio-mixer-transport"},[_c('button',{staticClass:"vue-audio-mixer-transport-play-button",class:{'vue-audio-mixer-transport-play-button-active':_vm.playing},attrs:{"type":"button"},on:{"click":function($event){return _vm.$emit('togglePlay')}}},[_c('span'),_vm._v(" "),_c('span')]),_vm._v(" "),_c('button',{staticClass:"vue-audio-mixer-transport-start-button",attrs:{"type":"button"},on:{"click":function($event){return _vm.$emit('stop')}}})])};
 var __vue_staticRenderFns__$4 = [];
 
   /* style */
-  var __vue_inject_styles__$4 = undefined;
+  const __vue_inject_styles__$4 = undefined;
   /* scoped */
-  var __vue_scope_id__$4 = undefined;
+  const __vue_scope_id__$4 = undefined;
   /* module identifier */
-  var __vue_module_identifier__$4 = undefined;
+  const __vue_module_identifier__$4 = undefined;
   /* functional template */
-  var __vue_is_functional_template__$4 = false;
+  const __vue_is_functional_template__$4 = false;
   /* style inject */
   
   /* style inject SSR */
@@ -10187,7 +10064,7 @@ var __vue_staticRenderFns__$4 = [];
   
 
   
-  var __vue_component__$4 = /*#__PURE__*/normalizeComponent(
+  const __vue_component__$4 = /*#__PURE__*/normalizeComponent(
     { render: __vue_render__$4, staticRenderFns: __vue_staticRenderFns__$4 },
     __vue_inject_styles__$4,
     __vue_script__$4,
@@ -10212,35 +10089,29 @@ var __vue_staticRenderFns__$4 = [];
 //
 //
 //
-
-
 var script$5 = {
   name: 'loader',
-  props: [
-      'percentLoaded'
-  ],
-  data : function(){       
-      return {
-      };
+  props: ['percentLoaded'],
+  data: function () {
+    return {};
   }
-
 };
 
 /* script */
-var __vue_script__$5 = script$5;
+const __vue_script__$5 = script$5;
 
 /* template */
 var __vue_render__$5 = function () {var _vm=this;var _h=_vm.$createElement;var _c=_vm._self._c||_h;return _c('div',{staticClass:"vue-audio-mixer-loader"},[_c('p',{staticClass:"vue-audio-mixer-loader-text"},[_vm._v("Loading... "),_c('span',[_vm._v(_vm._s(_vm.percentLoaded))]),_vm._v("%")]),_vm._v(" "),_vm._m(0)])};
 var __vue_staticRenderFns__$5 = [function () {var _vm=this;var _h=_vm.$createElement;var _c=_vm._self._c||_h;return _c('div',{staticClass:"vue-audio-mixer-loader-inner"},[_c('div'),_vm._v(" "),_c('div')])}];
 
   /* style */
-  var __vue_inject_styles__$5 = undefined;
+  const __vue_inject_styles__$5 = undefined;
   /* scoped */
-  var __vue_scope_id__$5 = undefined;
+  const __vue_scope_id__$5 = undefined;
   /* module identifier */
-  var __vue_module_identifier__$5 = undefined;
+  const __vue_module_identifier__$5 = undefined;
   /* functional template */
-  var __vue_is_functional_template__$5 = false;
+  const __vue_is_functional_template__$5 = false;
   /* style inject */
   
   /* style inject SSR */
@@ -10249,7 +10120,7 @@ var __vue_staticRenderFns__$5 = [function () {var _vm=this;var _h=_vm.$createEle
   
 
   
-  var __vue_component__$5 = /*#__PURE__*/normalizeComponent(
+  const __vue_component__$5 = /*#__PURE__*/normalizeComponent(
     { render: __vue_render__$5, staticRenderFns: __vue_staticRenderFns__$5 },
     __vue_inject_styles__$5,
     __vue_script__$5,
@@ -10263,12 +10134,9 @@ var __vue_staticRenderFns__$5 = [function () {var _vm=this;var _h=_vm.$createEle
   );
 
 //
-
 var script$6 = {
   name: 'app',
-  props: [
-      'config'
-  ],
+  props: ['config'],
   components: {
     MixerChannel: __vue_component__$1,
     Channel: __vue_component__,
@@ -10277,322 +10145,281 @@ var script$6 = {
     TransportButtons: __vue_component__$4,
     ProgressBar: __vue_component__$3
   },
-  data : function(){       
-      return {
-        context                    : false,
-        gainNode                   : false,
-        scriptProcessorNode        : false,
-        leftAnalyser               : false,
-        rightAnalyser              : false,
-        splitter                   : false,
-        masterPanValue             : 0,
-        masterGainValue            : 1,
-        masterMuted                : false,
-        totalDuration              : 0,
-        startedAt                  : 0,
-        currentTime                : 0,
-        timelineWidth              : 0,
-        playing                    : false,
-        pausedAt                   : 0,
-        dragging                   : false,
-        restart                    : false,
-        overRideProgressBarPosition: false,
-        progressBarPosition        : 0,
-        tracks                     : [],
-        tracksLoaded               : 0
-      };
+  data: function () {
+    return {
+      showPan: false,
+      context: false,
+      gainNode: false,
+      scriptProcessorNode: false,
+      leftAnalyser: false,
+      rightAnalyser: false,
+      splitter: false,
+      masterPanValue: 0,
+      masterGainValue: 1,
+      masterMuted: false,
+      totalDuration: 0,
+      startedAt: 0,
+      currentTime: 0,
+      timelineWidth: 0,
+      playing: false,
+      pausedAt: 0,
+      dragging: false,
+      restart: false,
+      overRideProgressBarPosition: false,
+      progressBarPosition: 0,
+      tracks: [],
+      tracksLoaded: 0
+    };
   },
-  created: function created(){
-    var this$1 = this;
 
-
+  created() {
     this.checkConfig();
-
-
     var AudioContext = window.AudioContext // Default
     || window.webkitAudioContext // Safari and old versions of Chrome
-    || false; 
-
-    this.context            = new AudioContext;
-    this.gainNode           = this.context.createGain();
+    || false;
+    this.context = new AudioContext();
+    this.gainNode = this.context.createGain();
     this.gainNode.connect(this.context.destination);
     this.scriptProcessorNode = this.context.createScriptProcessor(2048, 1, 1);
     this.setupAudioNodes();
-    EventBus.$on('track_loaded', this.trackLoaded);
-    EventBus.$on('stop', this.stopped);
-    EventBus.$on('play', this.started);
-
-    setInterval(function () {
-      if(this$1.playing)
-        { this$1.currentTime =  Date.now(); }
+    EventBus.$on(this.mixerVars.instance_id + 'track_loaded', this.trackLoaded);
+    EventBus.$on(this.mixerVars.instance_id + 'stop', this.stopped);
+    EventBus.$on(this.mixerVars.instance_id + 'play', this.started);
+    setInterval(() => {
+      if (this.playing) this.currentTime = Date.now();
     }, 1);
-
   },
 
-  beforeDestroy: function beforeDestroy() {
-    EventBus.$off('track_loaded',this.trackLoaded);
-    EventBus.$off('stop',this.stopped);
-    EventBus.$off('play',this.started);
+  beforeDestroy() {
+    EventBus.$off(this.mixerVars.instance_id + 'track_loaded', this.trackLoaded);
+    EventBus.$off(this.mixerVars.instance_id + 'stop', this.stopped);
+    EventBus.$off(this.mixerVars.instance_id + 'play', this.started);
   },
 
   watch: {
-    progressPercent: function(newVal){
-      if(newVal >= 100)
-         { EventBus.$emit('stop'); }
+    progressPercent: function (newVal) {
+      if (newVal >= 100) EventBus.$emit(this.mixerVars.instance_id + 'stop');
     },
 
-    trackSettings: function trackSettings(newVal)
-    {
-      this.$emit('input',newVal);
+    trackSettings(newVal) {
+      this.$emit('input', newVal);
     }
-  },
 
+  },
   computed: {
+    mixerVars() {
+      return {
+        'theme_size': this.themeSize,
+        'instance_id': this._uid
+      };
+    },
+
+    themeClass() {
+      let className = 'vue-audio-mixer-theme-' + this.themeSize.toLowerCase();
+      let toReturn = {};
+      toReturn[className] = true;
+      return toReturn;
+    },
+
+    themeSize() {
+      switch (true) {
+        case this.tracks.length > 4:
+          return 'Small';
+
+        default:
+          return 'Medium';
+      }
+    },
 
     // the starter config for the current settings
-    trackSettings: function trackSettings()
-    {
-
+    trackSettings() {
       return {
         tracks: this.tracks,
-        master:{
-          "pan":this.masterPanValue,
-          "gain":this.masterGainValue,
-          "muted":this.masterMuted
+        master: {
+          "pan": this.masterPanValue,
+          "gain": this.masterGainValue,
+          "muted": this.masterMuted
         }
       };
-
     },
 
-    mixerwidth: function mixerwidth()
-    {
-      return (this.tracks.length * 105) + 105 + 'px';
-    },
-
-
-    progress: function progress(){
+    progress() {
       return this.currentTime - this.startedAt;
     },
 
-    progressPercent: function progressPercent(){
-      return (100/this.totalDuration)*(this.progress);
+    progressPercent() {
+      return 100 / this.totalDuration * this.progress;
     },
 
-    loading: function loading(){
+    loading() {
       return this.tracksLoaded == 0 || this.tracksLoaded < this.tracks.length;
     },
 
-    loadingPercent: function loadingPercent(){
-      return ((100/this.tracks.length)*this.tracksLoaded).toFixed(2);
+    loadingPercent() {
+      return (100 / this.tracks.length * this.tracksLoaded).toFixed(2);
     }
 
-  
   },
-
   methods: {
-
-    playFromPercent: function playFromPercent(percent){
-      var this$1 = this;
-
-
-      if(this.playing){
+    playFromPercent(percent) {
+      if (this.playing) {
         this.restart = true;
-        EventBus.$emit('stop');
+        EventBus.$emit(this.mixerVars.instance_id + 'stop');
       }
-      this.pausedAt =  (this.totalDuration/100) * percent;
+
+      this.pausedAt = this.totalDuration / 100 * percent;
       this.startedAt = Date.now() - this.pausedAt;
-
-      if(this.restart)
-        { setTimeout( function () { EventBus.$emit('play',this$1.pausedAt); }, 10); }
-
+      if (this.restart) setTimeout(() => {
+        EventBus.$emit(this.mixerVars.instance_id + 'play', this.pausedAt);
+      }, 10);
       this.restart = false;
     },
 
+    checkConfig() {
+      let json = this.config;
 
-    checkConfig: function checkConfig(){
-
-      var json = this.config;
-
-      if(json){
-        this.tracks          = json.tracks;
-        this.masterPanValue  = json.master.pan;
+      if (json) {
+        this.tracks = json.tracks;
+        this.masterPanValue = json.master.pan;
         this.masterGainValue = json.master.gain;
-        this.masterMuted     = json.master.muted;
+        this.masterMuted = json.master.muted;
       }
-
-
     },
 
-
-    started: function started(){
+    started() {
       this.overRideProgressBarPosition = false;
       this.playing = true;
     },
 
-    stopped: function stopped(){
+    stopped() {
       this.playing = false;
     },
 
-
-
-
-
-    togglePlay: function togglePlay()
-    {
-      if(this.playing){
+    togglePlay() {
+      if (this.playing) {
         this.pausedAt = this.progress;
-        EventBus.$emit('stop');
-      }else {
-
-
-
+        EventBus.$emit(this.mixerVars.instance_id + 'stop');
+      } else {
         this.startedAt = Date.now() - this.progress;
-        EventBus.$emit('play',this.pausedAt);
+        EventBus.$emit(this.mixerVars.instance_id + 'play', this.pausedAt);
       }
-      
     },
 
-    stop: function stop()
-    {
+    stop() {
       this.pausedAt = 0;
       this.startedAt = this.currentTime;
-      EventBus.$emit('stop');
+      EventBus.$emit(this.mixerVars.instance_id + 'stop');
     },
 
-    trackLoaded: function trackLoaded(duration){
-
+    trackLoaded(duration) {
       this.tracksLoaded++;
+      duration = duration * 1000;
 
-
-    
-
-      duration = duration*1000;
-
-      if(duration > this.totalDuration){
+      if (duration > this.totalDuration) {
         this.totalDuration = duration;
       }
-
     },
 
-
-    changeGain: function changeGain(value){
+    changeGain(value) {
       this.tracks[value.index].gain = value.gain;
     },
 
-    changePan: function changePan(value){
+    changePan(value) {
       this.tracks[value.index].pan = value.pan;
     },
 
-    changeMute: function changeMute(value){
+    changeMute(value) {
       this.tracks[value.index].muted = value.muted;
     },
 
- 
+    changeSolo(value) {},
 
     /************************************************************
     *
     * Master channel controls
     *
     *************************************************************/
-
-    changeMasterMute: function changeMasterMute(value){
-      if(value){
+    changeMasterMute(value) {
+      if (value) {
         this.masterGainValue = this.gainNode.gain.value; // store gain value
+
         this.gainNode.gain.value = 0; // mute the gain node
+
         this.masterMuted = true;
-      }
-      else {
+      } else {
         this.masterMuted = false;
         this.gainNode.gain.value = this.masterGainValue; // restore previous gain value
       }
-
     },
 
-     // Master Gain
-
-    changeMasterGain: function changeMasterGain(gain)
-    {
+    // Master Gain
+    changeMasterGain(gain) {
       this.masterGainValue = gain;
-      if(!this.masterMuted)
-        { this.gainNode.gain.value = gain; }
+      if (!this.masterMuted) this.gainNode.gain.value = gain;
     },
 
     // Master Pan
-
-    changeMasterPan: function changeMasterPan(pan) {
+    changeMasterPan(pan) {
       var xDeg = parseInt(pan);
       var zDeg = xDeg + 90;
+
       if (zDeg > 90) {
         zDeg = 180 - zDeg;
       }
+
       var x = Math.sin(xDeg * (Math.PI / 180));
       var z = Math.sin(zDeg * (Math.PI / 180));
       this.pannerNode.setPosition(x, 0, z);
-
       this.masterPanValue = pan;
     },
 
     // Master Audio Nodes
+    setupAudioNodes() {
+      // setup a analyzers
+      this.leftAnalyser = this.context.createAnalyser();
+      this.leftAnalyser.smoothingTimeConstant = 0.3;
+      this.leftAnalyser.fftSize = 1024;
+      this.rightAnalyser = this.context.createAnalyser();
+      this.rightAnalyser.smoothingTimeConstant = 0.0;
+      this.rightAnalyser.fftSize = 1024; // Create a gain node.
 
-    setupAudioNodes: function setupAudioNodes() {
+      this.gainNode = this.context.createGain(); // Create a panner node.
 
+      this.pannerNode = this.context.createPanner();
+      this.pannerNode.panningModel = "equalpower"; // create splitter
 
-        // setup a analyzers
-        this.leftAnalyser = this.context.createAnalyser();
-        this.leftAnalyser.smoothingTimeConstant = 0.3;
-        this.leftAnalyser.fftSize = 1024;
- 
-        this.rightAnalyser = this.context.createAnalyser();
-        this.rightAnalyser.smoothingTimeConstant = 0.0;
-        this.rightAnalyser.fftSize = 1024;
+      this.splitter = this.context.createChannelSplitter(); // connect everything together
 
-        // Create a gain node.
-        this.gainNode = this.context.createGain();
+      this.scriptProcessorNode.connect(this.gainNode);
+      this.gainNode.connect(this.pannerNode);
+      this.pannerNode.connect(this.splitter);
+      this.splitter.connect(this.leftAnalyser, 0, 0);
+      this.splitter.connect(this.rightAnalyser, 1, 0); // this.leftAnalyser.connect(this.scriptProcessorNode);
 
-        // Create a panner node.
-        this.pannerNode = this.context.createPanner();
-        this.pannerNode.panningModel = "equalpower";
-        
-        // create splitter
-        this.splitter = this.context.createChannelSplitter();
+      this.pannerNode.connect(this.context.destination); // initial values
 
-        // connect everything together
-        this.scriptProcessorNode.connect(this.gainNode);
-        this.gainNode.connect(this.pannerNode);
-        this.pannerNode.connect(this.splitter);
-        this.splitter.connect(this.leftAnalyser,0,0);
-        this.splitter.connect(this.rightAnalyser,1,0);
-       // this.leftAnalyser.connect(this.scriptProcessorNode);
-        this.pannerNode.connect(this.context.destination);
-
-        // initial values
-        this.changeMasterGain(this.masterGainValue);
-        this.changeMasterPan(this.masterPanValue);
-       // this.changeMasterMute(this.masterMuted);
-
-    },
-
-   
+      this.changeMasterGain(this.masterGainValue);
+      this.changeMasterPan(this.masterPanValue); // this.changeMasterMute(this.masterMuted);
+    }
 
   }
-
 };
 
 /* script */
-var __vue_script__$6 = script$6;
+const __vue_script__$6 = script$6;
 
 /* template */
-var __vue_render__$6 = function () {var _vm=this;var _h=_vm.$createElement;var _c=_vm._self._c||_h;return _c('div',{staticClass:"vue-audio-mixer",style:({width:_vm.mixerwidth})},[(_vm.loading)?_c('Loader',{attrs:{"percentLoaded":_vm.loadingPercent}}):_vm._e(),_vm._v(" "),_c('div',{directives:[{name:"show",rawName:"v-show",value:(!_vm.loading),expression:"!loading"}]},[_c('div',{staticClass:"vue-audio-mixer-channel-strip"},[_vm._l((_vm.tracks),function(track,index){return _c('MixerChannel',{key:index,attrs:{"title":track.title,"defaultPan":track.pan,"defaultGain":track.gain,"defaultMuted":track.muted,"context":_vm.context,"output":_vm.gainNode,"url":track.url,"trackIndex":index},on:{"panChange":_vm.changePan,"gainChange":_vm.changeGain,"muteChange":_vm.changeMute}})}),_vm._v(" "),_c('Channel',{attrs:{"title":"Master","defaultPan":_vm.masterPanValue,"defaultGain":_vm.masterGainValue,"defaultMuted":_vm.masterMuted,"leftAnalyser":_vm.leftAnalyser,"rightAnalyser":_vm.rightAnalyser,"scriptProcessorNode":_vm.scriptProcessorNode},on:{"muteChange":_vm.changeMasterMute,"gainChange":_vm.changeMasterGain,"panChange":_vm.changeMasterPan}})],2),_vm._v(" "),_c('TimeDisplay',{attrs:{"showTotalTime":false,"progressTime":_vm.progress,"totalTime":_vm.totalDuration}}),_vm._v(" "),_c('ProgressBar',{attrs:{"progressPercent":_vm.progressPercent},on:{"percent":_vm.playFromPercent}}),_vm._v(" "),_c('TransportButtons',{attrs:{"playing":_vm.playing},on:{"stop":_vm.stop,"togglePlay":_vm.togglePlay}})],1)],1)};
+var __vue_render__$6 = function () {var _vm=this;var _h=_vm.$createElement;var _c=_vm._self._c||_h;return _c('div',{staticClass:"vue-audio-mixer",class:_vm.themeClass},[(_vm.loading)?_c('Loader',{attrs:{"percentLoaded":_vm.loadingPercent}}):_vm._e(),_vm._v(" "),_c('div',{directives:[{name:"show",rawName:"v-show",value:(!_vm.loading),expression:"!loading"}]},[_c('div',{ref:"channelstrip",staticClass:"vue-audio-mixer-channel-strip"},[_c('div',[_vm._l((_vm.tracks),function(track,index){return _c('MixerChannel',{key:index,attrs:{"title":track.title,"defaultPan":track.pan,"defaultGain":track.gain,"defaultMuted":track.muted,"context":_vm.context,"output":_vm.gainNode,"url":track.url,"trackIndex":index,"showPan":_vm.showPan,"mixerVars":_vm.mixerVars},on:{"panChange":_vm.changePan,"gainChange":_vm.changeGain,"muteChange":_vm.changeMute,"soloChange":_vm.changeSolo}})}),_vm._v(" "),_c('Channel',{attrs:{"title":"Master","defaultPan":_vm.masterPanValue,"defaultGain":_vm.masterGainValue,"defaultMuted":_vm.masterMuted,"leftAnalyser":_vm.leftAnalyser,"rightAnalyser":_vm.rightAnalyser,"scriptProcessorNode":_vm.scriptProcessorNode,"showPan":_vm.showPan,"showMute":false,"isMaster":true,"mixerVars":_vm.mixerVars},on:{"muteChange":_vm.changeMasterMute,"gainChange":_vm.changeMasterGain,"panChange":_vm.changeMasterPan}})],2),_vm._v(" "),_c('ProgressBar',{attrs:{"progressPercent":_vm.progressPercent,"mixerVars":_vm.mixerVars},on:{"percent":_vm.playFromPercent}}),_vm._v(" "),_c('div',{staticClass:"time_and_transport"},[_c('TimeDisplay',{attrs:{"showTotalTime":false,"progressTime":_vm.progress,"totalTime":_vm.totalDuration,"mixerVars":_vm.mixerVars}}),_vm._v(" "),_c('TransportButtons',{attrs:{"playing":_vm.playing,"mixerVars":_vm.mixerVars},on:{"stop":_vm.stop,"togglePlay":_vm.togglePlay}}),_vm._v(" "),_c('button',{staticClass:"custom_button"},[_vm._v("In den Warenkorb")])],1)],1)])],1)};
 var __vue_staticRenderFns__$6 = [];
 
   /* style */
-  var __vue_inject_styles__$6 = undefined;
+  const __vue_inject_styles__$6 = undefined;
   /* scoped */
-  var __vue_scope_id__$6 = undefined;
+  const __vue_scope_id__$6 = undefined;
   /* module identifier */
-  var __vue_module_identifier__$6 = undefined;
+  const __vue_module_identifier__$6 = undefined;
   /* functional template */
-  var __vue_is_functional_template__$6 = false;
+  const __vue_is_functional_template__$6 = false;
   /* style inject */
   
   /* style inject SSR */
@@ -10601,7 +10428,7 @@ var __vue_staticRenderFns__$6 = [];
   
 
   
-  var __vue_component__$6 = /*#__PURE__*/normalizeComponent(
+  const __vue_component__$6 = /*#__PURE__*/normalizeComponent(
     { render: __vue_render__$6, staticRenderFns: __vue_staticRenderFns__$6 },
     __vue_inject_styles__$6,
     __vue_script__$6,
@@ -10614,34 +10441,59 @@ var __vue_staticRenderFns__$6 = [];
     undefined
   );
 
-var css_248z$1 = "@import url(\"https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap\");\n@import url(\"https://fonts.googleapis.com/css2?family=Open+Sans&display=swap\");\n.vue-audio-mixer-channel-label {\n  margin-top: 10px;\n  width: 85px;\n  font-size: 10px;\n  padding-top: 5px;\n  padding-bottom: 5px;\n  height: 1em;\n  overflow: auto;\n  clear: both;\n  float: left;\n  background: #4ba7b7;\n  color: #FFFFFF;\n  text-align: center;\n  border: none;\n  box-sizing: content-box; }\n\n.vue-audio-mixer-channel-strip {\n  background: transparent !important;\n  background: #16191c;\n  position: relative;\n  overflow: auto;\n  display: block;\n  float: left;\n  opacity: 1;\n  width: 100%; }\n\n.vue-audio-mixer-channel {\n  height: 400px;\n  margin: 1px;\n  padding: 5px;\n  padding-top: 50px;\n  box-sizing: content-box;\n  position: relative;\n  float: left;\n  display: block;\n  background: rgba(41, 44, 48, 0.2); }\n  .vue-audio-mixer-channel:last-child {\n    background: #4ba7b7 !important; }\n    .vue-audio-mixer-channel:last-child .vue-audio-mixer-channel-label {\n      background: #000 !important; }\n\n.vue-audio-mixer-channel-slider {\n  top: 230px;\n  left: -135px;\n  display: block;\n  float: left;\n  -ms-transform: rotate(270deg);\n  /* IE 9 */\n  -webkit-transform: rotate(270deg);\n  /* Chrome, Safari, Opera */\n  transform: rotate(270deg);\n  position: absolute; }\n\n.vue-audio-mixer-channel-meter-canvas {\n  margin-right: 50px;\n  margin-left: 10px;\n  display: block;\n  float: left; }\n\n@keyframes rotate {\n  0% {\n    -webkit-transform: rotate(0deg) scale(1);\n    transform: rotate(0deg) scale(1); }\n  50% {\n    -webkit-transform: rotate(180deg) scale(0.6);\n    transform: rotate(180deg) scale(0.6); }\n  100% {\n    -webkit-transform: rotate(360deg) scale(1);\n    transform: rotate(360deg) scale(1); } }\n\n@-webkit-keyframes ball-scale-ripple {\n  0% {\n    -webkit-transform: scale(0.1);\n    transform: scale(0.1);\n    opacity: 1; }\n  70% {\n    -webkit-transform: scale(1);\n    transform: scale(1);\n    opacity: 0.7; }\n  100% {\n    opacity: 0.0; } }\n\n@keyframes ball-scale-ripple {\n  0% {\n    -webkit-transform: scale(0.1);\n    transform: scale(0.1);\n    opacity: 1; }\n  70% {\n    -webkit-transform: scale(1);\n    transform: scale(1);\n    opacity: 0.7; }\n  100% {\n    opacity: 0.0; } }\n\n.vue-audio-mixer-loader-inner {\n  position: relative; }\n\n.vue-audio-mixer-loader-inner > div {\n  -webkit-animation-fill-mode: both;\n  animation-fill-mode: both;\n  position: absolute;\n  left: -20px;\n  top: -20px;\n  border: 2px solid #1d7a9c;\n  border-bottom-color: transparent;\n  border-top-color: transparent;\n  border-radius: 100%;\n  height: 35px;\n  width: 35px;\n  -webkit-animation: rotate 1s 0s ease-in-out infinite;\n  animation: rotate 1s 0s ease-in-out infinite; }\n\n.vue-audio-mixer-loader-inner > div:last-child {\n  display: inline-block;\n  top: -10px;\n  left: -10px;\n  width: 15px;\n  height: 15px;\n  -webkit-animation-duration: 0.5s;\n  animation-duration: 0.5s;\n  border-color: #00a7cc transparent #00a7cc transparent;\n  -webkit-animation-direction: reverse;\n  animation-direction: reverse; }\n\n.vue-audio-mixer-loader {\n  width: 100%;\n  height: 100px;\n  position: relative; }\n\n.vue-audio-mixer-loader-inner {\n  margin: 0 auto;\n  width: 1px; }\n\n.vue-audio-mixer-loader-text {\n  color: #1d7a9c;\n  text-align: center;\n  width: 100%;\n  font-size: 0.7em;\n  position: relative;\n  top: 50%; }\n\n.vue-audio-mixer {\n  min-width: 105px;\n  overflow: auto;\n  margin: 0 auto;\n  margin-top: 2rem;\n  font-family: 'Open Sans', sans-serif; }\n  .vue-audio-mixer * {\n    -webkit-touch-callout: none;\n    -webkit-user-select: none;\n    /* Disable selection/copy in UIWebView */ }\n\n* {\n  box-sizing: content-box; }\n\n.vue-audio-mixer-channel-mute-button {\n  position: absolute;\n  left: 10px;\n  top: 5px;\n  font-size: 10px;\n  cursor: pointer; }\n\n.vue-audio-mixer-channel-mute-button-label {\n  width: 18px;\n  text-align: center;\n  cursor: pointer; }\n\n.vue-audio-mixer-channel-mute-button label input {\n  display: none; }\n\n.vue-audio-mixer-channel-mute-button {\n  margin: 4px;\n  background-color: #666B73;\n  border-radius: 4px;\n  border: 1px solid #000;\n  overflow: auto;\n  float: left;\n  box-sizing: content-box; }\n\n.vue-audio-mixer-channel-mute-button label {\n  float: left;\n  margin-bottom: 0;\n  box-sizing: content-box; }\n\n.vue-audio-mixer-channel-mute-button label span {\n  text-align: center;\n  padding: 3px;\n  display: block;\n  border-radius: 4px;\n  box-sizing: content-box; }\n\n.vue-audio-mixer-channel-mute-button label input {\n  position: absolute;\n  top: -20px; }\n\n.vue-audio-mixer-channel-mute-button input:hover + span {\n  opacity: 0.8; }\n\n.vue-audio-mixer-channel-mute-button input:checked + span {\n  background-color: #911;\n  color: #FFF; }\n\n.vue-audio-mixer-channel-mute-button input:checked:hover + span {\n  opacity: 0.8;\n  color: #FFF; }\n\n.vue-audio-mixer-channel-panner {\n  width: 19px;\n  height: 10px;\n  position: absolute;\n  vertical-align: middle;\n  top: 4px;\n  right: 30px;\n  border: 0px;\n  background: none;\n  font: bold 7px Arial;\n  text-align: center;\n  color: white;\n  padding: 0px;\n  -webkit-appearance: none;\n  cursor: pointer; }\n\n.vue-audio-mixer-channel-slider-input {\n  align-self: center;\n  margin: 2px;\n  padding: 0;\n  width: 400px;\n  background: transparent;\n  background: repeating-linear-gradient(90deg, #000, #3b3e41 0.0625em, transparent 0.0625em, transparent 2em) no-repeat 50% 1.5em border-box, repeating-linear-gradient(90deg, #000, #3b3e41 0.0625em, transparent 0.0625em, transparent 2em) no-repeat 50% 0em border-box;\n  background-size: 390px 0.625em, 390px 0.625em, 100% 2.25em;\n  font-size: 1em;\n  cursor: pointer;\n  height: 2em; }\n\n.vue-audio-mixer-channel-slider-input, .vue-audio-mixer-channel-slider-input::-webkit-slider-runnable-track, .vue-audio-mixer-channel-slider-input::-webkit-slider-thumb {\n  -webkit-appearance: none; }\n\n.vue-audio-mixer-channel-slider-input::-webkit-slider-runnable-track {\n  position: relative;\n  width: 390px;\n  height: 0.1em;\n  border-radius: .1875em;\n  background: #15181b; }\n\n.vue-audio-mixer-channel-slider-input::-moz-range-track {\n  width: 390px;\n  height: 0.1em;\n  border-radius: .1875em;\n  background: #15181b; }\n\n.vue-audio-mixer-channel-slider-input::-ms-track {\n  border: none;\n  width: 390px;\n  height: 0.1em;\n  border-radius: .1875em;\n  color: transparent;\n  background: #15181b; }\n\n.vue-audio-mixer-channel-slider-input::-ms-fill-lower {\n  display: none; }\n\n.vue-audio-mixer-channel-slider-input::-webkit-slider-thumb {\n  font-size: 0.7em;\n  margin-top: -0.90em;\n  border: none;\n  width: 4em;\n  height: 2em;\n  border-radius: .5em;\n  box-shadow: -.125em 0 .25em #928886,  inset -1px 0 1px #fff;\n  background: radial-gradient(#ebe1e0 10%, rgba(235, 225, 224, 0.2) 10%, rgba(235, 225, 224, 0) 72%) no-repeat 50% 50%, radial-gradient(at 100% 50%, #e9dfde, #eae1de 71%, rgba(0, 0, 0, 0) 71%) no-repeat 2.5em 50%, linear-gradient(90deg, #e9dfde, #d0c8c6) no-repeat 100% 50%, radial-gradient(at 0 50%, #d0c6c5, #c6baba 71%, rgba(0, 0, 0, 0) 71%) no-repeat 0.75em 50%, linear-gradient(90deg, #e3d9d8, #d0c6c5) no-repeat 0 50%, linear-gradient(#cdc0c0, #fcf5ef, #fcf5ef, #cdc0c0);\n  background-size: 0.825em 100%; }\n\n.vue-audio-mixer-channel-slider-input::-moz-range-thumb {\n  font-size: 0.7em;\n  border: none;\n  width: 4em;\n  height: 2em;\n  border-radius: .5em;\n  box-shadow: -.125em 0 .25em #928886,  inset -1px 0 1px #fff;\n  background: radial-gradient(#ebe1e0 10%, rgba(235, 225, 224, 0.2) 10%, rgba(235, 225, 224, 0) 72%) no-repeat 50% 50%, radial-gradient(at 100% 50%, #e9dfde, #eae1de 71%, rgba(0, 0, 0, 0) 71%) no-repeat 2.5em 50%, linear-gradient(90deg, #e9dfde, #d0c8c6) no-repeat 100% 50%, radial-gradient(at 0 50%, #d0c6c5, #c6baba 71%, rgba(0, 0, 0, 0) 71%) no-repeat 0.75em 50%, linear-gradient(90deg, #e3d9d8, #d0c6c5) no-repeat 0 50%, linear-gradient(#cdc0c0, #fcf5ef, #fcf5ef, #cdc0c0);\n  background-size: 0.825em 100%; }\n\n.vue-audio-mixer-channel-slider-input::-ms-thumb {\n  font-size: 0.7em;\n  margin-top: -0.15em;\n  border: none;\n  width: 4em;\n  height: 2em;\n  border-radius: .5em;\n  box-shadow: -.125em 0 .25em #928886,  inset -1px 0 1px #fff;\n  background: radial-gradient(#ebe1e0 10%, rgba(235, 225, 224, 0.2) 10%, rgba(235, 225, 224, 0) 72%) no-repeat 50% 50%, radial-gradient(at 100% 50%, #e9dfde, #eae1de 71%, rgba(0, 0, 0, 0) 71%) no-repeat 2.5em 50%, linear-gradient(90deg, #e9dfde, #d0c8c6) no-repeat 100% 50%, radial-gradient(at 0 50%, #d0c6c5, #c6baba 71%, rgba(0, 0, 0, 0) 71%) no-repeat 0.75em 50%, linear-gradient(90deg, #e3d9d8, #d0c6c5) no-repeat 0 50%, linear-gradient(#cdc0c0, #fcf5ef, #fcf5ef, #cdc0c0);\n  background-size: 0.825em 100%; }\n\n.vue-audio-mixer-channel-slider-input::-webkit-slider-runnable-track:before, .vue-audio-mixer-channel-slider-input::-webkit-slider-runnable-track:after, .vue-audio-mixer-channel-slider-input #track:before, .vue-audio-mixer-channel-slider-input #track:after {\n  position: absolute;\n  font: 0.75em/8em trebuchet ms, arial, sans-serif; }\n\n.vue-audio-mixer-channel-slider-input::-webkit-slider-runnable-track:before, .vue-audio-mixer-channel-slider-input #track:before {\n  top: 50%;\n  right: 100%;\n  transform: translate(50%, -50%) rotate(90deg) translate(0, 32%); }\n\n.vue-audio-mixer-channel-slider-input::-webkit-slider-runnable-track:after, .vue-audio-mixer-channel-slider-input #track:after {\n  left: 50%;\n  width: 3em;\n  word-spacing: 1em; }\n\n.vue-audio-mixer-channel-slider-input:nth-of-type(1)::-webkit-slider-runnable-track:after, .vue-audio-mixer-channel-slider-input:nth-of-type(1) #track:after {\n  bottom: 100%;\n  transform: translate(-50%, 50%) rotate(90deg) translate(-4.375em);\n  text-align: right; }\n\n.vue-audio-mixer-channel-slider-input:nth-of-type(6)::-webkit-slider-runnable-track:after, .vue-audio-mixer-channel-slider-input:nth-of-type(6) #track:after {\n  top: 100%;\n  transform: translate(-50%, -50%) rotate(90deg) translate(4.375em); }\n\n.vue-audio-mixer-channel-slider-input:focus {\n  outline: none; }\n\n.vue-audio-mixer-channel-slider-input:focus::-webkit-slider-runnable-track {\n  background: #15181b; }\n\n.vue-audio-mixer-channel-slider-input:focus::-moz-range-track {\n  background: #15181b; }\n\n.vue-audio-mixer-channel-slider-input:focus::-ms-track {\n  background: #15181b; }\n\n.vue-audio-mixer-progress-bar {\n  margin: 5px;\n  background: #292c30;\n  height: 30px;\n  position: relative;\n  display: block;\n  clear: both; }\n\n.vue-audio-mixer-progress-cursor {\n  width: 2px;\n  height: 100%;\n  background: #b6c8e1;\n  position: absolute;\n  left: 0; }\n\n.vue-audio-mixer-transport {\n  overflow: auto;\n  clear: both;\n  display: block;\n  text-align: center;\n  width: 150px;\n  position: relative;\n  margin: 0 auto 0 auto; }\n\n.vue-audio-mixer-timer {\n  font-family: \"Share Tech Mono\";\n  color: #fff;\n  font-size: 2em;\n  padding: 10px;\n  overflow: auto;\n  position: relative;\n  display: block;\n  clear: both;\n  background: #000;\n  text-align: center;\n  margin: 5px; }\n  .vue-audio-mixer-timer span {\n    display: inline-block;\n    text-align: left; }\n    .vue-audio-mixer-timer span span {\n      width: 32.6px; }\n  .vue-audio-mixer-timer .progress-time {\n    width: 150px;\n    text-align: center; }\n  .vue-audio-mixer-timer .total {\n    margin-left: 5px;\n    width: 140px; }\n\nbutton {\n  border: none;\n  padding: 0;\n  background: transparent; }\n\n.vue-audio-mixer-transport-play-button {\n  display: block;\n  width: 0;\n  float: left;\n  height: 0;\n  border-top: 18px solid transparent;\n  border-bottom: 18px solid transparent;\n  border-left: 21.6px solid #d5d5d5;\n  margin: 18px auto 30px auto;\n  position: relative;\n  z-index: 1;\n  transition: all 0.1s;\n  -webkit-transition: all 0.1s;\n  -moz-transition: all 0.1s;\n  left: 100px;\n  position: relative; }\n  .vue-audio-mixer-transport-play-button:focus, .vue-audio-mixer-transport-play-button:active {\n    outline: none; }\n  .vue-audio-mixer-transport-play-button:before {\n    content: '';\n    position: absolute;\n    top: -27px;\n    left: -41.4px;\n    bottom: -27px;\n    right: -12.6px;\n    border-radius: 50%;\n    border: 2px solid #d5d5d5;\n    z-index: -1;\n    transition: all 0.1s;\n    -webkit-transition: all 0.1s;\n    -moz-transition: all 0.1s; }\n  .vue-audio-mixer-transport-play-button:after {\n    content: '';\n    opacity: 0;\n    transition: opacity 0.2s;\n    -webkit-transition: opacity 0.2s;\n    -moz-transition: opacity 0.2s;\n    z-index: 2; }\n  .vue-audio-mixer-transport-play-button:hover:before, .vue-audio-mixer-transport-play-button:focus:before {\n    transform: scale(1.1);\n    -webkit-transform: scale(1.1);\n    -moz-transform: scale(1.1); }\n  .vue-audio-mixer-transport-play-button.vue-audio-mixer-transport-play-button-active {\n    border-color: transparent; }\n    .vue-audio-mixer-transport-play-button.vue-audio-mixer-transport-play-button-active span:nth-child(1), .vue-audio-mixer-transport-play-button.vue-audio-mixer-transport-play-button-active span:nth-child(2) {\n      content: '';\n      opacity: 1;\n      width: 2.57143px;\n      height: 28.8px;\n      background: #d5d5d5;\n      position: absolute;\n      right: 1.8px;\n      top: -14.4px;\n      border-left: 7.2px solid #d5d5d5; }\n    .vue-audio-mixer-transport-play-button.vue-audio-mixer-transport-play-button-active span:nth-child(1) {\n      right: 1.8px; }\n    .vue-audio-mixer-transport-play-button.vue-audio-mixer-transport-play-button-active span:nth-child(2) {\n      right: 16.2px; }\n\n.vue-audio-mixer-transport-start-button {\n  display: block;\n  float: left;\n  width: 0;\n  height: 0;\n  border-top: 18px solid transparent;\n  border-bottom: 18px solid transparent;\n  border-right: 21.6px solid #d5d5d5;\n  margin: 18px auto 18px auto;\n  position: relative;\n  z-index: 1;\n  transition: all 0.1s;\n  -webkit-transition: all 0.1s;\n  -moz-transition: all 0.1s; }\n  .vue-audio-mixer-transport-start-button:before {\n    content: '';\n    position: absolute;\n    top: -27px;\n    left: -16.2px;\n    bottom: -27px;\n    right: -37.8px;\n    border-radius: 50%;\n    border: 2px solid #d5d5d5;\n    z-index: 2;\n    transition: all 0.1s;\n    -webkit-transition: all 0.1s;\n    -moz-transition: all 0.1s; }\n  .vue-audio-mixer-transport-start-button:after {\n    content: \"\";\n    display: block;\n    width: 5px;\n    height: 20px;\n    background: #d5d5d5;\n    margin-top: -10px;\n    margin-left: -4px; }\n  .vue-audio-mixer-transport-start-button:hover:before, .vue-audio-mixer-transport-start-button:focus:before {\n    transform: scale(1.1);\n    -webkit-transform: scale(1.1);\n    -moz-transform: scale(1.1); }\n\n.vue-audio-mixer-transport-record-button {\n  display: block;\n  width: 0;\n  float: left;\n  height: 0;\n  border: 9px solid #d5d5d5;\n  border-radius: 75%;\n  margin: 50px auto 30px auto;\n  position: relative;\n  z-index: 1;\n  transition: all 0.1s;\n  -webkit-transition: all 0.1s;\n  -moz-transition: all 0.1s;\n  left: 125px; }\n  .vue-audio-mixer-transport-record-button:before {\n    content: '';\n    position: absolute;\n    top: -27px;\n    left: -30px;\n    bottom: -27px;\n    right: -30px;\n    border-radius: 50%;\n    border: 2px solid #d5d5d5;\n    z-index: 2;\n    transition: all 0.1s;\n    -webkit-transition: all 0.1s;\n    -moz-transition: all 0.1s; }\n  .vue-audio-mixer-transport-record-button:after {\n    content: '';\n    opacity: 0;\n    transition: opacity 0.2s;\n    -webkit-transition: opacity 0.2s;\n    -moz-transition: opacity 0.2s; }\n  .vue-audio-mixer-transport-record-button:hover:before, .vue-audio-mixer-transport-record-button:focus:before {\n    transform: scale(1.1);\n    -webkit-transform: scale(1.1);\n    -moz-transform: scale(1.1); }\n  .vue-audio-mixer-transport-record-button.vue-audio-mixer-transport-record-button-active {\n    border-color: red; }\n";
-styleInject(css_248z$1);
+function styleInject(css, ref) {
+  if ( ref === void 0 ) ref = {};
+  var insertAt = ref.insertAt;
+
+  if (!css || typeof document === 'undefined') { return; }
+
+  var head = document.head || document.getElementsByTagName('head')[0];
+  var style = document.createElement('style');
+  style.type = 'text/css';
+
+  if (insertAt === 'top') {
+    if (head.firstChild) {
+      head.insertBefore(style, head.firstChild);
+    } else {
+      head.appendChild(style);
+    }
+  } else {
+    head.appendChild(style);
+  }
+
+  if (style.styleSheet) {
+    style.styleSheet.cssText = css;
+  } else {
+    style.appendChild(document.createTextNode(css));
+  }
+}
+
+var css_248z = "@import url(\"https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap\");\n@import url(\"https://fonts.googleapis.com/css2?family=Open+Sans&display=swap\");\n.vue-audio-mixer-channel-label {\n  margin-top: 10px;\n  width: 100%;\n  font-size: 10px;\n  padding-top: 5px;\n  padding-bottom: 5px;\n  height: 1em;\n  overflow: auto;\n  clear: both;\n  float: left;\n  background: #4ba7b7;\n  color: #FFFFFF;\n  text-align: center;\n  border: none;\n  box-sizing: content-box; }\n\n.logo {\n  position: absolute;\n  top: 10px;\n  left: 5px;\n  right: 5px; }\n  .logo img {\n    width: 100%; }\n\n.vue-audio-mixer-channel-strip {\n  background: transparent !important;\n  background: #16191c;\n  position: relative;\n  overflow: auto;\n  display: block;\n  opacity: 1;\n  display: inline-block; }\n\n.vue-audio-mixer-theme-small .vue-audio-mixer-channel {\n  margin-right: 1px; }\n\n.vue-audio-mixer-theme-medium .vue-audio-mixer-channel {\n  margin-right: 2px; }\n\n.vue-audio-mixer-channel {\n  height: 240px;\n  padding: 5px;\n  padding-top: 50px;\n  box-sizing: content-box;\n  position: relative;\n  float: left;\n  display: block;\n  background: rgba(41, 44, 48, 0.2); }\n  .vue-audio-mixer-channel:last-child {\n    margin-right: 0px;\n    background: #4ba7b7 !important; }\n    .vue-audio-mixer-channel:last-child .vue-audio-mixer-channel-label {\n      background: #000 !important; }\n\n.vue-audio-mixer-channel-slider {\n  right: 17px;\n  top: 40px;\n  display: block;\n  float: left;\n  -ms-transform: rotate(270deg);\n  /* IE 9 */\n  -webkit-transform: rotate(270deg);\n  /* Chrome, Safari, Opera */\n  transform: rotate(270deg);\n  position: absolute;\n  transform-origin: right; }\n\n.vue-audio-mixer-theme-small .vue-audio-mixer-channel-meter-canvas {\n  margin-right: 15px; }\n\n.vue-audio-mixer-theme-medium .vue-audio-mixer-channel-meter-canvas {\n  margin-right: 30px; }\n\n.vue-audio-mixer-channel-meter-canvas {\n  margin-left: 2px;\n  display: block;\n  float: left; }\n\n@keyframes rotate {\n  0% {\n    -webkit-transform: rotate(0deg) scale(1);\n    transform: rotate(0deg) scale(1); }\n  50% {\n    -webkit-transform: rotate(180deg) scale(0.6);\n    transform: rotate(180deg) scale(0.6); }\n  100% {\n    -webkit-transform: rotate(360deg) scale(1);\n    transform: rotate(360deg) scale(1); } }\n\n@-webkit-keyframes ball-scale-ripple {\n  0% {\n    -webkit-transform: scale(0.1);\n    transform: scale(0.1);\n    opacity: 1; }\n  70% {\n    -webkit-transform: scale(1);\n    transform: scale(1);\n    opacity: 0.7; }\n  100% {\n    opacity: 0.0; } }\n\n@keyframes ball-scale-ripple {\n  0% {\n    -webkit-transform: scale(0.1);\n    transform: scale(0.1);\n    opacity: 1; }\n  70% {\n    -webkit-transform: scale(1);\n    transform: scale(1);\n    opacity: 0.7; }\n  100% {\n    opacity: 0.0; } }\n\n.vue-audio-mixer-loader-inner {\n  position: relative; }\n\n.vue-audio-mixer-loader-inner > div {\n  -webkit-animation-fill-mode: both;\n  animation-fill-mode: both;\n  position: absolute;\n  left: -20px;\n  top: -20px;\n  border: 2px solid #1d7a9c;\n  border-bottom-color: transparent;\n  border-top-color: transparent;\n  border-radius: 100%;\n  height: 35px;\n  width: 35px;\n  -webkit-animation: rotate 1s 0s ease-in-out infinite;\n  animation: rotate 1s 0s ease-in-out infinite; }\n\n.vue-audio-mixer-loader-inner > div:last-child {\n  display: inline-block;\n  top: -10px;\n  left: -10px;\n  width: 15px;\n  height: 15px;\n  -webkit-animation-duration: 0.5s;\n  animation-duration: 0.5s;\n  border-color: #00a7cc transparent #00a7cc transparent;\n  -webkit-animation-direction: reverse;\n  animation-direction: reverse; }\n\n.vue-audio-mixer-loader {\n  width: 100%;\n  height: 100px;\n  position: relative; }\n\n.vue-audio-mixer-loader-inner {\n  margin: 0 auto;\n  width: 1px; }\n\n.vue-audio-mixer-loader-text {\n  color: #1d7a9c;\n  text-align: center;\n  width: 100%;\n  font-size: 0.7em;\n  position: relative;\n  top: 50%; }\n\n.vue-audio-mixer {\n  min-width: 105px;\n  overflow: auto;\n  margin: 0 auto;\n  margin-top: 2rem;\n  font-family: 'Open Sans', sans-serif;\n  text-align: center; }\n  .vue-audio-mixer * {\n    -webkit-touch-callout: none;\n    -webkit-user-select: none;\n    /* Disable selection/copy in UIWebView */ }\n\n.custom_button {\n  max-width: 60px;\n  background: black;\n  color: white;\n  text-align: center;\n  height: 20px;\n  position: absolute;\n  top: 7px;\n  right: 10px;\n  text-align: center;\n  font-size: 10px;\n  cursor: pointer; }\n\n* {\n  box-sizing: content-box; }\n\n.vue-audio-mixer-channel-mute-button, .vue-audio-mixer-channel-solo-button {\n  position: absolute;\n  left: 2px;\n  top: 5px;\n  cursor: pointer; }\n\n.vue-audio-mixer-theme-small .vue-audio-mixer-channel-solo-button {\n  left: 25px; }\n\n.vue-audio-mixer-theme-medium .vue-audio-mixer-channel-solo-button {\n  left: 35px; }\n\n.vue-audio-mixer-channel-mute-button-label, .vue-audio-mixer-channel-solo-button-label {\n  width: 18px;\n  text-align: center;\n  cursor: pointer; }\n\n.vue-audio-mixer-channel-mute-button label input, .vue-audio-mixer-channel-solo-button label input {\n  display: none; }\n\n.vue-audio-mixer-channel-mute-button, .vue-audio-mixer-channel-solo-button {\n  margin: 4px;\n  background-color: #666B73;\n  border-radius: 4px;\n  border: 1px solid #000;\n  overflow: auto;\n  float: left;\n  box-sizing: content-box; }\n\n.vue-audio-mixer-channel-mute-button label, .vue-audio-mixer-channel-solo-button label {\n  float: left;\n  margin-bottom: 0;\n  box-sizing: content-box; }\n\n.vue-audio-mixer-theme-small .vue-audio-mixer-channel-mute-button label span, .vue-audio-mixer-theme-small .vue-audio-mixer-channel-solo-button label span {\n  width: 8px;\n  font-size: 7px; }\n\n.vue-audio-mixer-theme-medium .vue-audio-mixer-channel-mute-button label span, .vue-audio-mixer-theme-medium .vue-audio-mixer-channel-solo-button label span {\n  width: 14px;\n  font-size: 12px; }\n\n.vue-audio-mixer-channel-mute-button label span, .vue-audio-mixer-channel-solo-button label span {\n  text-align: center;\n  padding: 3px;\n  width: 8px;\n  display: block;\n  border-radius: 4px;\n  box-sizing: content-box; }\n\n.vue-audio-mixer-channel-mute-button label input, .vue-audio-mixer-channel-solo-button label input {\n  position: absolute;\n  top: -20px; }\n\n.vue-audio-mixer-channel-mute-button input:hover + span, .vue-audio-mixer-channel-solo-button input:hover + span {\n  opacity: 0.8; }\n\n.vue-audio-mixer-channel-mute-button input:checked + span {\n  background-color: #911;\n  color: #FFF; }\n\n.vue-audio-mixer-channel-solo-button input:checked + span {\n  background-color: #1cdd20;\n  color: #FFF; }\n\n.vue-audio-mixer-channel-mute-button input:checked:hover + span, .vue-audio-mixer-channel-solo-button input:checked:hover + span {\n  opacity: 0.8;\n  color: #FFF; }\n\n.vue-audio-mixer-channel-panner {\n  width: 19px;\n  height: 10px;\n  position: absolute;\n  vertical-align: middle;\n  top: 4px;\n  right: 30px;\n  border: 0px;\n  background: none;\n  font: bold 7px Arial;\n  text-align: center;\n  color: white;\n  padding: 0px;\n  -webkit-appearance: none;\n  cursor: pointer; }\n\n.vue-audio-mixer-channel-slider-input {\n  align-self: center;\n  margin: 2px;\n  padding: 0;\n  width: 190px;\n  margin-right: 7px;\n  background: transparent;\n  background: repeating-linear-gradient(90deg, #000, #3b3e41 0.0625em, transparent 0.0625em, transparent 0.75em) no-repeat 50% 0.75em border-box, repeating-linear-gradient(90deg, #000, #3b3e41 0.0625em, transparent 0.0625em, transparent 0.75em) no-repeat 50% 0em border-box;\n  background-size: 180px 0.625em, 180px 0.225em, 100% 2.25em;\n  font-size: 1em;\n  cursor: pointer;\n  height: 1em; }\n\n.vue-audio-mixer-channel-slider-input, .vue-audio-mixer-channel-slider-input::-webkit-slider-runnable-track, .vue-audio-mixer-channel-slider-input::-webkit-slider-thumb {\n  -webkit-appearance: none; }\n\n.vue-audio-mixer-channel-slider-input::-webkit-slider-runnable-track {\n  position: relative;\n  width: 180px;\n  height: 0.1em;\n  border-radius: .1875em;\n  background: #15181b; }\n\n.vue-audio-mixer-channel-slider-input::-moz-range-track {\n  width: 180px;\n  height: 0.1em;\n  border-radius: .1875em;\n  background: #15181b; }\n\n.vue-audio-mixer-channel-slider-input::-ms-track {\n  border: none;\n  width: 180px;\n  height: 0.1em;\n  border-radius: .1875em;\n  color: transparent;\n  background: #15181b; }\n\n.vue-audio-mixer-channel-slider-input::-ms-fill-lower {\n  display: none; }\n\n.vue-audio-mixer-theme-small .vue-audio-mixer-channel-slider-input::-webkit-slider-thumb {\n  font-size: 0.4em; }\n\n.vue-audio-mixer-theme-small .vue-audio-mixer-channel-slider-input::-moz-range-thumb {\n  font-size: 0.4em; }\n\n.vue-audio-mixer-theme-small .vue-audio-mixer-channel-slider-input:-ms-thumb {\n  font-size: 0.4em; }\n\n.vue-audio-mixer-theme-medium .vue-audio-mixer-channel-slider-input::-webkit-slider-thumb {\n  font-size: 0.6em; }\n\n.vue-audio-mixer-theme-medium .vue-audio-mixer-channel-slider-input::-moz-range-thumb {\n  font-size: 0.6em; }\n\n.vue-audio-mixer-theme-medium .vue-audio-mixer-channel-slider-input:-ms-thumb {\n  font-size: 0.6em; }\n\n.vue-audio-mixer-channel-slider-input::-webkit-slider-thumb {\n  margin-top: -0.90em;\n  border: none;\n  width: 4em;\n  height: 2em;\n  border-radius: .5em;\n  box-shadow: -.125em 0 .25em #928886,  inset -1px 0 1px #fff;\n  background: radial-gradient(#ebe1e0 10%, rgba(235, 225, 224, 0.2) 10%, rgba(235, 225, 224, 0) 72%) no-repeat 50% 50%, radial-gradient(at 100% 50%, #e9dfde, #eae1de 71%, rgba(0, 0, 0, 0) 71%) no-repeat 2.5em 50%, linear-gradient(90deg, #e9dfde, #d0c8c6) no-repeat 100% 50%, radial-gradient(at 0 50%, #d0c6c5, #c6baba 71%, rgba(0, 0, 0, 0) 71%) no-repeat 0.75em 50%, linear-gradient(90deg, #e3d9d8, #d0c6c5) no-repeat 0 50%, linear-gradient(#cdc0c0, #fcf5ef, #fcf5ef, #cdc0c0);\n  background-size: 0.825em 100%; }\n\n.vue-audio-mixer-channel-slider-input::-moz-range-thumb {\n  border: none;\n  width: 4em;\n  height: 2em;\n  border-radius: .5em;\n  box-shadow: -.125em 0 .25em #928886,  inset -1px 0 1px #fff;\n  background: radial-gradient(#ebe1e0 10%, rgba(235, 225, 224, 0.2) 10%, rgba(235, 225, 224, 0) 72%) no-repeat 50% 50%, radial-gradient(at 100% 50%, #e9dfde, #eae1de 71%, rgba(0, 0, 0, 0) 71%) no-repeat 2.5em 50%, linear-gradient(90deg, #e9dfde, #d0c8c6) no-repeat 100% 50%, radial-gradient(at 0 50%, #d0c6c5, #c6baba 71%, rgba(0, 0, 0, 0) 71%) no-repeat 0.75em 50%, linear-gradient(90deg, #e3d9d8, #d0c6c5) no-repeat 0 50%, linear-gradient(#cdc0c0, #fcf5ef, #fcf5ef, #cdc0c0);\n  background-size: 0.825em 100%; }\n\n.vue-audio-mixer-channel-slider-input::-ms-thumb {\n  margin-top: -0.15em;\n  border: none;\n  width: 4em;\n  height: 2em;\n  border-radius: .5em;\n  box-shadow: -.125em 0 .25em #928886,  inset -1px 0 1px #fff;\n  background: radial-gradient(#ebe1e0 10%, rgba(235, 225, 224, 0.2) 10%, rgba(235, 225, 224, 0) 72%) no-repeat 50% 50%, radial-gradient(at 100% 50%, #e9dfde, #eae1de 71%, rgba(0, 0, 0, 0) 71%) no-repeat 2.5em 50%, linear-gradient(90deg, #e9dfde, #d0c8c6) no-repeat 100% 50%, radial-gradient(at 0 50%, #d0c6c5, #c6baba 71%, rgba(0, 0, 0, 0) 71%) no-repeat 0.75em 50%, linear-gradient(90deg, #e3d9d8, #d0c6c5) no-repeat 0 50%, linear-gradient(#cdc0c0, #fcf5ef, #fcf5ef, #cdc0c0);\n  background-size: 0.825em 100%; }\n\n.vue-audio-mixer-channel-slider-input::-webkit-slider-runnable-track:before, .vue-audio-mixer-channel-slider-input::-webkit-slider-runnable-track:after, .vue-audio-mixer-channel-slider-input #track:before, .vue-audio-mixer-channel-slider-input #track:after {\n  position: absolute;\n  font: 0.75em/8em trebuchet ms, arial, sans-serif; }\n\n.slider_value {\n  position: absolute;\n  right: 10px;\n  top: 40px;\n  font-size: 10px; }\n\n.vue-audio-mixer-channel-slider-input::-webkit-slider-runnable-track:before, .vue-audio-mixer-channel-slider-input #track:before {\n  top: 50%;\n  right: 100%;\n  transform: translate(50%, -50%) rotate(90deg) translate(0, 32%); }\n\n.vue-audio-mixer-channel-slider-input::-webkit-slider-runnable-track:after, .vue-audio-mixer-channel-slider-input #track:after {\n  left: 50%;\n  width: 3em;\n  word-spacing: 1em; }\n\n.vue-audio-mixer-channel-slider-input:nth-of-type(1)::-webkit-slider-runnable-track:after, .vue-audio-mixer-channel-slider-input:nth-of-type(1) #track:after {\n  bottom: 100%;\n  transform: translate(-50%, 50%) rotate(90deg) translate(-4.375em);\n  text-align: right; }\n\n.vue-audio-mixer-channel-slider-input:nth-of-type(6)::-webkit-slider-runnable-track:after, .vue-audio-mixer-channel-slider-input:nth-of-type(6) #track:after {\n  top: 100%;\n  transform: translate(-50%, -50%) rotate(90deg) translate(4.375em); }\n\n.vue-audio-mixer-channel-slider-input:focus {\n  outline: none; }\n\n.vue-audio-mixer-channel-slider-input:focus::-webkit-slider-runnable-track {\n  background: #15181b; }\n\n.vue-audio-mixer-channel-slider-input:focus::-moz-range-track {\n  background: #15181b; }\n\n.vue-audio-mixer-channel-slider-input:focus::-ms-track {\n  background: #15181b; }\n\n.vue-audio-mixer-progress-bar {\n  margin-top: 1px;\n  background: #4c4c4c;\n  height: 5px;\n  position: relative;\n  display: block;\n  clear: both;\n  cursor: pointer; }\n\n.vue-audio-mixer-progress-cursor {\n  width: 2px;\n  height: 100%;\n  background: #b6c8e1;\n  position: absolute;\n  left: 0; }\n\n.time_and_transport {\n  position: relative;\n  width: 100%; }\n\n.vue-audio-mixer-transport {\n  overflow: auto;\n  clear: both;\n  display: block;\n  text-align: right;\n  width: 150px;\n  height: 30px;\n  overflow: hidden;\n  position: relative;\n  margin: 0 auto 0 auto;\n  position: absolute;\n  top: 2px;\n  padding-left: 10px; }\n\n.vue-audio-mixer-timer {\n  font-family: \"Share Tech Mono\";\n  color: #fff;\n  font-size: 1em;\n  padding: 10px;\n  overflow: auto;\n  position: relative;\n  display: block;\n  clear: both;\n  background: #000;\n  text-align: right;\n  margin: 0px; }\n  .vue-audio-mixer-timer span {\n    display: inline-block;\n    text-align: left; }\n    .vue-audio-mixer-timer span span {\n      width: 18px; }\n  .vue-audio-mixer-timer .progress-time {\n    width: 100%;\n    text-align: center; }\n  .vue-audio-mixer-timer .total {\n    margin-left: 5px;\n    width: 140px; }\n\nbutton {\n  border: none;\n  padding: 0;\n  background: transparent; }\n\n.vue-audio-mixer-transport-play-button {\n  cursor: pointer;\n  display: block;\n  width: 0;\n  float: left;\n  height: 0;\n  border-top: 8px solid transparent;\n  border-bottom: 8px solid transparent;\n  border-left: 9.6px solid #d5d5d5;\n  margin: 8px auto 30px auto;\n  position: relative;\n  z-index: 1;\n  transition: all 0.1s;\n  -webkit-transition: all 0.1s;\n  -moz-transition: all 0.1s;\n  left: 48px;\n  position: relative; }\n  .vue-audio-mixer-transport-play-button:focus, .vue-audio-mixer-transport-play-button:active {\n    outline: none; }\n  .vue-audio-mixer-transport-play-button:before {\n    content: '';\n    position: absolute;\n    top: -12px;\n    left: -18.4px;\n    bottom: -12px;\n    right: -5.6px;\n    border-radius: 50%;\n    border: 2px solid #d5d5d5;\n    z-index: -1;\n    transition: all 0.1s;\n    -webkit-transition: all 0.1s;\n    -moz-transition: all 0.1s; }\n  .vue-audio-mixer-transport-play-button:after {\n    content: '';\n    opacity: 0;\n    transition: opacity 0.2s;\n    -webkit-transition: opacity 0.2s;\n    -moz-transition: opacity 0.2s;\n    z-index: 2; }\n  .vue-audio-mixer-transport-play-button:hover:before, .vue-audio-mixer-transport-play-button:focus:before {\n    transform: scale(1.1);\n    -webkit-transform: scale(1.1);\n    -moz-transform: scale(1.1); }\n  .vue-audio-mixer-transport-play-button.vue-audio-mixer-transport-play-button-active {\n    border-color: transparent; }\n    .vue-audio-mixer-transport-play-button.vue-audio-mixer-transport-play-button-active span:nth-child(1), .vue-audio-mixer-transport-play-button.vue-audio-mixer-transport-play-button-active span:nth-child(2) {\n      content: '';\n      opacity: 1;\n      width: 1.14286px;\n      height: 12.8px;\n      background: #d5d5d5;\n      position: absolute;\n      right: 0.8px;\n      top: -6.4px;\n      border-left: 3.2px solid #d5d5d5; }\n    .vue-audio-mixer-transport-play-button.vue-audio-mixer-transport-play-button-active span:nth-child(1) {\n      right: 0.8px; }\n    .vue-audio-mixer-transport-play-button.vue-audio-mixer-transport-play-button-active span:nth-child(2) {\n      right: 7.2px; }\n\n.vue-audio-mixer-transport-start-button {\n  display: block;\n  float: left;\n  margin-left: 5px;\n  width: 0;\n  height: 0;\n  border-top: 8px solid transparent;\n  border-bottom: 8px solid transparent;\n  border-right: 9.6px solid #d5d5d5;\n  margin: 8px auto 8px auto;\n  position: relative;\n  z-index: 1;\n  cursor: pointer;\n  transition: all 0.1s;\n  -webkit-transition: all 0.1s;\n  -moz-transition: all 0.1s; }\n  .vue-audio-mixer-transport-start-button:before {\n    content: '';\n    position: absolute;\n    top: -12px;\n    left: -7.2px;\n    bottom: -12px;\n    right: -16.8px;\n    border-radius: 50%;\n    border: 2px solid #d5d5d5;\n    z-index: 2;\n    transition: all 0.1s;\n    -webkit-transition: all 0.1s;\n    -moz-transition: all 0.1s; }\n  .vue-audio-mixer-transport-start-button:after {\n    content: \"\";\n    display: block;\n    width: 2px;\n    height: 10px;\n    background: #d5d5d5;\n    margin-top: -5px;\n    margin-left: -2px; }\n  .vue-audio-mixer-transport-start-button:hover:before, .vue-audio-mixer-transport-start-button:focus:before {\n    transform: scale(1.1);\n    -webkit-transform: scale(1.1);\n    -moz-transform: scale(1.1); }\n\n.vue-audio-mixer-transport-record-button {\n  display: block;\n  width: 0;\n  float: left;\n  height: 0;\n  border: 4px solid #d5d5d5;\n  border-radius: 75%;\n  margin: 50px auto 30px auto;\n  position: relative;\n  z-index: 1;\n  transition: all 0.1s;\n  -webkit-transition: all 0.1s;\n  -moz-transition: all 0.1s;\n  left: 125px; }\n  .vue-audio-mixer-transport-record-button:before {\n    content: '';\n    position: absolute;\n    top: -12px;\n    left: -30px;\n    bottom: -12px;\n    right: -30px;\n    border-radius: 50%;\n    border: 2px solid #d5d5d5;\n    z-index: 2;\n    transition: all 0.1s;\n    -webkit-transition: all 0.1s;\n    -moz-transition: all 0.1s; }\n  .vue-audio-mixer-transport-record-button:after {\n    content: '';\n    opacity: 0;\n    transition: opacity 0.2s;\n    -webkit-transition: opacity 0.2s;\n    -moz-transition: opacity 0.2s; }\n  .vue-audio-mixer-transport-record-button:hover:before, .vue-audio-mixer-transport-record-button:focus:before {\n    transform: scale(1.1);\n    -webkit-transform: scale(1.1);\n    -moz-transform: scale(1.1); }\n  .vue-audio-mixer-transport-record-button.vue-audio-mixer-transport-record-button-active {\n    border-color: red; }\n";
+styleInject(css_248z);
 
 // Import vue component
 
-// Declare install function executed by Vue.use()
 function install(Vue) {
-    if (install.installed) { return; }
-    install.installed = true;
-    Vue.component('vue-audio-mixer', __vue_component__$6);
-}
+  if (install.installed) return;
+  install.installed = true;
+  Vue.component('vue-audio-mixer', __vue_component__$6);
+} // Create module definition for Vue.use()
 
-// Create module definition for Vue.use()
-var plugin = {
-    install: install,
+const plugin = {
+  install
 };
 
+let GlobalVue = null;
 
-// Auto-install when vue is found (eg. in browser via <script> tag)
-var GlobalVue = null;
 if (typeof window !== 'undefined') {
-    GlobalVue = window.Vue;
+  GlobalVue = window.Vue;
 } else if (typeof global !== 'undefined') {
-    GlobalVue = global.Vue;
+  GlobalVue = global.Vue;
 }
+
 if (GlobalVue) {
-    GlobalVue.use(plugin);
-}
+  GlobalVue.use(plugin);
+} // To allow use as module (npm/webpack/etc.) export component
 
 export default __vue_component__$6;
 export { install };
