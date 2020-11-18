@@ -1,4 +1,5 @@
 <template>
+ 
   <Channel 
       v-if="loaded" 
       :index="_uid" 
@@ -6,14 +7,18 @@
       :title="title" 
       :defaultPan="pan" 
       :defaultMuted="muted" 
-      :defaultGain="gain" 
+      :defaultGain="defaultGain" 
       @gainChange="changeGain" 
       @muteChange="muteChange" 
+      @soloChange="soloChange" 
       @panChange="changePan" 
       :leftAnalyser="leftAnalyser" 
       :rightAnalyser="rightAnalyser" 
       :scriptProcessorNode="scriptProcessorNode" 
+      :showMute="true"
+      :mixerVars="mixerVars"
   />
+
 </template>
 
 <script>
@@ -30,7 +35,10 @@ export default {
       'defaultPan',
       'defaultGain',
       'defaultMuted',
-      'trackIndex'
+      'trackIndex',
+      'mixerVars',
+      'hidden',
+      'solodTracks'
   ],
   components:{Channel},
   data : function(){       
@@ -58,10 +66,20 @@ export default {
         pan                : 0,
         gain               : 0.8,
         loaded             : false,
+        mutedBySolo                :false,
+        mutedByMute                :false
       };
   },
 
   watch:{
+    
+    solodTracks(newVal)
+    {
+        if(this.solodTracks.length && this.solodTracks.indexOf(this.trackIndex) === -1)
+          this.muteChange(true, true);
+        else
+          this.muteChange(false, true);
+    },
 
 
   },
@@ -69,17 +87,17 @@ export default {
   created(){
     this.muted = this.defaultMuted;
     this.pan   = this.defaultPan;
-    this.gain  = this.defaultGain;
+    this.gainValue  = this.defaultGain.toString();
 
     this.scriptProcessorNode = this.context.createScriptProcessor(2048, 1, 1);
-    EventBus.$on('play', this.playSound);
-    EventBus.$on('stop', this.stopSound);
+    EventBus.$on(this.mixerVars.instance_id+'play', this.playSound);
+    EventBus.$on(this.mixerVars.instance_id+'stop', this.stopSound);
     this.loadSound();
   },
 
   beforeDestroy() {
-    EventBus.$off('play',this.playSound);
-    EventBus.$off('stop',this.stopSound);
+    EventBus.$off(this.mixerVars.instance_id+'play',this.playSound);
+    EventBus.$off(this.mixerVars.instance_id+'stop',this.stopSound);
   },
 
 
@@ -89,32 +107,65 @@ export default {
   },
   methods: {
 
+
+    mute()
+    {
+      this.gainValue = this.gainNode.gain.value; // store gain value
+      this.gainNode.gain.value = 0; // mute the gain node
+      this.muted = true;
+      this.$emit('muteChange', {index:this.trackIndex,muted:this.muted});
+    },
+
+    unMute()
+    {
+      this.muted = false;
+      this.gainNode.gain.value = this.gainValue; // restore previous gain value
+      this.$emit('muteChange', {index:this.trackIndex,muted:this.muted});
+    },
+
+    
+
     /*
     * MUTE CHANGE
     * Event when mute changes
     */
 
-    muteChange(value){
+    muteChange(value, triggered_from_solo){
+
+        // don't mute hidden tracks
+        if(this.hidden)
+          return;
 
 
-        if(value){
-            this.gainValue = this.gainNode.gain.value; // store gain value
-            this.gainNode.gain.value = 0; // mute the gain node
-            this.muted = true;
+        if(triggered_from_solo)
+        {
+          if(value && !this.mutedByMute && !this.mutedBySolo)
+            this.mute();
+          
+          if(!value && !this.mutedByMute)
+            this.unMute();
+        
+          this.mutedBySolo = value;
+        }else{
+          if(value && !this.mutedByMute && !this.mutedBySolo)
+            this.mute();
+          
+          if(!value && !this.mutedBySolo)
+            this.unMute();
+
+          this.mutedByMute = value;
         }
-        else{
-            this.muted = false;
-            this.gainNode.gain.value = this.gainValue; // restore previous gain value
-        }
 
-        this.$emit('muteChange', {index:this.trackIndex,muted:this.muted});
+    },
 
+    soloChange(value){
+        this.$emit('soloChange', {index:this.trackIndex});
     },
 
     changeGain(gain)
     {
-        this.gainValue = gain;
-        this.gain = gain;
+      this.gainValue = gain;
+      //this.gain = gain;
 
       if(!this.muted){
         this.gainNode.gain.value = gain;
@@ -151,7 +202,7 @@ export default {
             this.context.decodeAudioData(request.response, (buffer) => { // sound loaded
                 // when the audio is decoded play the sound
                 this.buffer=buffer;
-                EventBus.$emit('track_loaded', this.buffer.duration);
+                EventBus.$emit(this.mixerVars.instance_id+'track_loaded', this.buffer.duration);
                 this.setupAudioNodes();
 
             }, this.onError);
@@ -214,11 +265,11 @@ export default {
 
         // setup a analyzers
         this.leftAnalyser = this.context.createAnalyser();
-        this.leftAnalyser.smoothingTimeConstant = 0.0;
+        this.leftAnalyser.smoothingTimeConstant = 0.6;
         this.leftAnalyser.fftSize = 1024;
  
         this.rightAnalyser = this.context.createAnalyser();
-        this.rightAnalyser.smoothingTimeConstant = 0.0;
+        this.rightAnalyser.smoothingTimeConstant = 0.6;
         this.rightAnalyser.fftSize = 1024;
 
 
@@ -251,8 +302,17 @@ export default {
 
 
         // initial values
-        this.muteChange(this.muted);
-        this.changeGain(this.gain);
+        // 
+
+        let mutedBySolo = this.mutedBySolo;
+        this.mutedBySolo = false;
+        this.mutedByMute = false;
+       
+        this.gainNode.gain.value = this.gainValue;
+        this.changeGain(this.gainValue);
+
+        this.muteChange(this.muted, mutedBySolo);
+
         this.changePan(this.pan);
 
 
@@ -279,9 +339,9 @@ export default {
         this.splitter.disconnect();
 
         if(this.playFrom)
-            EventBus.$emit('play', this.playFrom);
+            EventBus.$emit(this.mixerVars.instance_id+'play', this.playFrom);
 
-        EventBus.$emit('ended',this._uid);
+        EventBus.$emit(this.mixerVars.instance_id+'ended',this._uid);
 
     },
 

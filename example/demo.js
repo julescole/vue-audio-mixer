@@ -10183,10 +10183,12 @@
 
   const EventBus = new Vue();
 
+  var variables = {"marginBetweenChannelsSmall":"1","channelHeight":"200","meterHeight":"210","channelWidthSmall":"40","meterWidthSmall":"5","meterWidthBetweenSmall":"2","channelSliderThumbSizeSmall":"0.4","channelWidthMedium":"57","marginBetweenChannelsMedium":"2","meterWidthMedium":"10","meterWidthBetweenMedium":"5","channelSliderThumbSizeMedium":"0.6","colourSchemeOne":"#4ba7b7","colourSchemeTwo":"#4ba7b7","channelLabelBackgroundColour":"#4ba7b7","masterChannelLabelBackgroundColour":"#000","channelLabelTextColour":"#FFFFFF","channelStripBackgroundColour":"#16191c","channelBackgroundColour ":"rgba(41,44,48,0.2)","masterChannelBackgroundColour":"#4ba7b7","channelMuteButtonBackgroundColour":"#666B73","channelMuteButtonBackgroundColourActive":"#911","channelMuteButtonBorderColour":"#000","channelMuteButtonTextColourHover":"#FFF","channelMuteButtonTextColourActive":"#FFF","channelSoloButtonBackgroundColourActive":"#1cdd20","channelSoloButtonTextColourActive":"#FFF","channelPannerTextColour":"rgb(255, 255, 255)","loaderInnerColour":"#1d7a9c","loaderOuterColour":"#00a7cc","loaderTextColour":"#1d7a9c","sliderInputBackground":"repeating-linear-gradient(90deg, #000, #3b3e41 0.0625em, transparent 0.0625em, transparent 0.75em) no-repeat 50% 0.75em border-box, ","sliderTrackColour":"#15181b","sliderThumbBackground":"radial-gradient(#ebe1e0 10%, rgba(235, 225, 224, 0.2) 10%, rgba(235, 225, 224, 0) 72%) no-repeat 50% 50%, radial-gradient(at 100% 50%, #e9dfde, #eae1de 71%, rgba(0, 0, 0, 0) 71%) no-repeat 2.5em 50%, linear-gradient(90deg, #e9dfde, #d0c8c6) no-repeat 100% 50%, radial-gradient(at 0 50%, #d0c6c5, #c6baba 71%, rgba(0, 0, 0, 0) 71%) no-repeat 0.75em 50%, linear-gradient(90deg, #e3d9d8, #d0c6c5) no-repeat 0 50%, linear-gradient(#cdc0c0, #fcf5ef, #fcf5ef, #cdc0c0)","progressBarBackgroundColour":"#4c4c4c","progressBarCursorColour":"#b6c8e1","transportTimeBackground":"#000","transportTimeTextColour":"#fff","transportButtonsColour":"#d5d5d5"};
+
   //
   var script = {
     name: 'Channel',
-    props: ['index', 'trackIndex', 'title', 'context', 'url', 'output', 'leftAnalyser', 'rightAnalyser', 'scriptProcessorNode', 'defaultPan', 'defaultGain', 'defaultMuted'],
+    props: ['index', 'trackIndex', 'title', 'context', 'url', 'output', 'leftAnalyser', 'rightAnalyser', 'scriptProcessorNode', 'defaultPan', 'defaultGain', 'defaultMuted', 'showMute', 'isMaster', 'mixerVars', 'solodTracks'],
     components: {
       VueKnobControl
     },
@@ -10204,11 +10206,29 @@
         ctx: false,
         gain: 0.8,
         pan: 0,
+        soloModel: false,
         mute: false,
-        meterHeight: 400,
-        meterWidth: 10,
+        meterHeight: parseInt(variables.meterHeight),
         titleModel: ''
       };
+    },
+    computed: {
+      pannerSize() {
+        return this.mixerVars.theme_size == 'Small' ? 30 : 40;
+      },
+
+      meterWidth() {
+        return parseInt(variables['meterWidth' + this.mixerVars.theme_size]);
+      },
+
+      meterWidthBetween() {
+        return parseInt(variables['meterWidthBetween' + this.mixerVars.theme_size]);
+      },
+
+      formattedGain() {
+        return this.pad(Math.round(this.gain * 100), 3);
+      }
+
     },
     watch: {
       pan: function () {
@@ -10217,6 +10237,9 @@
       mute: function () {
         this.muteChange();
       },
+      soloModel: function (newVal) {
+        this.soloChange(this.trackIndex, newVal);
+      },
       titleModel: function () {
         this.titleChange();
       }
@@ -10224,7 +10247,7 @@
 
     created() {
       this.titleModel = 'Track ' + (this.trackIndex + 1);
-      EventBus.$on('ended', this.ended);
+      EventBus.$on(this.mixerVars.instance_id + 'ended', this.ended);
 
       this.scriptProcessorNode.onaudioprocess = () => {
         this.drawMeter();
@@ -10232,7 +10255,7 @@
     },
 
     beforeDestroy() {
-      EventBus.$off('ended', this.ended);
+      EventBus.$off(this.mixerVars.instance_id + 'ended', this.ended);
     },
 
     mounted() {
@@ -10251,6 +10274,12 @@
     },
 
     methods: {
+      pad(n, width, z) {
+        z = z || '0';
+        n = n + '';
+        return n.length >= width ? n : new Array(width - n.length + 1).join(z) + n;
+      },
+
       ended(index) {
         if (index == this.index) {
           setTimeout(() => {
@@ -10260,9 +10289,7 @@
       },
 
       changeGain() {
-        if (!this.mute) {
-          this.$emit('gainChange', this.gain);
-        }
+        this.$emit('gainChange', this.gain);
       },
 
       changePan() {
@@ -10273,8 +10300,15 @@
         this.$emit('muteChange', this.mute);
       },
 
+      soloChange(trackIndex, is_solo) {
+        EventBus.$emit(this.mixerVars.instance_id + 'soloChange', {
+          index: trackIndex,
+          solo: is_solo
+        });
+      },
+
       titleChange() {
-        this.$emit('titleChange', this.titleModel);
+        this.$emit(this.mixerVars.instance_id + 'titleChange', this.titleModel);
       },
 
       getAverageVolume(array) {
@@ -10296,7 +10330,7 @@
         this.ctx.fillStyle = "#15181b"; // create background to meters
 
         this.ctx.fillRect(0, 0, this.meterWidth, this.meterHeight + 200);
-        this.ctx.fillRect(this.meterWidth + 5, 0, this.meterWidth, this.meterHeight + 200);
+        this.ctx.fillRect(this.meterWidth + this.meterWidthBetween, 0, this.meterWidth, this.meterHeight + 200);
       },
 
       drawMeter() {
@@ -10333,10 +10367,10 @@
         this.ctx.fillStyle = this.gradient; // create the meters (ctx.meterHeight/100) is 1% of the meter height
 
         this.ctx.fillRect(0, this.meterHeight - average * (this.meterHeight / 100), this.meterWidth, this.meterHeight + 200);
-        this.ctx.fillRect(this.meterWidth + 5, this.meterHeight - average2 * (this.meterHeight / 100), this.meterWidth, this.meterHeight + 200); // create the bouncers
+        this.ctx.fillRect(this.meterWidth + this.meterWidthBetween, this.meterHeight - average2 * (this.meterHeight / 100), this.meterWidth, this.meterHeight + 200); // create the bouncers
 
         if (average > 0) this.ctx.fillRect(0, this.meterHeight - this.leftBouncer.average * (this.meterHeight / 100) - 2, this.meterWidth, this.leftBouncer.opacity);
-        if (average2 > 0) this.ctx.fillRect(this.meterWidth + 5, this.meterHeight - this.rightBouncer.average * (this.meterHeight / 100) - 2, this.meterWidth, this.rightBouncer.opacity);
+        if (average2 > 0) this.ctx.fillRect(this.meterWidth + this.meterWidthBetween, this.meterHeight - this.rightBouncer.average * (this.meterHeight / 100) - 2, this.meterWidth, this.rightBouncer.opacity);
       }
 
     }
@@ -10427,13 +10461,52 @@
     var _c = _vm._self._c || _h;
     return _c(
       "div",
-      { staticClass: "vue-audio-mixer-channel" },
+      {
+        staticClass: "vue-audio-mixer-channel",
+        class: { "with-panner": _vm.mixerVars.show_pan }
+      },
       [
+        _c(
+          "div",
+          {
+            staticClass: "vue-audio-mixer-channel-panner-container",
+            class: { "vue-audio-mixer-is-master": _vm.isMaster }
+          },
+          [
+            _vm.mixerVars.show_pan
+              ? _c("VueKnobControl", {
+                  staticClass: "vue-audio-mixer-channel-panner",
+                  attrs: {
+                    min: -90,
+                    max: 90,
+                    size: _vm.pannerSize,
+                    "stroke-width": 7,
+                    primaryColor: "#c40303",
+                    secondaryColor: "#adadad",
+                    textColor: "#000"
+                  },
+                  model: {
+                    value: _vm.pan,
+                    callback: function($$v) {
+                      _vm.pan = $$v;
+                    },
+                    expression: "pan"
+                  }
+                })
+              : _vm._e()
+          ],
+          1
+        ),
+        _vm._v(" "),
         _c("canvas", {
           staticClass: "vue-audio-mixer-channel-meter-canvas",
           staticStyle: { display: "block" },
-          attrs: { id: "canvas" + _vm._uid, width: "25", height: "400" }
+          attrs: { id: "canvas" + _vm._uid, width: "25", height: _vm.meterHeight }
         }),
+        _vm._v(" "),
+        _c("div", { staticClass: "slider_value" }, [
+          _vm._v(_vm._s(_vm.formattedGain))
+        ]),
         _vm._v(" "),
         _c("div", { staticClass: "vue-audio-mixer-channel-slider" }, [
           _c("input", {
@@ -10457,86 +10530,140 @@
           })
         ]),
         _vm._v(" "),
-        _c("div", { staticClass: "vue-audio-mixer-channel-mute-button" }, [
-          _c("label", [
-            _c("input", {
-              directives: [
-                {
-                  name: "model",
-                  rawName: "v-model",
-                  value: _vm.mute,
-                  expression: "mute"
-                }
-              ],
-              attrs: { type: "checkbox" },
-              domProps: {
-                checked: Array.isArray(_vm.mute)
-                  ? _vm._i(_vm.mute, null) > -1
-                  : _vm.mute
-              },
-              on: {
-                change: function($event) {
-                  var $$a = _vm.mute,
-                    $$el = $event.target,
-                    $$c = $$el.checked ? true : false;
-                  if (Array.isArray($$a)) {
-                    var $$v = null,
-                      $$i = _vm._i($$a, $$v);
-                    if ($$el.checked) {
-                      $$i < 0 && (_vm.mute = $$a.concat([$$v]));
+        _c(
+          "div",
+          {
+            directives: [
+              {
+                name: "show",
+                rawName: "v-show",
+                value: _vm.showMute,
+                expression: "showMute"
+              }
+            ],
+            staticClass: "vue-audio-mixer-channel-mute-button"
+          },
+          [
+            _c("label", [
+              _c("input", {
+                directives: [
+                  {
+                    name: "model",
+                    rawName: "v-model",
+                    value: _vm.mute,
+                    expression: "mute"
+                  }
+                ],
+                attrs: { type: "checkbox" },
+                domProps: {
+                  checked: Array.isArray(_vm.mute)
+                    ? _vm._i(_vm.mute, null) > -1
+                    : _vm.mute
+                },
+                on: {
+                  change: function($event) {
+                    var $$a = _vm.mute,
+                      $$el = $event.target,
+                      $$c = $$el.checked ? true : false;
+                    if (Array.isArray($$a)) {
+                      var $$v = null,
+                        $$i = _vm._i($$a, $$v);
+                      if ($$el.checked) {
+                        $$i < 0 && (_vm.mute = $$a.concat([$$v]));
+                      } else {
+                        $$i > -1 &&
+                          (_vm.mute = $$a
+                            .slice(0, $$i)
+                            .concat($$a.slice($$i + 1)));
+                      }
                     } else {
-                      $$i > -1 &&
-                        (_vm.mute = $$a.slice(0, $$i).concat($$a.slice($$i + 1)));
+                      _vm.mute = $$c;
                     }
-                  } else {
-                    _vm.mute = $$c;
                   }
                 }
-              }
-            }),
-            _vm._v(" "),
-            _c(
-              "span",
-              { staticClass: "vue-audio-mixer-channel-mute-button-label" },
-              [_vm._v("M")]
-            )
-          ])
-        ]),
+              }),
+              _vm._v(" "),
+              _c(
+                "span",
+                { staticClass: "vue-audio-mixer-channel-mute-button-label" },
+                [_vm._v("M")]
+              )
+            ])
+          ]
+        ),
         _vm._v(" "),
-        _c("VueKnobControl", {
-          staticClass: "vue-audio-mixer-channel-panner",
-          attrs: {
-            min: -90,
-            max: 90,
-            size: 40,
-            "stroke-width": 7,
-            primaryColor: "#c40303",
-            secondaryColor: "#adadad",
-            textColor: "#000"
-          },
-          model: {
-            value: _vm.pan,
-            callback: function($$v) {
-              _vm.pan = $$v;
-            },
-            expression: "pan"
-          }
-        }),
+        _vm.isMaster && !_vm.showMute
+          ? _c("div", { staticClass: "logo" })
+          : _vm._e(),
         _vm._v(" "),
         _c(
           "div",
           {
-            staticClass: "vue-audio-mixer-channel-label",
-            staticStyle: { height: "14px" }
+            directives: [
+              {
+                name: "show",
+                rawName: "v-show",
+                value: !_vm.isMaster,
+                expression: "!isMaster"
+              }
+            ],
+            staticClass: "vue-audio-mixer-channel-solo-button"
           },
           [
-            _c("label", { attrs: { "data-label": "0" } }, [
-              _vm._v(" " + _vm._s(_vm.title))
+            _c("label", [
+              _c("input", {
+                directives: [
+                  {
+                    name: "model",
+                    rawName: "v-model",
+                    value: _vm.soloModel,
+                    expression: "soloModel"
+                  }
+                ],
+                attrs: { type: "checkbox" },
+                domProps: {
+                  checked: Array.isArray(_vm.soloModel)
+                    ? _vm._i(_vm.soloModel, null) > -1
+                    : _vm.soloModel
+                },
+                on: {
+                  change: function($event) {
+                    var $$a = _vm.soloModel,
+                      $$el = $event.target,
+                      $$c = $$el.checked ? true : false;
+                    if (Array.isArray($$a)) {
+                      var $$v = null,
+                        $$i = _vm._i($$a, $$v);
+                      if ($$el.checked) {
+                        $$i < 0 && (_vm.soloModel = $$a.concat([$$v]));
+                      } else {
+                        $$i > -1 &&
+                          (_vm.soloModel = $$a
+                            .slice(0, $$i)
+                            .concat($$a.slice($$i + 1)));
+                      }
+                    } else {
+                      _vm.soloModel = $$c;
+                    }
+                  }
+                }
+              }),
+              _vm._v(" "),
+              _c(
+                "span",
+                { staticClass: "vue-audio-mixer-channel-solo-button-label" },
+                [_vm._v("S")]
+              )
             ])
           ]
-        )
-      ],
-      1
+        ),
+        _vm._v(" "),
+        _c("div", { staticClass: "vue-audio-mixer-channel-label" }, [
+          _c("label", { attrs: { "data-label": "0" } }, [
+            _vm._v(" " + _vm._s(_vm.title))
+          ])
+        ])
+      ]
     )
   };
   var __vue_staticRenderFns__ = [];
@@ -10574,7 +10701,7 @@
   //
   var script$1 = {
     name: 'MixerChannel',
-    props: ['title', 'context', 'url', 'output', 'defaultPan', 'defaultGain', 'defaultMuted', 'trackIndex'],
+    props: ['title', 'context', 'url', 'output', 'defaultPan', 'defaultGain', 'defaultMuted', 'trackIndex', 'mixerVars', 'hidden', 'solodTracks'],
     components: {
       Channel: __vue_component__
     },
@@ -10606,44 +10733,51 @@
         gainValue: 0,
         pan: 0,
         gain: 0.8,
-        loaded: false
+        loaded: false,
+        mutedBySolo: false,
+        mutedByMute: false
       };
     },
-    watch: {},
+    watch: {
+      solodTracks(newVal) {
+        if (this.solodTracks.length && this.solodTracks.indexOf(this.trackIndex) === -1) this.muteChange(true, true);else this.muteChange(false, true);
+      }
+
+    },
 
     created() {
       this.muted = this.defaultMuted;
       this.pan = this.defaultPan;
-      this.gain = this.defaultGain;
+      this.gainValue = this.defaultGain.toString();
       this.scriptProcessorNode = this.context.createScriptProcessor(2048, 1, 1);
-      EventBus.$on('play', this.playSound);
-      EventBus.$on('stop', this.stopSound);
+      EventBus.$on(this.mixerVars.instance_id + 'play', this.playSound);
+      EventBus.$on(this.mixerVars.instance_id + 'stop', this.stopSound);
       this.loadSound();
     },
 
     beforeDestroy() {
-      EventBus.$off('play', this.playSound);
-      EventBus.$off('stop', this.stopSound);
+      EventBus.$off(this.mixerVars.instance_id + 'play', this.playSound);
+      EventBus.$off(this.mixerVars.instance_id + 'stop', this.stopSound);
     },
 
     mounted() {},
 
     methods: {
-      /*
-      * MUTE CHANGE
-      * Event when mute changes
-      */
-      muteChange(value) {
-        if (value) {
-          this.gainValue = this.gainNode.gain.value; // store gain value
+      mute() {
+        this.gainValue = this.gainNode.gain.value; // store gain value
 
-          this.gainNode.gain.value = 0; // mute the gain node
+        this.gainNode.gain.value = 0; // mute the gain node
 
-          this.muted = true;
-        } else {
-          this.muted = false;
-          this.gainNode.gain.value = this.gainValue; // restore previous gain value
-        }
+        this.muted = true;
+        this.$emit('muteChange', {
+          index: this.trackIndex,
+          muted: this.muted
+        });
+      },
+
+      unMute() {
+        this.muted = false;
+        this.gainNode.gain.value = this.gainValue; // restore previous gain value
 
         this.$emit('muteChange', {
           index: this.trackIndex,
@@ -10651,9 +10785,33 @@
         });
       },
 
+      /*
+      * MUTE CHANGE
+      * Event when mute changes
+      */
+      muteChange(value, triggered_from_solo) {
+        // don't mute hidden tracks
+        if (this.hidden) return;
+
+        if (triggered_from_solo) {
+          if (value && !this.mutedByMute && !this.mutedBySolo) this.mute();
+          if (!value && !this.mutedByMute) this.unMute();
+          this.mutedBySolo = value;
+        } else {
+          if (value && !this.mutedByMute && !this.mutedBySolo) this.mute();
+          if (!value && !this.mutedBySolo) this.unMute();
+          this.mutedByMute = value;
+        }
+      },
+
+      soloChange(value) {
+        this.$emit('soloChange', {
+          index: this.trackIndex
+        });
+      },
+
       changeGain(gain) {
-        this.gainValue = gain;
-        this.gain = gain;
+        this.gainValue = gain; //this.gain = gain;
 
         if (!this.muted) {
           this.gainNode.gain.value = gain;
@@ -10695,7 +10853,7 @@
             // sound loaded
             // when the audio is decoded play the sound
             this.buffer = buffer;
-            EventBus.$emit('track_loaded', this.buffer.duration);
+            EventBus.$emit(this.mixerVars.instance_id + 'track_loaded', this.buffer.duration);
             this.setupAudioNodes();
           }, this.onError);
         };
@@ -10739,10 +10897,10 @@
         // setup a analyzers
 
         this.leftAnalyser = this.context.createAnalyser();
-        this.leftAnalyser.smoothingTimeConstant = 0.0;
+        this.leftAnalyser.smoothingTimeConstant = 0.6;
         this.leftAnalyser.fftSize = 1024;
         this.rightAnalyser = this.context.createAnalyser();
-        this.rightAnalyser.smoothingTimeConstant = 0.0;
+        this.rightAnalyser.smoothingTimeConstant = 0.6;
         this.rightAnalyser.fftSize = 1024; // Create a gain node.
 
         this.gainNode = this.context.createGain(); // Create a panner node.
@@ -10761,9 +10919,14 @@
         this.splitter.connect(this.rightAnalyser, 1, 0);
         this.pannerNode.connect(this.output); //this.leftAnalyser.connect(this.scriptProcessorNode);
         // initial values
+        // 
 
-        this.muteChange(this.muted);
-        this.changeGain(this.gain);
+        let mutedBySolo = this.mutedBySolo;
+        this.mutedBySolo = false;
+        this.mutedByMute = false;
+        this.gainNode.gain.value = this.gainValue;
+        this.changeGain(this.gainValue);
+        this.muteChange(this.muted, mutedBySolo);
         this.changePan(this.pan);
 
         this.sourceNode.onended = () => {
@@ -10782,8 +10945,8 @@
         this.leftAnalyser.disconnect();
         this.rightAnalyser.disconnect();
         this.splitter.disconnect();
-        if (this.playFrom) EventBus.$emit('play', this.playFrom);
-        EventBus.$emit('ended', this._uid);
+        if (this.playFrom) EventBus.$emit(this.mixerVars.instance_id + 'play', this.playFrom);
+        EventBus.$emit(this.mixerVars.instance_id + 'ended', this._uid);
       }
 
     }
@@ -10805,14 +10968,17 @@
             title: _vm.title,
             defaultPan: _vm.pan,
             defaultMuted: _vm.muted,
-            defaultGain: _vm.gain,
+            defaultGain: _vm.defaultGain,
             leftAnalyser: _vm.leftAnalyser,
             rightAnalyser: _vm.rightAnalyser,
-            scriptProcessorNode: _vm.scriptProcessorNode
+            scriptProcessorNode: _vm.scriptProcessorNode,
+            showMute: true,
+            mixerVars: _vm.mixerVars
           },
           on: {
             gainChange: _vm.changeGain,
             muteChange: _vm.muteChange,
+            soloChange: _vm.soloChange,
             panChange: _vm.changePan
           }
         })
@@ -10864,13 +11030,23 @@
   //
   //
   //
+  //
+  //
+  //
+  //
+  //
+  //
   var script$2 = {
     name: 'timedisplay',
-    props: ['progressTime', 'totalTime'],
+    props: ['progressTime', 'totalTime', 'mixerVars'],
     data: function () {
       return {};
     },
     computed: {
+      showMins() {
+        return this.totalTime > 61000;
+      },
+
       totalLength() {
         return this.formatTime(this.totalTime);
       },
@@ -10886,7 +11062,14 @@
         let mins = Math.floor(millis % 36e5 / 6e4);
         let secs = Math.floor(millis % 6e4 / 1000);
         let mill = Math.floor(millis % 1000);
-        var returns = [this.pad(mins, 2), this.pad(secs, 2), this.pad(mill, 2).substring(2, 0)];
+
+        if (!this.showMins) {
+          // if 60 seconds or less, don't show minutes
+          var returns = [0, this.pad(secs + mins * 60, 2), this.pad(mill, 2).substring(2, 0)];
+        } else {
+          var returns = [this.pad(mins, 2), this.pad(secs, 2), this.pad(mill, 2).substring(2, 0)];
+        }
+
         return returns;
       },
 
@@ -10909,23 +11092,43 @@
     var _h = _vm.$createElement;
     var _c = _vm._self._c || _h;
     return _c("div", { staticClass: "vue-audio-mixer-timer" }, [
-      _c("span", { staticClass: "progress-time" }, [
-        _c("span", [_vm._v(_vm._s(_vm.progressFormatted[0]))]),
-        _vm._v(":"),
-        _c("span", [_vm._v(_vm._s(_vm.progressFormatted[1]))]),
-        _vm._v(":"),
-        _c("span", [_vm._v(_vm._s(_vm.progressFormatted[2]))])
-      ]),
-      _vm._v(" "),
-      _c("span", [_vm._v(" / ")]),
-      _vm._v(" "),
-      _c("span", { staticClass: "total" }, [
-        _c("span", [_vm._v(_vm._s(_vm.totalLength[0]))]),
-        _vm._v(":"),
-        _c("span", [_vm._v(_vm._s(_vm.totalLength[1]))]),
-        _vm._v(":"),
-        _c("span", [_vm._v(_vm._s(_vm.totalLength[2]))])
-      ])
+      _c(
+        "span",
+        {
+          staticClass: "vue-audio-mixer-progress-time",
+          class: {
+            "vue-audio-mixer-show-total-time": _vm.mixerVars.show_total_time
+          }
+        },
+        [
+          _vm.showMins
+            ? _c("span", { staticClass: "vue-audio-mixer-timer-number" }, [
+                _vm._v(_vm._s(_vm.progressFormatted[0]))
+              ])
+            : _vm._e(),
+          _vm.showMins ? _c("span", [_vm._v(":")]) : _vm._e(),
+          _c("span", { staticClass: "vue-audio-mixer-timer-number" }, [
+            _vm._v(_vm._s(_vm.progressFormatted[1]))
+          ]),
+          _vm._v(":"),
+          _c("span", { staticClass: "vue-audio-mixer-timer-number" }, [
+            _vm._v(_vm._s(_vm.progressFormatted[2]))
+          ]),
+          _vm._v(" "),
+          _vm.mixerVars.show_total_time ? _c("span", [_vm._v(" / ")]) : _vm._e(),
+          _vm._v(" "),
+          _vm.mixerVars.show_total_time
+            ? _c("span", { staticClass: "total" }, [
+                _vm.showMins
+                  ? _c("span", [_vm._v(_vm._s(_vm.totalLength[0]) + ":")])
+                  : _vm._e(),
+                _c("span", [_vm._v(_vm._s(_vm.totalLength[1]))]),
+                _vm._v(":"),
+                _c("span", [_vm._v(_vm._s(_vm.totalLength[2]))])
+              ])
+            : _vm._e()
+        ]
+      )
     ])
   };
   var __vue_staticRenderFns__$2 = [];
@@ -10972,18 +11175,18 @@
   //
   //
   //
-  //
-  //
   var script$3 = {
-    name: 'time',
+    name: 'progressbar',
     props: ['progressPercent'],
 
     created() {
+      window.addEventListener('mousemove', this.doDrag);
       window.addEventListener("mouseup", this.triggerMouseUpEvent);
       window.addEventListener("touchend", this.triggerMouseUpEvent);
     },
 
     beforeDestroy() {
+      window.removeEventListener('mousemove', this.doDrag);
       window.removeEventListener("mouseup", this.triggerMouseUpEvent);
       window.removeEventListener("touchend", this.triggerMouseUpEvent);
     },
@@ -10997,7 +11200,7 @@
     },
     watch: {
       progressPercent: function (newVal) {
-        if (this.$refs['vue-audio-mixer-progress-bar']) this.progressBarPosition = this.$refs['vue-audio-mixer-progress-bar'].offsetWidth / 100 * newVal + 'px';
+        if (this.$refs['vue-audio-mixer-progress-bar'] && !this.dragging) this.progressBarPosition = this.$refs['vue-audio-mixer-progress-bar'].offsetWidth / 100 * newVal + 'px';
       }
     },
     computed: {
@@ -11020,21 +11223,22 @@
         if (this.dragging) this.progressBarClick(e);
       },
 
-      triggerMouseUpEvent() {
+      triggerMouseUpEvent(e) {
+        let doIt = this.dragging ? true : false;
         this.dragging = false;
+        if (doIt) this.progressBarClick(e, true);
       },
 
-      progressBarClick(e) {
+      progressBarClick(e, fdsa) {
         let target = this.$refs['vue-audio-mixer-progress-bar'];
         var rect = target.getBoundingClientRect();
         var x = e.clientX - rect.left; //x position within the element.
 
-        var percent = 100 / e.target.offsetWidth * x;
+        var percent = 100 / target.offsetWidth * x;
         percent = Math.round(percent);
         if (percent < 0 || percent > 100) return false; // only if mouse inside box
 
-        if (!this.dragging) this.$emit('percent', percent);
-        this.progressBarPosition = Math.round(x) + 'px';
+        if (!this.dragging) this.$emit('percent', percent);else this.progressBarPosition = Math.round(x) + 'px';
       }
 
     }
@@ -11053,11 +11257,7 @@
       {
         ref: "vue-audio-mixer-progress-bar",
         staticClass: "vue-audio-mixer-progress-bar",
-        on: {
-          mousemove: _vm.doDrag,
-          mousedown: _vm.startDrag,
-          click: _vm.progressBarClick
-        }
+        on: { mousedown: _vm.startDrag }
       },
       [
         _c("div", {
@@ -11270,7 +11470,7 @@
   //
   var script$6 = {
     name: 'app',
-    props: ['config'],
+    props: ['config', 'size', 'showPan', 'showTotalTime'],
     components: {
       MixerChannel: __vue_component__$1,
       Channel: __vue_component__,
@@ -11301,11 +11501,14 @@
         overRideProgressBarPosition: false,
         progressBarPosition: 0,
         tracks: [],
+        solodTracks: [],
         tracksLoaded: 0
       };
     },
 
     created() {
+      this.currentTime = Date.now();
+      this.startedAt = this.currentTime;
       this.checkConfig();
       var AudioContext = window.AudioContext // Default
       || window.webkitAudioContext // Safari and old versions of Chrome
@@ -11315,23 +11518,29 @@
       this.gainNode.connect(this.context.destination);
       this.scriptProcessorNode = this.context.createScriptProcessor(2048, 1, 1);
       this.setupAudioNodes();
-      EventBus.$on('track_loaded', this.trackLoaded);
-      EventBus.$on('stop', this.stopped);
-      EventBus.$on('play', this.started);
+      EventBus.$on(this.mixerVars.instance_id + 'track_loaded', this.trackLoaded);
+      EventBus.$on(this.mixerVars.instance_id + 'stop', this.stopped);
+      EventBus.$on(this.mixerVars.instance_id + 'play', this.started);
+      EventBus.$on(this.mixerVars.instance_id + 'soloChange', this.detectedSoloChange);
       setInterval(() => {
         if (this.playing) this.currentTime = Date.now();
       }, 1);
     },
 
     beforeDestroy() {
-      EventBus.$off('track_loaded', this.trackLoaded);
-      EventBus.$off('stop', this.stopped);
-      EventBus.$off('play', this.started);
+      EventBus.$off(this.mixerVars.instance_id + 'soloChange', this.detectedSoloChange);
+      EventBus.$off(this.mixerVars.instance_id + 'track_loaded', this.trackLoaded);
+      EventBus.$off(this.mixerVars.instance_id + 'stop', this.stopped);
+      EventBus.$off(this.mixerVars.instance_id + 'play', this.started);
     },
 
     watch: {
       progressPercent: function (newVal) {
-        if (newVal >= 100) EventBus.$emit('stop');
+        if (newVal >= 100) EventBus.$emit(this.mixerVars.instance_id + 'stop');
+      },
+
+      loading(newVal) {
+        this.$emit('loaded', !newVal);
       },
 
       trackSettings(newVal) {
@@ -11340,20 +11549,58 @@
 
     },
     computed: {
+      visibleTracks() {
+        return this.tracks.filter(t => !t.hidden);
+      },
+
+      mixerWidth() {
+        let width = 69; // channel width of medium
+
+        if (this.mixerVars.theme_size == 'Small') {
+          width = 51; // channel width of small
+        }
+
+        return width * (this.visibleTracks.length + 1) + 'px';
+      },
+
+      mixerVars() {
+        return {
+          'theme_size': this.themeSize,
+          'instance_id': this._uid,
+          'show_pan': this.showPan,
+          'show_total_time': this.showTotalTime
+        };
+      },
+
+      trackClass() {
+        return 'vue-audio-mixer-theme-tracks-' + this.tracks.length;
+      },
+
+      themeClass() {
+        let className = 'vue-audio-mixer-theme-' + this.themeSize.toLowerCase();
+        let toReturn = {};
+        toReturn[className] = true;
+        return toReturn;
+      },
+
+      themeSize() {
+        if (this.size && this.size.toLowerCase() == 'small') {
+          return 'Small';
+        }
+
+        return 'Medium';
+      },
+
       // the starter config for the current settings
       trackSettings() {
         return {
           tracks: this.tracks,
           master: {
-            "pan": this.masterPanValue,
-            "gain": this.masterGainValue,
+            "pan": parseFloat(this.masterPanValue),
+            "gain": parseFloat(this.masterGainValue),
             "muted": this.masterMuted
           }
         };
-      },
-
-      mixerwidth() {
-        return this.tracks.length * 105 + 105 + 'px';
       },
 
       progress() {
@@ -11374,16 +11621,27 @@
 
     },
     methods: {
+      detectedSoloChange(track) {
+        let index = this.solodTracks.indexOf(track.index);
+
+        if (index > -1) {
+          if (!track.solo) this.solodTracks.splice(index, 1);
+        } else {
+          if (track.solo) this.solodTracks.push(track.index);
+        }
+      },
+
       playFromPercent(percent) {
         if (this.playing) {
           this.restart = true;
-          EventBus.$emit('stop');
+          EventBus.$emit(this.mixerVars.instance_id + 'stop');
         }
 
+        this.currentTime = Date.now();
         this.pausedAt = this.totalDuration / 100 * percent;
-        this.startedAt = Date.now() - this.pausedAt;
+        this.startedAt = this.currentTime - this.pausedAt;
         if (this.restart) setTimeout(() => {
-          EventBus.$emit('play', this.pausedAt);
+          EventBus.$emit(this.mixerVars.instance_id + 'play', this.pausedAt);
         }, 10);
         this.restart = false;
       },
@@ -11411,17 +11669,21 @@
       togglePlay() {
         if (this.playing) {
           this.pausedAt = this.progress;
-          EventBus.$emit('stop');
+          EventBus.$emit(this.mixerVars.instance_id + 'stop');
+        } else if (this.progressPercent >= 100) {
+          // it's at the end, so restart
+          this.playing = true;
+          this.playFromPercent(0);
         } else {
           this.startedAt = Date.now() - this.progress;
-          EventBus.$emit('play', this.pausedAt);
+          EventBus.$emit(this.mixerVars.instance_id + 'play', this.pausedAt);
         }
       },
 
       stop() {
         this.pausedAt = 0;
         this.startedAt = this.currentTime;
-        EventBus.$emit('stop');
+        EventBus.$emit(this.mixerVars.instance_id + 'stop');
       },
 
       trackLoaded(duration) {
@@ -11434,16 +11696,18 @@
       },
 
       changeGain(value) {
-        this.tracks[value.index].gain = value.gain;
+        this.tracks[value.index].gain = parseFloat(value.gain);
       },
 
       changePan(value) {
-        this.tracks[value.index].pan = value.pan;
+        this.tracks[value.index].pan = parseFloat(value.pan);
       },
 
       changeMute(value) {
         this.tracks[value.index].muted = value.muted;
       },
+
+      changeSolo(value) {},
 
       /************************************************************
       *
@@ -11526,7 +11790,11 @@
     var _c = _vm._self._c || _h;
     return _c(
       "div",
-      { staticClass: "vue-audio-mixer", style: { width: _vm.mixerwidth } },
+      {
+        staticClass: "vue-audio-mixer",
+        class: [_vm.themeClass, _vm.trackClass],
+        style: { width: _vm.mixerWidth }
+      },
       [
         _vm.loading
           ? _c("Loader", { attrs: { percentLoaded: _vm.loadingPercent } })
@@ -11542,69 +11810,107 @@
                 value: !_vm.loading,
                 expression: "!loading"
               }
-            ]
+            ],
+            staticClass: "vue-audio-mixer-loading-hider"
           },
           [
             _c(
               "div",
-              { staticClass: "vue-audio-mixer-channel-strip" },
+              {
+                ref: "channelstrip",
+                staticClass: "vue-audio-mixer-channel-strip"
+              },
               [
-                _vm._l(_vm.tracks, function(track, index) {
-                  return _c("MixerChannel", {
-                    key: index,
-                    attrs: {
-                      title: track.title,
-                      defaultPan: track.pan,
-                      defaultGain: track.gain,
-                      defaultMuted: track.muted,
-                      context: _vm.context,
-                      output: _vm.gainNode,
-                      url: track.url,
-                      trackIndex: index
-                    },
-                    on: {
-                      panChange: _vm.changePan,
-                      gainChange: _vm.changeGain,
-                      muteChange: _vm.changeMute
-                    }
-                  })
+                _c(
+                  "div",
+                  [
+                    _vm._l(_vm.tracks, function(track, index) {
+                      return _c("MixerChannel", {
+                        directives: [
+                          {
+                            name: "show",
+                            rawName: "v-show",
+                            value: !track.hidden,
+                            expression: "!track.hidden"
+                          }
+                        ],
+                        key: index,
+                        attrs: {
+                          title: track.title,
+                          defaultPan: track.pan,
+                          hidden: track.hidden,
+                          defaultGain: track.gain,
+                          defaultMuted: track.muted,
+                          context: _vm.context,
+                          output: _vm.gainNode,
+                          url: track.url,
+                          solodTracks: _vm.solodTracks,
+                          trackIndex: index,
+                          mixerVars: _vm.mixerVars
+                        },
+                        on: {
+                          panChange: _vm.changePan,
+                          gainChange: _vm.changeGain,
+                          muteChange: _vm.changeMute,
+                          soloChange: _vm.changeSolo
+                        }
+                      })
+                    }),
+                    _vm._v(" "),
+                    _c("Channel", {
+                      attrs: {
+                        title: "Master",
+                        defaultPan: _vm.masterPanValue,
+                        defaultGain: _vm.masterGainValue,
+                        defaultMuted: _vm.masterMuted,
+                        leftAnalyser: _vm.leftAnalyser,
+                        rightAnalyser: _vm.rightAnalyser,
+                        scriptProcessorNode: _vm.scriptProcessorNode,
+                        showMute: false,
+                        isMaster: true,
+                        mixerVars: _vm.mixerVars
+                      },
+                      on: {
+                        muteChange: _vm.changeMasterMute,
+                        gainChange: _vm.changeMasterGain,
+                        panChange: _vm.changeMasterPan
+                      }
+                    })
+                  ],
+                  2
+                ),
+                _vm._v(" "),
+                _c("ProgressBar", {
+                  attrs: {
+                    progressPercent: _vm.progressPercent,
+                    mixerVars: _vm.mixerVars
+                  },
+                  on: { percent: _vm.playFromPercent }
                 }),
                 _vm._v(" "),
-                _c("Channel", {
-                  attrs: {
-                    title: "Master",
-                    defaultPan: _vm.masterPanValue,
-                    defaultGain: _vm.masterGainValue,
-                    defaultMuted: _vm.masterMuted,
-                    leftAnalyser: _vm.leftAnalyser,
-                    rightAnalyser: _vm.rightAnalyser,
-                    scriptProcessorNode: _vm.scriptProcessorNode
-                  },
-                  on: {
-                    muteChange: _vm.changeMasterMute,
-                    gainChange: _vm.changeMasterGain,
-                    panChange: _vm.changeMasterPan
-                  }
-                })
+                _c(
+                  "div",
+                  { staticClass: "time_and_transport" },
+                  [
+                    _c("TimeDisplay", {
+                      attrs: {
+                        progressTime: _vm.progress,
+                        totalTime: _vm.totalDuration,
+                        mixerVars: _vm.mixerVars
+                      }
+                    }),
+                    _vm._v(" "),
+                    _c("TransportButtons", {
+                      attrs: { playing: _vm.playing, mixerVars: _vm.mixerVars },
+                      on: { stop: _vm.stop, togglePlay: _vm.togglePlay }
+                    })
+                  ],
+                  1
+                )
               ],
-              2
-            ),
-            _vm._v(" "),
-            _c("TimeDisplay", {
-              attrs: { progressTime: _vm.progress, totalTime: _vm.totalDuration }
-            }),
-            _vm._v(" "),
-            _c("ProgressBar", {
-              attrs: { progressPercent: _vm.progressPercent },
-              on: { percent: _vm.playFromPercent }
-            }),
-            _vm._v(" "),
-            _c("TransportButtons", {
-              attrs: { playing: _vm.playing },
-              on: { stop: _vm.stop, togglePlay: _vm.togglePlay }
-            })
-          ],
-          1
+              1
+            )
+          ]
         )
       ],
       1
@@ -11669,7 +11975,7 @@
     }
   }
 
-  var css_248z = "@import url(\"https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap\");\n@import url(\"https://fonts.googleapis.com/css2?family=Open+Sans&display=swap\");\n:export {\n  colourschemeone: #4ba7b7; }\n\n.vue-audio-mixer-channel-label {\n  margin-top: 10px;\n  width: 85px;\n  font-size: 10px;\n  padding-top: 5px;\n  padding-bottom: 5px;\n  height: 1em;\n  overflow: auto;\n  clear: both;\n  float: left;\n  background: #4ba7b7;\n  color: #FFFFFF;\n  text-align: center;\n  border: none;\n  box-sizing: content-box; }\n\n.vue-audio-mixer-channel-strip {\n  background: transparent !important;\n  background: #16191c;\n  position: relative;\n  overflow: auto;\n  display: block;\n  float: left;\n  opacity: 1;\n  width: 100%; }\n\n.vue-audio-mixer-channel {\n  height: 435px;\n  margin: 5px;\n  padding: 5px;\n  padding-top: 50px;\n  box-sizing: content-box;\n  position: relative;\n  float: left;\n  display: block;\n  background: rgba(41, 44, 48, 0.2); }\n  .vue-audio-mixer-channel:last-child {\n    background: #4ba7b7 !important; }\n    .vue-audio-mixer-channel:last-child .vue-audio-mixer-channel-label {\n      background: #000 !important; }\n\n.vue-audio-mixer-channel-slider {\n  top: 230px;\n  left: -135px;\n  display: block;\n  float: left;\n  -ms-transform: rotate(270deg);\n  /* IE 9 */\n  -webkit-transform: rotate(270deg);\n  /* Chrome, Safari, Opera */\n  transform: rotate(270deg);\n  position: absolute; }\n\n.vue-audio-mixer-channel-meter-canvas {\n  margin-right: 50px;\n  margin-left: 10px;\n  display: block;\n  float: left; }\n\n@keyframes rotate {\n  0% {\n    -webkit-transform: rotate(0deg) scale(1);\n    transform: rotate(0deg) scale(1); }\n  50% {\n    -webkit-transform: rotate(180deg) scale(0.6);\n    transform: rotate(180deg) scale(0.6); }\n  100% {\n    -webkit-transform: rotate(360deg) scale(1);\n    transform: rotate(360deg) scale(1); } }\n\n@-webkit-keyframes ball-scale-ripple {\n  0% {\n    -webkit-transform: scale(0.1);\n    transform: scale(0.1);\n    opacity: 1; }\n  70% {\n    -webkit-transform: scale(1);\n    transform: scale(1);\n    opacity: 0.7; }\n  100% {\n    opacity: 0.0; } }\n\n@keyframes ball-scale-ripple {\n  0% {\n    -webkit-transform: scale(0.1);\n    transform: scale(0.1);\n    opacity: 1; }\n  70% {\n    -webkit-transform: scale(1);\n    transform: scale(1);\n    opacity: 0.7; }\n  100% {\n    opacity: 0.0; } }\n\n.vue-audio-mixer-loader-inner {\n  position: relative; }\n\n.vue-audio-mixer-loader-inner > div {\n  -webkit-animation-fill-mode: both;\n  animation-fill-mode: both;\n  position: absolute;\n  left: -20px;\n  top: -20px;\n  border: 2px solid #1d7a9c;\n  border-bottom-color: transparent;\n  border-top-color: transparent;\n  border-radius: 100%;\n  height: 35px;\n  width: 35px;\n  -webkit-animation: rotate 1s 0s ease-in-out infinite;\n  animation: rotate 1s 0s ease-in-out infinite; }\n\n.vue-audio-mixer-loader-inner > div:last-child {\n  display: inline-block;\n  top: -10px;\n  left: -10px;\n  width: 15px;\n  height: 15px;\n  -webkit-animation-duration: 0.5s;\n  animation-duration: 0.5s;\n  border-color: #00a7cc transparent #00a7cc transparent;\n  -webkit-animation-direction: reverse;\n  animation-direction: reverse; }\n\n.vue-audio-mixer-loader {\n  width: 100%;\n  height: 100px;\n  position: relative; }\n\n.vue-audio-mixer-loader-inner {\n  margin: 0 auto;\n  width: 1px; }\n\n.vue-audio-mixer-loader-text {\n  color: #1d7a9c;\n  text-align: center;\n  width: 100%;\n  font-size: 0.7em;\n  position: relative;\n  top: 50%; }\n\n.vue-audio-mixer {\n  min-width: 105px;\n  overflow: auto;\n  margin: 0 auto;\n  margin-top: 2rem;\n  font-family: 'Open Sans', sans-serif; }\n  .vue-audio-mixer * {\n    -webkit-touch-callout: none;\n    -webkit-user-select: none;\n    /* Disable selection/copy in UIWebView */ }\n\n* {\n  box-sizing: content-box; }\n\n.vue-audio-mixer-channel-mute-button {\n  position: absolute;\n  left: 10px;\n  top: 5px;\n  font-size: 10px;\n  cursor: pointer; }\n\n.vue-audio-mixer-channel-mute-button-label {\n  width: 18px;\n  text-align: center;\n  cursor: pointer; }\n\n.vue-audio-mixer-channel-mute-button label input {\n  display: none; }\n\n.vue-audio-mixer-channel-mute-button {\n  margin: 4px;\n  background-color: #666B73;\n  border-radius: 4px;\n  border: 1px solid #000;\n  overflow: auto;\n  float: left;\n  box-sizing: content-box; }\n\n.vue-audio-mixer-channel-mute-button label {\n  float: left;\n  margin-bottom: 0;\n  box-sizing: content-box; }\n\n.vue-audio-mixer-channel-mute-button label span {\n  text-align: center;\n  padding: 3px;\n  display: block;\n  border-radius: 4px;\n  box-sizing: content-box; }\n\n.vue-audio-mixer-channel-mute-button label input {\n  position: absolute;\n  top: -20px; }\n\n.vue-audio-mixer-channel-mute-button input:hover + span {\n  opacity: 0.8; }\n\n.vue-audio-mixer-channel-mute-button input:checked + span {\n  background-color: #911;\n  color: #FFF; }\n\n.vue-audio-mixer-channel-mute-button input:checked:hover + span {\n  opacity: 0.8;\n  color: #FFF; }\n\n.vue-audio-mixer-channel-panner {\n  width: 19px;\n  height: 10px;\n  position: absolute;\n  vertical-align: middle;\n  top: 4px;\n  right: 30px;\n  border: 0px;\n  background: none;\n  font: bold 7px Arial;\n  text-align: center;\n  color: white;\n  padding: 0px;\n  -webkit-appearance: none;\n  cursor: pointer; }\n\n.vue-audio-mixer-channel-slider-input {\n  align-self: center;\n  margin: 2px;\n  padding: 0;\n  width: 400px;\n  background: transparent;\n  background: repeating-linear-gradient(90deg, #000, #3b3e41 0.0625em, transparent 0.0625em, transparent 2em) no-repeat 50% 1.5em border-box, repeating-linear-gradient(90deg, #000, #3b3e41 0.0625em, transparent 0.0625em, transparent 2em) no-repeat 50% 0em border-box;\n  background-size: 390px 0.625em, 390px 0.625em, 100% 2.25em;\n  font-size: 1em;\n  cursor: pointer;\n  height: 2em; }\n\n.vue-audio-mixer-channel-slider-input, .vue-audio-mixer-channel-slider-input::-webkit-slider-runnable-track, .vue-audio-mixer-channel-slider-input::-webkit-slider-thumb {\n  -webkit-appearance: none; }\n\n.vue-audio-mixer-channel-slider-input::-webkit-slider-runnable-track {\n  position: relative;\n  width: 390px;\n  height: 0.1em;\n  border-radius: .1875em;\n  background: #15181b; }\n\n.vue-audio-mixer-channel-slider-input::-moz-range-track {\n  width: 390px;\n  height: 0.1em;\n  border-radius: .1875em;\n  background: #15181b; }\n\n.vue-audio-mixer-channel-slider-input::-ms-track {\n  border: none;\n  width: 390px;\n  height: 0.1em;\n  border-radius: .1875em;\n  color: transparent;\n  background: #15181b; }\n\n.vue-audio-mixer-channel-slider-input::-ms-fill-lower {\n  display: none; }\n\n.vue-audio-mixer-channel-slider-input::-webkit-slider-thumb {\n  font-size: 0.7em;\n  margin-top: -0.90em;\n  border: none;\n  width: 4em;\n  height: 2em;\n  border-radius: .5em;\n  box-shadow: -.125em 0 .25em #928886,  inset -1px 0 1px #fff;\n  background: radial-gradient(#ebe1e0 10%, rgba(235, 225, 224, 0.2) 10%, rgba(235, 225, 224, 0) 72%) no-repeat 50% 50%, radial-gradient(at 100% 50%, #e9dfde, #eae1de 71%, rgba(0, 0, 0, 0) 71%) no-repeat 2.5em 50%, linear-gradient(90deg, #e9dfde, #d0c8c6) no-repeat 100% 50%, radial-gradient(at 0 50%, #d0c6c5, #c6baba 71%, rgba(0, 0, 0, 0) 71%) no-repeat 0.75em 50%, linear-gradient(90deg, #e3d9d8, #d0c6c5) no-repeat 0 50%, linear-gradient(#cdc0c0, #fcf5ef, #fcf5ef, #cdc0c0);\n  background-size: 0.825em 100%; }\n\n.vue-audio-mixer-channel-slider-input::-moz-range-thumb {\n  font-size: 0.7em;\n  border: none;\n  width: 4em;\n  height: 2em;\n  border-radius: .5em;\n  box-shadow: -.125em 0 .25em #928886,  inset -1px 0 1px #fff;\n  background: radial-gradient(#ebe1e0 10%, rgba(235, 225, 224, 0.2) 10%, rgba(235, 225, 224, 0) 72%) no-repeat 50% 50%, radial-gradient(at 100% 50%, #e9dfde, #eae1de 71%, rgba(0, 0, 0, 0) 71%) no-repeat 2.5em 50%, linear-gradient(90deg, #e9dfde, #d0c8c6) no-repeat 100% 50%, radial-gradient(at 0 50%, #d0c6c5, #c6baba 71%, rgba(0, 0, 0, 0) 71%) no-repeat 0.75em 50%, linear-gradient(90deg, #e3d9d8, #d0c6c5) no-repeat 0 50%, linear-gradient(#cdc0c0, #fcf5ef, #fcf5ef, #cdc0c0);\n  background-size: 0.825em 100%; }\n\n.vue-audio-mixer-channel-slider-input::-ms-thumb {\n  font-size: 0.7em;\n  margin-top: -0.15em;\n  border: none;\n  width: 4em;\n  height: 2em;\n  border-radius: .5em;\n  box-shadow: -.125em 0 .25em #928886,  inset -1px 0 1px #fff;\n  background: radial-gradient(#ebe1e0 10%, rgba(235, 225, 224, 0.2) 10%, rgba(235, 225, 224, 0) 72%) no-repeat 50% 50%, radial-gradient(at 100% 50%, #e9dfde, #eae1de 71%, rgba(0, 0, 0, 0) 71%) no-repeat 2.5em 50%, linear-gradient(90deg, #e9dfde, #d0c8c6) no-repeat 100% 50%, radial-gradient(at 0 50%, #d0c6c5, #c6baba 71%, rgba(0, 0, 0, 0) 71%) no-repeat 0.75em 50%, linear-gradient(90deg, #e3d9d8, #d0c6c5) no-repeat 0 50%, linear-gradient(#cdc0c0, #fcf5ef, #fcf5ef, #cdc0c0);\n  background-size: 0.825em 100%; }\n\n.vue-audio-mixer-channel-slider-input::-webkit-slider-runnable-track:before, .vue-audio-mixer-channel-slider-input::-webkit-slider-runnable-track:after, .vue-audio-mixer-channel-slider-input #track:before, .vue-audio-mixer-channel-slider-input #track:after {\n  position: absolute;\n  font: 0.75em/8em trebuchet ms, arial, sans-serif; }\n\n.vue-audio-mixer-channel-slider-input::-webkit-slider-runnable-track:before, .vue-audio-mixer-channel-slider-input #track:before {\n  top: 50%;\n  right: 100%;\n  transform: translate(50%, -50%) rotate(90deg) translate(0, 32%); }\n\n.vue-audio-mixer-channel-slider-input::-webkit-slider-runnable-track:after, .vue-audio-mixer-channel-slider-input #track:after {\n  left: 50%;\n  width: 3em;\n  word-spacing: 1em; }\n\n.vue-audio-mixer-channel-slider-input:nth-of-type(1)::-webkit-slider-runnable-track:after, .vue-audio-mixer-channel-slider-input:nth-of-type(1) #track:after {\n  bottom: 100%;\n  transform: translate(-50%, 50%) rotate(90deg) translate(-4.375em);\n  text-align: right; }\n\n.vue-audio-mixer-channel-slider-input:nth-of-type(6)::-webkit-slider-runnable-track:after, .vue-audio-mixer-channel-slider-input:nth-of-type(6) #track:after {\n  top: 100%;\n  transform: translate(-50%, -50%) rotate(90deg) translate(4.375em); }\n\n.vue-audio-mixer-channel-slider-input:focus {\n  outline: none; }\n\n.vue-audio-mixer-channel-slider-input:focus::-webkit-slider-runnable-track {\n  background: #15181b; }\n\n.vue-audio-mixer-channel-slider-input:focus::-moz-range-track {\n  background: #15181b; }\n\n.vue-audio-mixer-channel-slider-input:focus::-ms-track {\n  background: #15181b; }\n\n.vue-audio-mixer-progress-bar {\n  margin: 5px;\n  background: #292c30;\n  height: 30px;\n  position: relative;\n  display: block;\n  clear: both; }\n\n.vue-audio-mixer-progress-cursor {\n  width: 2px;\n  height: 100%;\n  background: #b6c8e1;\n  position: absolute;\n  left: 0; }\n\n.vue-audio-mixer-transport {\n  overflow: auto;\n  clear: both;\n  display: block;\n  text-align: center;\n  width: 150px;\n  position: relative;\n  margin: 0 auto 0 auto; }\n\n.vue-audio-mixer-timer {\n  font-family: \"Share Tech Mono\";\n  color: #fff;\n  font-size: 2em;\n  padding: 10px;\n  overflow: auto;\n  position: relative;\n  display: block;\n  clear: both;\n  background: #000;\n  text-align: center;\n  margin: 5px; }\n  .vue-audio-mixer-timer span {\n    display: inline-block;\n    text-align: left; }\n    .vue-audio-mixer-timer span span {\n      width: 32.6px; }\n  .vue-audio-mixer-timer .progress-time {\n    width: 150px; }\n  .vue-audio-mixer-timer .total {\n    margin-left: 5px;\n    width: 140px; }\n\nbutton {\n  border: none;\n  padding: 0;\n  background: transparent; }\n\n.vue-audio-mixer-transport-play-button {\n  display: block;\n  width: 0;\n  float: left;\n  height: 0;\n  border-top: 18px solid transparent;\n  border-bottom: 18px solid transparent;\n  border-left: 21.6px solid #d5d5d5;\n  margin: 18px auto 30px auto;\n  position: relative;\n  z-index: 1;\n  transition: all 0.1s;\n  -webkit-transition: all 0.1s;\n  -moz-transition: all 0.1s;\n  left: 100px;\n  position: relative; }\n  .vue-audio-mixer-transport-play-button:focus, .vue-audio-mixer-transport-play-button:active {\n    outline: none; }\n  .vue-audio-mixer-transport-play-button:before {\n    content: '';\n    position: absolute;\n    top: -27px;\n    left: -41.4px;\n    bottom: -27px;\n    right: -12.6px;\n    border-radius: 50%;\n    border: 2px solid #d5d5d5;\n    z-index: -1;\n    transition: all 0.1s;\n    -webkit-transition: all 0.1s;\n    -moz-transition: all 0.1s; }\n  .vue-audio-mixer-transport-play-button:after {\n    content: '';\n    opacity: 0;\n    transition: opacity 0.2s;\n    -webkit-transition: opacity 0.2s;\n    -moz-transition: opacity 0.2s;\n    z-index: 2; }\n  .vue-audio-mixer-transport-play-button:hover:before, .vue-audio-mixer-transport-play-button:focus:before {\n    transform: scale(1.1);\n    -webkit-transform: scale(1.1);\n    -moz-transform: scale(1.1); }\n  .vue-audio-mixer-transport-play-button.vue-audio-mixer-transport-play-button-active {\n    border-color: transparent; }\n    .vue-audio-mixer-transport-play-button.vue-audio-mixer-transport-play-button-active span:nth-child(1), .vue-audio-mixer-transport-play-button.vue-audio-mixer-transport-play-button-active span:nth-child(2) {\n      content: '';\n      opacity: 1;\n      width: 2.57143px;\n      height: 28.8px;\n      background: #d5d5d5;\n      position: absolute;\n      right: 1.8px;\n      top: -14.4px;\n      border-left: 7.2px solid #d5d5d5; }\n    .vue-audio-mixer-transport-play-button.vue-audio-mixer-transport-play-button-active span:nth-child(1) {\n      right: 1.8px; }\n    .vue-audio-mixer-transport-play-button.vue-audio-mixer-transport-play-button-active span:nth-child(2) {\n      right: 16.2px; }\n\n.vue-audio-mixer-transport-start-button {\n  display: block;\n  float: left;\n  width: 0;\n  height: 0;\n  border-top: 18px solid transparent;\n  border-bottom: 18px solid transparent;\n  border-right: 21.6px solid #d5d5d5;\n  margin: 18px auto 18px auto;\n  position: relative;\n  z-index: 1;\n  transition: all 0.1s;\n  -webkit-transition: all 0.1s;\n  -moz-transition: all 0.1s; }\n  .vue-audio-mixer-transport-start-button:before {\n    content: '';\n    position: absolute;\n    top: -27px;\n    left: -16.2px;\n    bottom: -27px;\n    right: -37.8px;\n    border-radius: 50%;\n    border: 2px solid #d5d5d5;\n    z-index: 2;\n    transition: all 0.1s;\n    -webkit-transition: all 0.1s;\n    -moz-transition: all 0.1s; }\n  .vue-audio-mixer-transport-start-button:after {\n    content: \"\";\n    display: block;\n    width: 5px;\n    height: 20px;\n    background: #d5d5d5;\n    margin-top: -10px;\n    margin-left: -4px; }\n  .vue-audio-mixer-transport-start-button:hover:before, .vue-audio-mixer-transport-start-button:focus:before {\n    transform: scale(1.1);\n    -webkit-transform: scale(1.1);\n    -moz-transform: scale(1.1); }\n\n.vue-audio-mixer-transport-record-button {\n  display: block;\n  width: 0;\n  float: left;\n  height: 0;\n  border: 9px solid #d5d5d5;\n  border-radius: 75%;\n  margin: 50px auto 30px auto;\n  position: relative;\n  z-index: 1;\n  transition: all 0.1s;\n  -webkit-transition: all 0.1s;\n  -moz-transition: all 0.1s;\n  left: 125px; }\n  .vue-audio-mixer-transport-record-button:before {\n    content: '';\n    position: absolute;\n    top: -27px;\n    left: -30px;\n    bottom: -27px;\n    right: -30px;\n    border-radius: 50%;\n    border: 2px solid #d5d5d5;\n    z-index: 2;\n    transition: all 0.1s;\n    -webkit-transition: all 0.1s;\n    -moz-transition: all 0.1s; }\n  .vue-audio-mixer-transport-record-button:after {\n    content: '';\n    opacity: 0;\n    transition: opacity 0.2s;\n    -webkit-transition: opacity 0.2s;\n    -moz-transition: opacity 0.2s; }\n  .vue-audio-mixer-transport-record-button:hover:before, .vue-audio-mixer-transport-record-button:focus:before {\n    transform: scale(1.1);\n    -webkit-transform: scale(1.1);\n    -moz-transform: scale(1.1); }\n  .vue-audio-mixer-transport-record-button.vue-audio-mixer-transport-record-button-active {\n    border-color: red; }\n";
+  var css_248z = "@import url(\"https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap\");\n@import url(\"https://fonts.googleapis.com/css2?family=Open+Sans&display=swap\");\n.vue-audio-mixer-channel-label {\n  line-height: 0.6rem;\n  font-size: 0.55rem;\n  display: table;\n  padding: 2px;\n  margin-top: 5px;\n  width: 100%;\n  height: 30px;\n  overflow: hidden;\n  clear: both;\n  float: left;\n  background: #4ba7b7;\n  color: #FFFFFF;\n  text-align: center;\n  border: none;\n  box-sizing: border-box;\n  overflow: hidden; }\n  .vue-audio-mixer-channel-label label {\n    word-wrap: break-word;\n    display: table-cell;\n    vertical-align: middle;\n    word-break: break-word; }\n\n.logo {\n  position: absolute;\n  top: 10px;\n  left: 5px;\n  right: 5px; }\n  .logo img {\n    width: 100%; }\n\n.vue-audio-mixer-channel-strip {\n  background: transparent !important;\n  background: #16191c;\n  position: relative;\n  overflow: auto;\n  display: block;\n  opacity: 1;\n  display: inline-block; }\n\n.vue-audio-mixer-theme-small .vue-audio-mixer-channel {\n  margin-right: 1px;\n  width: 40px; }\n\n.vue-audio-mixer-theme-medium .vue-audio-mixer-channel {\n  margin-right: 2px;\n  width: 57px; }\n\n.with-panner {\n  margin-top: 40px; }\n\n.vue-audio-mixer-channel {\n  height: 245px;\n  padding: 5px;\n  padding-top: 41px;\n  box-sizing: content-box;\n  position: relative;\n  float: left;\n  display: block;\n  background: rgba(41, 44, 48, 0.2); }\n  .vue-audio-mixer-channel:last-child {\n    margin-right: 0px;\n    background: #4ba7b7 !important; }\n    .vue-audio-mixer-channel:last-child .vue-audio-mixer-channel-label {\n      background: #000 !important; }\n\n.vue-audio-mixer-channel-slider {\n  right: 17px;\n  top: 40px;\n  display: block;\n  float: left;\n  -ms-transform: rotate(270deg);\n  /* IE 9 */\n  -webkit-transform: rotate(270deg);\n  /* Chrome, Safari, Opera */\n  transform: rotate(270deg);\n  position: absolute;\n  transform-origin: right; }\n\n.vue-audio-mixer-theme-small .vue-audio-mixer-channel-meter-canvas {\n  margin-right: 40px; }\n\n.vue-audio-mixer-theme-medium .vue-audio-mixer-channel-meter-canvas {\n  margin-right: 57px; }\n\n.vue-audio-mixer-channel-meter-canvas {\n  margin-left: 2px;\n  display: block;\n  float: left; }\n\n@keyframes rotate {\n  0% {\n    -webkit-transform: rotate(0deg) scale(1);\n    transform: rotate(0deg) scale(1); }\n  50% {\n    -webkit-transform: rotate(180deg) scale(0.6);\n    transform: rotate(180deg) scale(0.6); }\n  100% {\n    -webkit-transform: rotate(360deg) scale(1);\n    transform: rotate(360deg) scale(1); } }\n\n@-webkit-keyframes ball-scale-ripple {\n  0% {\n    -webkit-transform: scale(0.1);\n    transform: scale(0.1);\n    opacity: 1; }\n  70% {\n    -webkit-transform: scale(1);\n    transform: scale(1);\n    opacity: 0.7; }\n  100% {\n    opacity: 0.0; } }\n\n@keyframes ball-scale-ripple {\n  0% {\n    -webkit-transform: scale(0.1);\n    transform: scale(0.1);\n    opacity: 1; }\n  70% {\n    -webkit-transform: scale(1);\n    transform: scale(1);\n    opacity: 0.7; }\n  100% {\n    opacity: 0.0; } }\n\n.vue-audio-mixer-loader-inner {\n  position: relative; }\n\n.vue-audio-mixer-loader-inner > div {\n  -webkit-animation-fill-mode: both;\n  animation-fill-mode: both;\n  position: absolute;\n  left: -20px;\n  top: -20px;\n  border: 2px solid #1d7a9c;\n  border-bottom-color: transparent;\n  border-top-color: transparent;\n  border-radius: 100%;\n  height: 35px;\n  width: 35px;\n  -webkit-animation: rotate 1s 0s ease-in-out infinite;\n  animation: rotate 1s 0s ease-in-out infinite; }\n\n.vue-audio-mixer-loader-inner > div:last-child {\n  display: inline-block;\n  top: -10px;\n  left: -10px;\n  width: 15px;\n  height: 15px;\n  -webkit-animation-duration: 0.5s;\n  animation-duration: 0.5s;\n  border-color: #00a7cc transparent #00a7cc transparent;\n  -webkit-animation-direction: reverse;\n  animation-direction: reverse; }\n\n.vue-audio-mixer-loader {\n  width: 100%;\n  height: 100px;\n  position: relative; }\n\n.vue-audio-mixer-loader-inner {\n  margin: 0 auto;\n  width: 1px; }\n\n.vue-audio-mixer-loader-text {\n  color: #1d7a9c;\n  text-align: center;\n  width: 100%;\n  font-size: 0.7em;\n  position: relative;\n  top: 50%; }\n\n.vue-audio-mixer {\n  display: inline-block;\n  min-width: 105px;\n  overflow: auto;\n  margin: 0 auto;\n  font-family: 'Open Sans', sans-serif;\n  text-align: center; }\n  .vue-audio-mixer * {\n    -webkit-touch-callout: none;\n    -webkit-user-select: none;\n    /* Disable selection/copy in UIWebView */ }\n\n.vue-audio-mixer-loading-hider {\n  display: inline-block; }\n\n* {\n  box-sizing: content-box; }\n\n.vue-audio-mixer-channel-mute-button, .vue-audio-mixer-channel-solo-button {\n  position: absolute;\n  left: 2px;\n  top: 5px;\n  cursor: pointer; }\n\n.vue-audio-mixer-theme-small .vue-audio-mixer-channel-solo-button {\n  left: 25px; }\n\n.vue-audio-mixer-theme-medium .vue-audio-mixer-channel-solo-button {\n  left: 35px; }\n\n.vue-audio-mixer-channel-mute-button-label, .vue-audio-mixer-channel-solo-button-label {\n  width: 18px;\n  text-align: center;\n  cursor: pointer; }\n\n.vue-audio-mixer-channel-mute-button label input, .vue-audio-mixer-channel-solo-button label input {\n  display: none; }\n\n.vue-audio-mixer-channel-mute-button, .vue-audio-mixer-channel-solo-button {\n  margin: 4px;\n  background-color: #666B73;\n  border-radius: 4px;\n  border: 1px solid #000;\n  overflow: auto;\n  float: left;\n  box-sizing: content-box; }\n\n.vue-audio-mixer-channel-mute-button label, .vue-audio-mixer-channel-solo-button label {\n  float: left;\n  margin-bottom: 0;\n  box-sizing: content-box; }\n\n.vue-audio-mixer-theme-small .vue-audio-mixer-channel-mute-button label span, .vue-audio-mixer-theme-small .vue-audio-mixer-channel-solo-button label span {\n  width: 8px;\n  font-size: 7px; }\n\n.vue-audio-mixer-theme-medium .vue-audio-mixer-channel-mute-button label span, .vue-audio-mixer-theme-medium .vue-audio-mixer-channel-solo-button label span {\n  width: 14px;\n  font-size: 12px; }\n\n.vue-audio-mixer-channel-mute-button label span, .vue-audio-mixer-channel-solo-button label span {\n  text-align: center;\n  padding: 3px;\n  width: 8px;\n  display: block;\n  border-radius: 4px;\n  box-sizing: content-box; }\n\n.vue-audio-mixer-channel-mute-button label input, .vue-audio-mixer-channel-solo-button label input {\n  position: absolute;\n  top: -20px; }\n\n.vue-audio-mixer-channel-mute-button input:hover + span, .vue-audio-mixer-channel-solo-button input:hover + span {\n  opacity: 0.8; }\n\n.vue-audio-mixer-channel-mute-button input:checked + span {\n  background-color: #911;\n  color: #FFF; }\n\n.vue-audio-mixer-channel-solo-button input:checked + span {\n  background-color: #1cdd20;\n  color: #FFF; }\n\n.vue-audio-mixer-channel-mute-button input:checked:hover + span, .vue-audio-mixer-channel-solo-button input:checked:hover + span {\n  opacity: 0.8;\n  color: #FFF; }\n\n.vue-audio-mixer-channel-panner-container {\n  top: -37px;\n  left: 0;\n  position: absolute;\n  width: 100%;\n  background: rgba(41, 44, 48, 0.2);\n  padding-left: 12px;\n  box-sizing: border-box; }\n  .vue-audio-mixer-channel-panner-container.vue-audio-mixer-is-master {\n    background: #4ba7b7 !important; }\n\n.vue-audio-mixer-theme-small .vue-audio-mixer-channel-panner-container {\n  top: -27px; }\n  .vue-audio-mixer-theme-small .vue-audio-mixer-channel-panner-container .knob-control__text-display {\n    font-size: 1.5rem; }\n\n.vue-audio-mixer-channel-panner {\n  width: 19px;\n  height: 10px;\n  margin-top: 2px;\n  border: 0px;\n  background: none;\n  font: bold 7px Arial;\n  text-align: center;\n  color: white;\n  padding: 0px;\n  -webkit-appearance: none;\n  cursor: pointer; }\n\n.vue-audio-mixer-channel-slider-input {\n  align-self: center;\n  margin: 2px;\n  padding: 0;\n  width: 190px;\n  margin-right: 7px;\n  background: transparent;\n  background: repeating-linear-gradient(90deg, #000, #3b3e41 0.0625em, transparent 0.0625em, transparent 0.75em) no-repeat 50% 0.75em border-box, repeating-linear-gradient(90deg, #000, #3b3e41 0.0625em, transparent 0.0625em, transparent 0.75em) no-repeat 50% 0em border-box;\n  background-size: 180px 0.625em, 180px 0.225em, 100% 2.25em;\n  font-size: 1em;\n  cursor: pointer;\n  height: 1em; }\n\n.vue-audio-mixer-channel-slider-input, .vue-audio-mixer-channel-slider-input::-webkit-slider-runnable-track, .vue-audio-mixer-channel-slider-input::-webkit-slider-thumb {\n  -webkit-appearance: none; }\n\n.vue-audio-mixer-channel-slider-input::-webkit-slider-runnable-track {\n  position: relative;\n  width: 180px;\n  height: 0.1em;\n  border-radius: .1875em;\n  background: #15181b; }\n\n.vue-audio-mixer-channel-slider-input::-moz-range-track {\n  width: 180px;\n  height: 0.1em;\n  border-radius: .1875em;\n  background: #15181b; }\n\n.vue-audio-mixer-channel-slider-input::-ms-track {\n  border: none;\n  width: 180px;\n  height: 0.1em;\n  border-radius: .1875em;\n  color: transparent;\n  background: #15181b; }\n\n.vue-audio-mixer-channel-slider-input::-ms-fill-lower {\n  display: none; }\n\n.vue-audio-mixer-theme-small .vue-audio-mixer-channel-slider-input::-webkit-slider-thumb {\n  font-size: 0.4em; }\n\n.vue-audio-mixer-theme-small .vue-audio-mixer-channel-slider-input::-moz-range-thumb {\n  font-size: 0.4em; }\n\n.vue-audio-mixer-theme-small .vue-audio-mixer-channel-slider-input:-ms-thumb {\n  font-size: 0.4em; }\n\n.vue-audio-mixer-theme-medium .vue-audio-mixer-channel-slider-input::-webkit-slider-thumb {\n  font-size: 0.6em; }\n\n.vue-audio-mixer-theme-medium .vue-audio-mixer-channel-slider-input::-moz-range-thumb {\n  font-size: 0.6em; }\n\n.vue-audio-mixer-theme-medium .vue-audio-mixer-channel-slider-input:-ms-thumb {\n  font-size: 0.6em; }\n\n.vue-audio-mixer-channel-slider-input::-webkit-slider-thumb {\n  margin-top: -0.90em;\n  border: none;\n  width: 4em;\n  height: 2em;\n  border-radius: .5em;\n  box-shadow: -.125em 0 .25em #928886,  inset -1px 0 1px #fff;\n  background: radial-gradient(#ebe1e0 10%, rgba(235, 225, 224, 0.2) 10%, rgba(235, 225, 224, 0) 72%) no-repeat 50% 50%, radial-gradient(at 100% 50%, #e9dfde, #eae1de 71%, rgba(0, 0, 0, 0) 71%) no-repeat 2.5em 50%, linear-gradient(90deg, #e9dfde, #d0c8c6) no-repeat 100% 50%, radial-gradient(at 0 50%, #d0c6c5, #c6baba 71%, rgba(0, 0, 0, 0) 71%) no-repeat 0.75em 50%, linear-gradient(90deg, #e3d9d8, #d0c6c5) no-repeat 0 50%, linear-gradient(#cdc0c0, #fcf5ef, #fcf5ef, #cdc0c0);\n  background-size: 0.825em 100%; }\n\n.vue-audio-mixer-channel-slider-input::-moz-range-thumb {\n  border: none;\n  width: 4em;\n  height: 2em;\n  border-radius: .5em;\n  box-shadow: -.125em 0 .25em #928886,  inset -1px 0 1px #fff;\n  background: radial-gradient(#ebe1e0 10%, rgba(235, 225, 224, 0.2) 10%, rgba(235, 225, 224, 0) 72%) no-repeat 50% 50%, radial-gradient(at 100% 50%, #e9dfde, #eae1de 71%, rgba(0, 0, 0, 0) 71%) no-repeat 2.5em 50%, linear-gradient(90deg, #e9dfde, #d0c8c6) no-repeat 100% 50%, radial-gradient(at 0 50%, #d0c6c5, #c6baba 71%, rgba(0, 0, 0, 0) 71%) no-repeat 0.75em 50%, linear-gradient(90deg, #e3d9d8, #d0c6c5) no-repeat 0 50%, linear-gradient(#cdc0c0, #fcf5ef, #fcf5ef, #cdc0c0);\n  background-size: 0.825em 100%; }\n\n.vue-audio-mixer-channel-slider-input::-ms-thumb {\n  margin-top: -0.15em;\n  border: none;\n  width: 4em;\n  height: 2em;\n  border-radius: .5em;\n  box-shadow: -.125em 0 .25em #928886,  inset -1px 0 1px #fff;\n  background: radial-gradient(#ebe1e0 10%, rgba(235, 225, 224, 0.2) 10%, rgba(235, 225, 224, 0) 72%) no-repeat 50% 50%, radial-gradient(at 100% 50%, #e9dfde, #eae1de 71%, rgba(0, 0, 0, 0) 71%) no-repeat 2.5em 50%, linear-gradient(90deg, #e9dfde, #d0c8c6) no-repeat 100% 50%, radial-gradient(at 0 50%, #d0c6c5, #c6baba 71%, rgba(0, 0, 0, 0) 71%) no-repeat 0.75em 50%, linear-gradient(90deg, #e3d9d8, #d0c6c5) no-repeat 0 50%, linear-gradient(#cdc0c0, #fcf5ef, #fcf5ef, #cdc0c0);\n  background-size: 0.825em 100%; }\n\n.vue-audio-mixer-channel-slider-input::-webkit-slider-runnable-track:before, .vue-audio-mixer-channel-slider-input::-webkit-slider-runnable-track:after, .vue-audio-mixer-channel-slider-input #track:before, .vue-audio-mixer-channel-slider-input #track:after {\n  position: absolute;\n  font: 0.75em/8em trebuchet ms, arial, sans-serif; }\n\n.slider_value {\n  position: absolute;\n  right: 10px;\n  top: 37px;\n  font-size: 10px; }\n\n.vue-audio-mixer-channel-slider-input::-webkit-slider-runnable-track:before, .vue-audio-mixer-channel-slider-input #track:before {\n  top: 50%;\n  right: 100%;\n  transform: translate(50%, -50%) rotate(90deg) translate(0, 32%); }\n\n.vue-audio-mixer-channel-slider-input::-webkit-slider-runnable-track:after, .vue-audio-mixer-channel-slider-input #track:after {\n  left: 50%;\n  width: 3em;\n  word-spacing: 1em; }\n\n.vue-audio-mixer-channel-slider-input:nth-of-type(1)::-webkit-slider-runnable-track:after, .vue-audio-mixer-channel-slider-input:nth-of-type(1) #track:after {\n  bottom: 100%;\n  transform: translate(-50%, 50%) rotate(90deg) translate(-4.375em);\n  text-align: right; }\n\n.vue-audio-mixer-channel-slider-input:nth-of-type(6)::-webkit-slider-runnable-track:after, .vue-audio-mixer-channel-slider-input:nth-of-type(6) #track:after {\n  top: 100%;\n  transform: translate(-50%, -50%) rotate(90deg) translate(4.375em); }\n\n.vue-audio-mixer-channel-slider-input:focus {\n  outline: none; }\n\n.vue-audio-mixer-channel-slider-input:focus::-webkit-slider-runnable-track {\n  background: #15181b; }\n\n.vue-audio-mixer-channel-slider-input:focus::-moz-range-track {\n  background: #15181b; }\n\n.vue-audio-mixer-channel-slider-input:focus::-ms-track {\n  background: #15181b; }\n\n.vue-audio-mixer-progress-bar {\n  margin-top: 1px;\n  background: #4c4c4c;\n  height: 5px;\n  position: relative;\n  display: block;\n  clear: both;\n  overflow: hidden;\n  cursor: pointer; }\n\n.vue-audio-mixer-progress-cursor {\n  width: 2px;\n  height: 100%;\n  background: #b6c8e1;\n  position: absolute;\n  left: 0; }\n\n.time_and_transport {\n  position: relative;\n  width: 100%;\n  background: #000; }\n\n.vue-audio-mixer-transport {\n  overflow: auto;\n  clear: both;\n  display: block;\n  text-align: right;\n  width: 150px;\n  height: 30px;\n  overflow: hidden;\n  position: relative;\n  margin: 0 auto 0 auto;\n  position: absolute;\n  top: 2px;\n  padding-left: 10px; }\n\n.vue-audio-mixer-theme-tracks-1 .vue-audio-mixer-progress-time, .vue-audio-mixer-theme-tracks-2 .vue-audio-mixer-progress-time, .vue-audio-mixer-theme-tracks-3.vue-audio-mixer-theme-small .vue-audio-mixer-progress-time, .vue-audio-mixer-theme-tracks-4.vue-audio-mixer-theme-small .vue-audio-mixer-progress-time {\n  width: 100%;\n  text-align: right !important; }\n\n.vue-audio-mixer-theme-tracks-1 .vue-audio-mixer-timer, .vue-audio-mixer-theme-tracks-2 .vue-audio-mixer-timer {\n  font-size: 0.7em; }\n  .vue-audio-mixer-theme-tracks-1 .vue-audio-mixer-timer .vue-audio-mixer-timer-number, .vue-audio-mixer-theme-tracks-2 .vue-audio-mixer-timer .vue-audio-mixer-timer-number {\n    width: 13px; }\n\n.vue-audio-mixer-theme-tracks-3 .vue-audio-mixer-show-total-time {\n  font-size: 0.7em; }\n  .vue-audio-mixer-theme-tracks-3 .vue-audio-mixer-show-total-time .vue-audio-mixer-timer-number {\n    width: 13px; }\n\n.vue-audio-mixer-timer {\n  font-family: \"Share Tech Mono\";\n  color: #fff;\n  font-size: 1em;\n  padding: 10px;\n  overflow: auto;\n  position: relative;\n  display: block;\n  clear: both;\n  background: #000;\n  text-align: right;\n  margin: 0px; }\n  .vue-audio-mixer-timer span {\n    display: inline-block;\n    text-align: left; }\n    .vue-audio-mixer-timer span .vue-audio-mixer-timer-number {\n      width: 18px; }\n  .vue-audio-mixer-timer .vue-audio-mixer-progress-time {\n    width: 100%;\n    text-align: center; }\n\nbutton {\n  border: none;\n  padding: 0;\n  background: transparent; }\n\n.vue-audio-mixer-transport-play-button {\n  cursor: pointer;\n  display: block;\n  width: 0;\n  float: left;\n  height: 0;\n  border-top: 8px solid transparent;\n  border-bottom: 8px solid transparent;\n  border-left: 9.6px solid #d5d5d5;\n  margin: 8px auto 30px auto;\n  position: relative;\n  z-index: 1;\n  transition: all 0.1s;\n  -webkit-transition: all 0.1s;\n  -moz-transition: all 0.1s;\n  left: 48px;\n  position: relative; }\n  .vue-audio-mixer-transport-play-button:focus, .vue-audio-mixer-transport-play-button:active {\n    outline: none; }\n  .vue-audio-mixer-transport-play-button:before {\n    content: '';\n    position: absolute;\n    top: -12px;\n    left: -18.4px;\n    bottom: -12px;\n    right: -5.6px;\n    border-radius: 50%;\n    border: 2px solid #d5d5d5;\n    z-index: -1;\n    transition: all 0.1s;\n    -webkit-transition: all 0.1s;\n    -moz-transition: all 0.1s; }\n  .vue-audio-mixer-transport-play-button:after {\n    content: '';\n    opacity: 0;\n    transition: opacity 0.2s;\n    -webkit-transition: opacity 0.2s;\n    -moz-transition: opacity 0.2s;\n    z-index: 2; }\n  .vue-audio-mixer-transport-play-button:hover:before, .vue-audio-mixer-transport-play-button:focus:before {\n    transform: scale(1.1);\n    -webkit-transform: scale(1.1);\n    -moz-transform: scale(1.1); }\n  .vue-audio-mixer-transport-play-button.vue-audio-mixer-transport-play-button-active {\n    border-color: transparent; }\n    .vue-audio-mixer-transport-play-button.vue-audio-mixer-transport-play-button-active span:nth-child(1), .vue-audio-mixer-transport-play-button.vue-audio-mixer-transport-play-button-active span:nth-child(2) {\n      content: '';\n      opacity: 1;\n      width: 1.14286px;\n      height: 12.8px;\n      background: #d5d5d5;\n      position: absolute;\n      right: 0.8px;\n      top: -6.4px;\n      border-left: 3.2px solid #d5d5d5; }\n    .vue-audio-mixer-transport-play-button.vue-audio-mixer-transport-play-button-active span:nth-child(1) {\n      right: 0.8px; }\n    .vue-audio-mixer-transport-play-button.vue-audio-mixer-transport-play-button-active span:nth-child(2) {\n      right: 7.2px; }\n\n.vue-audio-mixer-transport-start-button {\n  outline: none;\n  display: block;\n  float: left;\n  margin-left: 5px;\n  width: 0;\n  height: 0;\n  border-top: 8px solid transparent;\n  border-bottom: 8px solid transparent;\n  border-right: 9.6px solid #d5d5d5;\n  margin: 8px auto 8px auto;\n  position: relative;\n  z-index: 1;\n  cursor: pointer;\n  transition: all 0.1s;\n  -webkit-transition: all 0.1s;\n  -moz-transition: all 0.1s; }\n  .vue-audio-mixer-transport-start-button:before {\n    content: '';\n    position: absolute;\n    top: -12px;\n    left: -7.2px;\n    bottom: -12px;\n    right: -16.8px;\n    border-radius: 50%;\n    border: 2px solid #d5d5d5;\n    z-index: 2;\n    transition: all 0.1s;\n    -webkit-transition: all 0.1s;\n    -moz-transition: all 0.1s; }\n  .vue-audio-mixer-transport-start-button:after {\n    content: \"\";\n    display: block;\n    position: absolute;\n    width: 2px;\n    height: 10px;\n    background: #d5d5d5;\n    margin-top: -5px;\n    margin-left: -2px; }\n  .vue-audio-mixer-transport-start-button:hover:before, .vue-audio-mixer-transport-start-button:focus:before {\n    transform: scale(1.1);\n    -webkit-transform: scale(1.1);\n    -moz-transform: scale(1.1); }\n\n.vue-audio-mixer-transport-record-button {\n  display: block;\n  width: 0;\n  float: left;\n  height: 0;\n  border: 4px solid #d5d5d5;\n  border-radius: 75%;\n  margin: 50px auto 30px auto;\n  position: relative;\n  z-index: 1;\n  transition: all 0.1s;\n  -webkit-transition: all 0.1s;\n  -moz-transition: all 0.1s;\n  left: 125px; }\n  .vue-audio-mixer-transport-record-button:before {\n    content: '';\n    position: absolute;\n    top: -12px;\n    left: -30px;\n    bottom: -12px;\n    right: -30px;\n    border-radius: 50%;\n    border: 2px solid #d5d5d5;\n    z-index: 2;\n    transition: all 0.1s;\n    -webkit-transition: all 0.1s;\n    -moz-transition: all 0.1s; }\n  .vue-audio-mixer-transport-record-button:after {\n    content: '';\n    opacity: 0;\n    transition: opacity 0.2s;\n    -webkit-transition: opacity 0.2s;\n    -moz-transition: opacity 0.2s; }\n  .vue-audio-mixer-transport-record-button:hover:before, .vue-audio-mixer-transport-record-button:focus:before {\n    transform: scale(1.1);\n    -webkit-transform: scale(1.1);\n    -moz-transform: scale(1.1); }\n  .vue-audio-mixer-transport-record-button.vue-audio-mixer-transport-record-button-active {\n    border-color: red; }\n";
   styleInject(css_248z);
 
   //
@@ -11680,59 +11986,72 @@
     },
     data: function () {
       return {
+        is_loaded: false,
         newConfig: null,
         config: {
           "tracks": [{
-            "title": "Strings1",
-            "url": "https://api.soundcloud.com/tracks/515722791/stream?client_id=ae1dadcc70f054f451de8c6358bcf396",
-            "pan": -60,
+            "title": "Bass",
+            "url": "https://api.soundcloud.com/tracks/841840237/stream?client_id=ae1dadcc70f054f451de8c6358bcf396",
+            "pan": -30,
             "gain": 0.5,
-            "muted": false
+            "muted": false,
+            "hidden": false
           }, {
-            "title": "Strings2",
-            "url": "https://api.soundcloud.com/tracks/515722791/stream?client_id=ae1dadcc70f054f451de8c6358bcf396",
+            "title": "Flutes",
+            "url": "https://api.soundcloud.com/tracks/841840234/stream?client_id=ae1dadcc70f054f451de8c6358bcf396",
             "pan": 81,
-            "gain": "1.08",
-            "muted": true
+            "gain": 1.08,
+            "muted": false,
+            "hidden": false
           }, {
-            "title": "Strings3",
-            "url": "https://api.soundcloud.com/tracks/515722791/stream?client_id=ae1dadcc70f054f451de8c6358bcf396",
-            "pan": -49,
-            "gain": "0.85",
-            "muted": true
-          }, {
-            "title": "Strings1",
-            "url": "https://api.soundcloud.com/tracks/515722791/stream?client_id=ae1dadcc70f054f451de8c6358bcf396",
-            "pan": -60,
-            "gain": 0.5,
-            "muted": false
-          }, {
-            "title": "Strings2",
-            "url": "https://api.soundcloud.com/tracks/515722791/stream?client_id=ae1dadcc70f054f451de8c6358bcf396",
-            "pan": 81,
-            "gain": "1.08",
-            "muted": true
-          }, {
-            "title": "Strings3",
-            "url": "https://api.soundcloud.com/tracks/515722791/stream?client_id=ae1dadcc70f054f451de8c6358bcf396",
-            "pan": -49,
-            "gain": "0.85",
-            "muted": true
-          }],
-          "master": {
+            "title": "Perc",
+            "url": "https://api.soundcloud.com/tracks/841840222/stream?client_id=ae1dadcc70f054f451de8c6358bcf396",
             "pan": -49,
             "gain": 0.85,
+            "muted": false,
+            "hidden": false
+          }, {
+            "title": "Piano",
+            "url": "https://api.soundcloud.com/tracks/841840216/stream?client_id=ae1dadcc70f054f451de8c6358bcf396",
+            "pan": -60,
+            "gain": 0.6,
+            "muted": false,
+            "hidden": false
+          }, {
+            "title": "Strings",
+            "url": "https://api.soundcloud.com/tracks/841840174/stream?client_id=ae1dadcc70f054f451de8c6358bcf396",
+            "pan": -49,
+            "gain": 0.85,
+            "muted": false,
+            "hidden": false
+          }, {
+            "title": "Bass",
+            "url": "https://api.soundcloud.com/tracks/841840237/stream?client_id=ae1dadcc70f054f451de8c6358bcf396",
+            "pan": -30,
+            "gain": 0.5,
+            "muted": false,
+            "hidden": false
+          }],
+          "master": {
+            "pan": 0,
+            "gain": 1,
             "muted": false
           }
         }
       };
     },
 
-    created() {},
+    created() {
+      this.newConfig = this.config;
+    },
 
     beforeDestroy() {},
 
     methods: {
+      loadedChange(loaded) {
+        this.is_loaded = loaded;
+      },
+
       setConfig(newVal) {
         this.newConfig = newVal;
       },
@@ -11829,20 +12148,30 @@
     var _vm = this;
     var _h = _vm.$createElement;
     var _c = _vm._self._c || _h;
-    return _c(
-      "div",
-      [
-        _c("vue-audio-mixer", {
-          attrs: { config: _vm.config },
-          on: { input: _vm.setConfig }
-        }),
-        _vm._v(" "),
-        _c("pre", {
-          domProps: { innerHTML: _vm._s(_vm.syntaxHighlight(_vm.newConfig)) }
-        })
-      ],
-      1
-    )
+    return _c("div", [
+      _c("div", { staticStyle: { "text-align": "center" } }, [
+        _c(
+          "div",
+          { staticStyle: { position: "relative", display: "inline-block" } },
+          [
+            _c("vue-audio-mixer", {
+              attrs: {
+                config: _vm.config,
+                size: "medium",
+                showPan: true,
+                showTotalTime: true
+              },
+              on: { loaded: _vm.loadedChange, input: _vm.setConfig }
+            })
+          ],
+          1
+        )
+      ]),
+      _vm._v(" "),
+      _c("pre", {
+        domProps: { innerHTML: _vm._s(_vm.syntaxHighlight(_vm.newConfig)) }
+      })
+    ])
   };
   var __vue_staticRenderFns__$7 = [];
   __vue_render__$7._withStripped = true;
@@ -11850,7 +12179,7 @@
     /* style */
     const __vue_inject_styles__$7 = function (inject) {
       if (!inject) return
-      inject("data-v-0c25fd24_0", { source: "\npre {outline: 1px solid #ccc; padding: 5px; margin: 5px;\n}\n.string { color: green;\n}\n.number { color: darkorange;\n}\n.boolean { color: blue;\n}\n.null { color: magenta;\n}\n.key { color: red;\n}\n\n", map: {"version":3,"sources":["/Users/juliancole/Code/vue-audio-mixer/example/Demo.vue"],"names":[],"mappings":";AA6HA,KAAA,uBAAA,EAAA,YAAA,EAAA,WAAA;AAAA;AACA,UAAA,YAAA;AAAA;AACA,UAAA,iBAAA;AAAA;AACA,WAAA,WAAA;AAAA;AACA,QAAA,cAAA;AAAA;AACA,OAAA,UAAA;AAAA","file":"Demo.vue","sourcesContent":["<template>\n  <div>\n    <vue-audio-mixer :config=\"config\" @input=\"setConfig\" />\n    <pre v-html=\"syntaxHighlight(newConfig)\"></pre>\n  </div>\n</template>\n\n<script>\n\nimport VueAudioMixer from '../src/components/Mixer.vue';\nimport '../src/scss/main.scss'; \n\nexport default {\n  name: 'app',\n  components: {\n    VueAudioMixer\n  },\n  data : function(){     \n\n    return {\n      newConfig: null,\n      config: {\n        \"tracks\":[\n            {\n                \"title\":\"Strings1\",\n                \"url\":\"https://api.soundcloud.com/tracks/515722791/stream?client_id=ae1dadcc70f054f451de8c6358bcf396\",\n                \"pan\":-60,\n                \"gain\":0.5,\n                \"muted\":false\n            },\n            {\n                \"title\":\"Strings2\",\n                \"url\":\"https://api.soundcloud.com/tracks/515722791/stream?client_id=ae1dadcc70f054f451de8c6358bcf396\",\n                \"pan\":81,\n                \"gain\":\"1.08\",\n                \"muted\":true\n            },\n            {\n                \"title\":\"Strings3\",\n                \"url\":\"https://api.soundcloud.com/tracks/515722791/stream?client_id=ae1dadcc70f054f451de8c6358bcf396\",\n                \"pan\":-49,\n                \"gain\":\"0.85\",\n                \"muted\":true\n            },\n            {\n                \"title\":\"Strings1\",\n                \"url\":\"https://api.soundcloud.com/tracks/515722791/stream?client_id=ae1dadcc70f054f451de8c6358bcf396\",\n                \"pan\":-60,\n                \"gain\":0.5,\n                \"muted\":false\n            },\n            {\n                \"title\":\"Strings2\",\n                \"url\":\"https://api.soundcloud.com/tracks/515722791/stream?client_id=ae1dadcc70f054f451de8c6358bcf396\",\n                \"pan\":81,\n                \"gain\":\"1.08\",\n                \"muted\":true\n            },\n            {\n                \"title\":\"Strings3\",\n                \"url\":\"https://api.soundcloud.com/tracks/515722791/stream?client_id=ae1dadcc70f054f451de8c6358bcf396\",\n                \"pan\":-49,\n                \"gain\":\"0.85\",\n                \"muted\":true\n            }\n        ],\n        \"master\":{\n            \"pan\":-49,\n            \"gain\":0.85,\n            \"muted\":false\n        }\n      }\n    }  \n  },\n  created(){\n\n  },\n\n  beforeDestroy() {\n  \n  },\n  methods:{\n\n    setConfig(newVal)\n    {\n      this.newConfig = newVal;\n    },\n\n    // accepts json string\n    // returns pretyyprinted json\n    syntaxHighlight(json) {\n      if (typeof json != 'string') {\n           json = JSON.stringify(json, undefined, 2);\n      }\n      json = json.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');\n      return json.replace(/(\"(\\\\u[a-zA-Z0-9]{4}|\\\\[^u]|[^\\\\\"])*\"(\\s*:)?|\\b(true|false|null)\\b|-?\\d+(?:\\.\\d*)?(?:[eE][+\\-]?\\d+)?)/g, function (match) {\n          var cls = 'number';\n          if (/^\"/.test(match)) {\n              if (/:$/.test(match)) {\n                  cls = 'key';\n              } else {\n                  cls = 'string';\n              }\n          } else if (/true|false/.test(match)) {\n              cls = 'boolean';\n          } else if (/null/.test(match)) {\n              cls = 'null';\n          }\n          return '<span class=\"' + cls + '\">' + match + '</span>';\n      });\n  }\n\n\n\n  },\n\n  computed: {\n\n  }\n\n}\n</script>\n\n<style>\n\npre {outline: 1px solid #ccc; padding: 5px; margin: 5px; }\n.string { color: green; }\n.number { color: darkorange; }\n.boolean { color: blue; }\n.null { color: magenta; }\n.key { color: red; }\n\n</style>\n\n\n\n"]}, media: undefined });
+      inject("data-v-7d1e7f91_0", { source: "\npre {outline: 1px solid #ccc; padding: 5px; margin: 5px;\n}\n.string { color: green;\n}\n.number { color: darkorange;\n}\n.boolean { color: blue;\n}\n.null { color: magenta;\n}\n.key { color: red;\n}\n\n", map: {"version":3,"sources":["/Users/juliancole/Code/vue-audio-mixer/example/Demo.vue"],"names":[],"mappings":";AA+JA,KAAA,uBAAA,EAAA,YAAA,EAAA,WAAA;AAAA;AACA,UAAA,YAAA;AAAA;AACA,UAAA,iBAAA;AAAA;AACA,WAAA,WAAA;AAAA;AACA,QAAA,cAAA;AAAA;AACA,OAAA,UAAA;AAAA","file":"Demo.vue","sourcesContent":["<template>\n\n  <div>\n    <div style=\"text-align: center;\">\n\n      <div style=\"position:relative; display: inline-block; \">\n        <vue-audio-mixer \n          :config=\"config\" \n          size=\"medium\" \n          @loaded=\"loadedChange\"\n          @input=\"setConfig\" \n          :showPan=\"true\"\n          :showTotalTime=\"true\"\n        />\n      </div>\n\n    </div>\n\n    <pre v-html=\"syntaxHighlight(newConfig)\"></pre>\n\n  </div>\n\n</template>\n\n\n<script>\n\nimport VueAudioMixer from '../src/components/Mixer.vue';\nimport '../src/scss/main.scss'; \n\nexport default {\n  name: 'app',\n  components: {\n    VueAudioMixer\n  },\n  data : function(){     \n\n    return {\n      is_loaded:false,\n      newConfig: null,\n      config: {\n        \"tracks\":[\n            {\n                \"title\":\"Bass\",\n                \"url\":\"https://api.soundcloud.com/tracks/841840237/stream?client_id=ae1dadcc70f054f451de8c6358bcf396\",\n                \"pan\":-30,\n                \"gain\":0.5,\n                \"muted\":false,\n                \"hidden\":false\n            },\n            {\n                \"title\":\"Flutes\",\n                \"url\":\"https://api.soundcloud.com/tracks/841840234/stream?client_id=ae1dadcc70f054f451de8c6358bcf396\",\n                \"pan\":81,\n                \"gain\":1.08,\n                \"muted\":false,\n                \"hidden\":false\n            },\n            {\n                \"title\":\"Perc\",\n                \"url\":\"https://api.soundcloud.com/tracks/841840222/stream?client_id=ae1dadcc70f054f451de8c6358bcf396\",\n                \"pan\":-49,\n                \"gain\":0.85,\n                \"muted\":false,\n                \"hidden\":false\n            },\n            {\n                \"title\":\"Piano\",\n                \"url\":\"https://api.soundcloud.com/tracks/841840216/stream?client_id=ae1dadcc70f054f451de8c6358bcf396\",\n                \"pan\":-60,\n                \"gain\":0.6,\n                \"muted\":false,\n                \"hidden\":false\n            },\n            {\n                \"title\":\"Strings\",\n                \"url\":\"https://api.soundcloud.com/tracks/841840174/stream?client_id=ae1dadcc70f054f451de8c6358bcf396\",\n                \"pan\":-49,\n                \"gain\":0.85,\n                \"muted\":false,\n                \"hidden\":false\n            },\n            {\n                \"title\":\"Bass\",\n                \"url\":\"https://api.soundcloud.com/tracks/841840237/stream?client_id=ae1dadcc70f054f451de8c6358bcf396\",\n                \"pan\":-30,\n                \"gain\":0.5,\n                \"muted\":false,\n                \"hidden\":false\n            }\n        ],\n        \"master\":{\n            \"pan\":0,\n            \"gain\":1,\n            \"muted\":false\n        }\n      }\n    }    \n  },\n  created(){\n\n    this.newConfig = this.config;\n\n  },\n\n  beforeDestroy() {\n  \n  },\n  methods:{\n\n    loadedChange(loaded)\n    {\n      this.is_loaded = loaded;\n    },\n\n    setConfig(newVal)\n    {\n      this.newConfig = newVal;\n    },\n\n    // accepts json string\n    // returns pretyyprinted json\n    syntaxHighlight(json) {\n      if (typeof json != 'string') {\n           json = JSON.stringify(json, undefined, 2);\n      }\n      json = json.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');\n      return json.replace(/(\"(\\\\u[a-zA-Z0-9]{4}|\\\\[^u]|[^\\\\\"])*\"(\\s*:)?|\\b(true|false|null)\\b|-?\\d+(?:\\.\\d*)?(?:[eE][+\\-]?\\d+)?)/g, function (match) {\n          var cls = 'number';\n          if (/^\"/.test(match)) {\n              if (/:$/.test(match)) {\n                  cls = 'key';\n              } else {\n                  cls = 'string';\n              }\n          } else if (/true|false/.test(match)) {\n              cls = 'boolean';\n          } else if (/null/.test(match)) {\n              cls = 'null';\n          }\n          return '<span class=\"' + cls + '\">' + match + '</span>';\n      });\n  }\n\n\n\n  },\n\n  computed: {\n\n    \n\n  }\n\n}\n</script>\n\n<style>\n\npre {outline: 1px solid #ccc; padding: 5px; margin: 5px; }\n.string { color: green; }\n.number { color: darkorange; }\n.boolean { color: blue; }\n.null { color: magenta; }\n.key { color: red; }\n\n</style>\n\n\n\n"]}, media: undefined });
 
     };
     /* scoped */

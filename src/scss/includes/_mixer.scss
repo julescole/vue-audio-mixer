@@ -1,14 +1,18 @@
 .vue-audio-mixer{
+  display: inline-block;
 
   min-width: 105px;
   overflow: auto;
   margin:0 auto;
-  margin-top:2rem;
   font-family: 'Open Sans', sans-serif;
+  text-align: center;
 
   * {
       -webkit-touch-callout: none;
       -webkit-user-select: none; /* Disable selection/copy in UIWebView */
   }
 
+}
+.vue-audio-mixer-loading-hider{
+  display: inline-block;
 }

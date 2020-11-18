@@ -1,10 +1,31 @@
+.vue-audio-mixer-channel-panner-container{
+    top: -37px;
+    left: 0;
+    position: absolute;
+    width: 100%;
+    background: $channel-background-colour;
+    padding-left: 12px;
+    box-sizing: border-box;
+    &.vue-audio-mixer-is-master { // master track 
+      background: $master-channel-background-colour !important;       
+    } 
+
+}
+
+.vue-audio-mixer-theme-small{
+    .vue-audio-mixer-channel-panner-container{
+        top: -27px;
+        .knob-control__text-display{
+            font-size: 1.5rem;
+        }
+    }
+
+}
 .vue-audio-mixer-channel-panner{
     width: 19px;
     height: 10px;
-    position: absolute;
-    vertical-align: middle;
-    top: 4px;
-    right: 30px;
+    margin-top:2px;
+    
     border: 0px;
     background: none;
     font: bold 7px Arial;

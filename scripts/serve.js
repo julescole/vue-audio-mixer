@@ -7,6 +7,8 @@ import resolve from 'rollup-plugin-node-resolve'
 import replace from 'rollup-plugin-replace'
 import common from 'rollup-plugin-commonjs'
 import postcss from 'rollup-plugin-postcss'
+import scss from 'rollup-plugin-scss'
+import scssVariable from 'rollup-plugin-sass-variables'
 
 export default {
   input: path.join(__dirname, '..', 'example', 'main.js'),
@@ -20,9 +22,12 @@ export default {
     vue({
       css: true
     }),
-    postcss({
-      plugins: []
-    }),
+
+
+    scss(),
+    postcss(),
+    scssVariable(),
+
     replace({
       'process.env.NODE_ENV': JSON.stringify('development')
     }),

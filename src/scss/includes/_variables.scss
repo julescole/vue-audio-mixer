@@ -1,4 +1,19 @@
-$height : 400; // probably best not to change this
+$margin-between-channels-small:1;
+$channel-height:200;
+
+$meter-height:210;
+
+$channel-width-small:40;
+$meter-width-small:5;
+$meter-width-between-small:2;
+$channel-slider-thumb-size-small:0.4;
+
+$channel-width-medium:57;
+$margin-between-channels-medium:1;
+$meter-width-medium:10;
+$meter-width-between-medium:5;
+$margin-between-channels-medium:2;
+$channel-slider-thumb-size-medium:0.6;
 
 
 $colour-scheme-one: #4ba7b7;
@@ -19,6 +34,10 @@ $channel-mute-button-border-colour: #000;
 $channel-mute-button-text-colour-hover:#FFF;
 $channel-mute-button-text-colour-active:#FFF;
 
+// Solo button
+$channel-solo-button-background-colour-active:#1cdd20;
+$channel-solo-button-text-colour-active: #FFF;
+
 // Panners buttons
 $channel-panner-text-colour: rgb(255, 255, 255);
 
@@ -28,13 +47,13 @@ $loader-outer-colour: #00a7cc;
 $loader-text-colour: #1d7a9c;
 
 // Sliders
-$slider-input-background: repeating-linear-gradient(90deg, #000, #3b3e41 0.0625em, transparent 0.0625em, transparent 2em) no-repeat 50% 1.5em border-box, 
-              repeating-linear-gradient(90deg, #000, #3b3e41 0.0625em, transparent 0.0625em, transparent 2em) no-repeat 50% 0em border-box;
+$slider-input-background: repeating-linear-gradient(90deg, #000, #3b3e41 0.0625em, transparent 0.0625em, transparent 0.75em) no-repeat 50% 0.75em border-box, 
+                          repeating-linear-gradient(90deg, #000, #3b3e41 0.0625em, transparent 0.0625em, transparent 0.75em) no-repeat 50% 0em border-box;
 $slider-track-colour: #15181b;
 $slider-thumb-background: radial-gradient(#ebe1e0 10%, rgba(235, 225, 224, 0.2) 10%, rgba(235, 225, 224, 0) 72%) no-repeat 50% 50%, radial-gradient(at 100% 50%, #e9dfde, #eae1de 71%, rgba(0, 0, 0, 0) 71%) no-repeat 2.5em 50%, linear-gradient(90deg, #e9dfde, #d0c8c6) no-repeat 100% 50%, radial-gradient(at 0 50%, #d0c6c5, #c6baba 71%, rgba(0, 0, 0, 0) 71%) no-repeat 0.75em 50%, linear-gradient(90deg, #e3d9d8, #d0c6c5) no-repeat 0 50%, linear-gradient(#cdc0c0, #fcf5ef, #fcf5ef, #cdc0c0);
 
 // Progress Bar
-$progress-bar-background-colour:#292c30;
+$progress-bar-background-colour:#4c4c4c;
 $progress-bar-cursor-colour:#b6c8e1;
 
 // Transport
@@ -42,8 +61,3 @@ $transport-time-background: #000;
 $transport-time-text-colour:#fff;
 
 $transport-buttons-colour: #d5d5d5;
-
-
-:export {
-	colourschemeone     : $colour-scheme-one;
-}
