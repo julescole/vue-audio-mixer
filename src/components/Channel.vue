@@ -1,45 +1,52 @@
 <template>
 
-  <div class="vue-audio-mixer-channel">
+  <div class="vue-audio-mixer-channel" :class="{'with-panner':mixerVars.show_pan}">
 
-    <canvas :id="'canvas'+_uid"  width="25" :height="meterHeight" style="display: block;" class="vue-audio-mixer-channel-meter-canvas"></canvas>
-    <div class="slider_value">{{formattedGain}}</div>
+        <div class="vue-audio-mixer-channel-panner-container" :class="{'vue-audio-mixer-is-master':isMaster}">
 
-    <div class="vue-audio-mixer-channel-slider"> 
-      <input class="vue-audio-mixer-channel-slider-input" type="range" min="0" max="1.5" step="0.01" v-on:input="changeGain" v-model="gain" />
-    </div>
+          <VueKnobControl
+          v-if="mixerVars.show_pan"
+          :min="-90"
+          :max="90"
+          :size="pannerSize"
+          :stroke-width="7"
+          v-model="pan"
+          class="vue-audio-mixer-channel-panner"
+          primaryColor="#c40303"
+          secondaryColor="#adadad"
+          textColor="#000"
+        ></VueKnobControl>
+      </div>
 
-    <div class="vue-audio-mixer-channel-mute-button" v-show="showMute">
-      <label>
-        <input v-model="mute" type="checkbox" />
-        <span class="vue-audio-mixer-channel-mute-button-label">M</span>
-      </label>
-    </div>
 
-    <div class="logo" v-if="isMaster && !showMute">
-    </div>
+      <canvas :id="'canvas'+_uid"  width="25" :height="meterHeight" style="display: block;" class="vue-audio-mixer-channel-meter-canvas"></canvas>
+      <div class="slider_value">{{formattedGain}}</div>
 
-    <div class="vue-audio-mixer-channel-solo-button" v-show="!isMaster">
-      <label>
-        <input v-model="solo" type="checkbox" />
-        <span class="vue-audio-mixer-channel-solo-button-label">S</span>
-      </label>
-    </div>
+      <div class="vue-audio-mixer-channel-slider"> 
+        <input class="vue-audio-mixer-channel-slider-input" type="range" min="0" max="1.5" step="0.01" v-on:input="changeGain" v-model="gain" />
+      </div>
+
+      <div class="vue-audio-mixer-channel-mute-button" v-show="showMute">
+        <label>
+          <input v-model="mute" type="checkbox" />
+          <span class="vue-audio-mixer-channel-mute-button-label">M</span>
+        </label>
+      </div>
+
+      <div class="logo" v-if="isMaster && !showMute">
+      </div>
+
+      <div class="vue-audio-mixer-channel-solo-button" v-show="!isMaster">
+        <label>
+          <input v-model="soloModel" type="checkbox" />
+          <span class="vue-audio-mixer-channel-solo-button-label">S</span>
+        </label>
+      </div>
+
     
-    <VueKnobControl
-      v-if="showPan"
-      :min="-90"
-      :max="90"
-      :size="40"
-      :stroke-width="7"
-      v-model="pan"
-      class="vue-audio-mixer-channel-panner"
-      primaryColor="#c40303"
-      secondaryColor="#adadad"
-      textColor="#000"
-    ></VueKnobControl>
 
-    <div class="vue-audio-mixer-channel-label" style="height: 14px;"><label data-label="0"> {{title}}</label></div>
+      <div class="vue-audio-mixer-channel-label"><label data-label="0"> {{title}}</label></div>
+
 
   </div>
 
@@ -68,10 +75,10 @@ export default {
     'defaultPan',
     'defaultGain',
     'defaultMuted',
-    'showPan',
     'showMute',
     'isMaster',
-    'mixerVars'
+    'mixerVars',
+    'solodTracks'
   ],
   components:{
     VueKnobControl
@@ -84,15 +91,19 @@ export default {
           ctx         : false,
           gain        : 0.8,
           pan         : 0,
-          solo        : false,
+          soloModel   : false,
           mute        : false,
-          mutedBySolo : false,
-          meterHeight : parseInt(variables.channelHeight),
+          meterHeight : parseInt(variables.meterHeight),
           titleModel  : ''
       };
   },
 
   computed:{
+
+    pannerSize()
+    {
+      return this.mixerVars.theme_size == 'Small' ? 30 :40; 
+    },
 
     meterWidth()
     {
@@ -119,17 +130,16 @@ export default {
         this.changePan();
     },
 
+
     mute: function(){
         this.muteChange();
     },
 
-    mutedBySolo: function(){
-        this.muteChange();
-    },
+    
 
-    solo: function(newVal){
-        let solodTrack = newVal ? this.trackIndex : false;
-        this.soloChange(solodTrack);
+
+    soloModel: function(newVal){
+        this.soloChange(this.trackIndex, newVal);
     },
 
     titleModel:function(){
@@ -141,7 +151,6 @@ export default {
   created(){
     this.titleModel = 'Track '+(this.trackIndex+1);
     EventBus.$on(this.mixerVars.instance_id+'ended', this.ended);
-    EventBus.$on(this.mixerVars.instance_id+'soloChange', this.detectedSoloChange);
     this.scriptProcessorNode.onaudioprocess = () => {
       this.drawMeter();
     }
@@ -149,7 +158,6 @@ export default {
 
   beforeDestroy() {
     EventBus.$off(this.mixerVars.instance_id+'ended',this.ended);
-    EventBus.$off(this.mixerVars.instance_id+'soloChange',this.detectedSoloChange);
   },
 
   mounted(){
@@ -173,14 +181,7 @@ export default {
   },
   methods: {
 
-    detectedSoloChange(index)
-    {
-      if(index && this.trackIndex !== undefined && index != this.trackIndex){
-        this.mutedBySolo = index;
-      }else{
-        this.mutedBySolo = false;
-      }
-    },
+   
 
     pad(n, width, z) {
       z = z || '0';
@@ -198,9 +199,7 @@ export default {
 
     changeGain()
     {
-      if(!this.mute){
-        this.$emit('gainChange',this.gain);
-      }
+      this.$emit('gainChange',this.gain);
     },
 
     changePan() {
@@ -208,11 +207,11 @@ export default {
     },
 
     muteChange() {
-      this.$emit('muteChange',(this.mute || this.mutedBySolo));
+      this.$emit('muteChange',this.mute);
     },
 
-    soloChange(value) {
-        EventBus.$emit(this.mixerVars.instance_id+'soloChange',value);
+    soloChange(trackIndex, is_solo) {
+        EventBus.$emit(this.mixerVars.instance_id+'soloChange',{index:trackIndex, solo:is_solo});
     },
 
     titleChange() {

@@ -1,9 +1,9 @@
 .vue-audio-mixer{
+  display: inline-block;
 
   min-width: 105px;
   overflow: auto;
   margin:0 auto;
-  margin-top:2rem;
   font-family: 'Open Sans', sans-serif;
   text-align: center;
 
@@ -13,17 +13,6 @@
   }
 
 }
-
-.custom_button{
-	max-width:60px;
-	background: black;
-	color:white;
-	text-align: center;
-	height:20px;
-  position: absolute;
-  top:7px;
-  right:10px;
-  text-align: center;
-  font-size: 10px;
-  cursor: pointer;
+.vue-audio-mixer-loading-hider{
+  display: inline-block;
 }

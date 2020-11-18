@@ -1,29 +1,32 @@
 <template>
 
-  <div class="vue-audio-mixer" :class="themeClass" >
+  <div class="vue-audio-mixer" :class="[themeClass, trackClass]" :style="{ width: mixerWidth }">
 
     <Loader v-if="loading" :percentLoaded="loadingPercent" />
 
-    <div v-show="!loading">
+    <div class="vue-audio-mixer-loading-hider" v-show="!loading">
 
       <div class="vue-audio-mixer-channel-strip" ref="channelstrip" >
           <div>
+
             <MixerChannel 
+              v-show="!track.hidden"
               v-for="(track,index) in tracks" 
               :title="track.title" 
               :defaultPan="track.pan" 
+              :hidden="track.hidden" 
               :defaultGain="track.gain" 
               :defaultMuted="track.muted" 
               :context="context" 
               :output="gainNode" 
               :url="track.url" 
               :key="index" 
+              :solodTracks="solodTracks"
               :trackIndex="index" 
               @panChange="changePan" 
               @gainChange="changeGain" 
               @muteChange="changeMute" 
               @soloChange="changeSolo"
-              :showPan="showPan"
               :mixerVars="mixerVars"
             />
 
@@ -39,7 +42,6 @@
               :leftAnalyser="leftAnalyser" 
               :rightAnalyser="rightAnalyser" 
               :scriptProcessorNode="scriptProcessorNode"
-              :showPan="showPan"
               :showMute="false"
               :isMaster="true"
               :mixerVars="mixerVars"
@@ -53,7 +55,6 @@
           />
           <div class="time_and_transport">
             <TimeDisplay 
-            :showTotalTime="false" 
             :progressTime="progress" 
             :totalTime="totalDuration" 
             :mixerVars="mixerVars"
@@ -64,7 +65,6 @@
             @togglePlay="togglePlay" 
             :mixerVars="mixerVars"
             />
-            <button class="custom_button">In den Warenkorb</button>
           </div>
 
 
@@ -94,7 +94,10 @@ import variables from '../scss/includes/_variables.scss';
 export default {
   name: 'app',
   props: [
-      'config'
+      'config',
+      'size',
+      'showPan',
+      'showTotalTime'
   ],
   components: {
     MixerChannel,
@@ -106,7 +109,6 @@ export default {
   },
   data : function(){       
       return {
-        showPan                    : false,
         context                    : false,
         gainNode                   : false,
         scriptProcessorNode        : false,
@@ -127,10 +129,14 @@ export default {
         overRideProgressBarPosition: false,
         progressBarPosition        : 0,
         tracks                     : [],
+        solodTracks                : [],
         tracksLoaded               : 0
       };
   },
   created(){
+
+    this.currentTime =  Date.now()
+    this.startedAt = this.currentTime;
 
     this.checkConfig();
 
@@ -147,6 +153,7 @@ export default {
     EventBus.$on(this.mixerVars.instance_id+'track_loaded', this.trackLoaded);
     EventBus.$on(this.mixerVars.instance_id+'stop', this.stopped);
     EventBus.$on(this.mixerVars.instance_id+'play', this.started);
+    EventBus.$on(this.mixerVars.instance_id+'soloChange', this.detectedSoloChange);
 
     setInterval(() => {
       if(this.playing)
@@ -156,6 +163,7 @@ export default {
   },
 
   beforeDestroy() {
+    EventBus.$off(this.mixerVars.instance_id+'soloChange',this.detectedSoloChange);
     EventBus.$off(this.mixerVars.instance_id+'track_loaded',this.trackLoaded);
     EventBus.$off(this.mixerVars.instance_id+'stop',this.stopped);
     EventBus.$off(this.mixerVars.instance_id+'play',this.started);
@@ -167,20 +175,53 @@ export default {
          EventBus.$emit(this.mixerVars.instance_id+'stop');
     },
 
+    loading(newVal) {
+      this.$emit('loaded',!newVal)
+    },
+
     trackSettings(newVal)
     {
       this.$emit('input',newVal)
     }
+
+    
   },
 
   computed: {
+
+    visibleTracks(){
+
+      return this.tracks.filter(t => !t.hidden);
+
+    },
+
+    mixerWidth()
+    {
+
+
+      let width = 69; // channel width of medium
+      if(this.mixerVars.theme_size == 'Small'){
+        width = 51; // channel width of small
+      }
+      return (width*(this.visibleTracks.length+1))+'px';
+
+    },
 
     mixerVars()
     {
       return {
         'theme_size' : this.themeSize,
-        'instance_id': this._uid
+        'instance_id': this._uid,
+        'show_pan' : this.showPan,
+        'show_total_time' : this.showTotalTime
       }
+    },
+
+    trackClass()
+    {
+
+      return 'vue-audio-mixer-theme-tracks-'+this.tracks.length;
+
     },
 
     themeClass() {
@@ -192,15 +233,11 @@ export default {
 
     themeSize()
     {
-      switch(true)
-      {
-        case this.tracks.length > 4:
-          return 'Small'
-          break;
-        default:
-          return 'Medium'
+      if(this.size && this.size.toLowerCase() == 'small'){
+        return 'Small'
       }
 
+      return 'Medium'
     },
 
     // the starter config for the current settings
@@ -210,8 +247,8 @@ export default {
       return {
         tracks: this.tracks,
         master:{
-          "pan":this.masterPanValue,
-          "gain":this.masterGainValue,
+          "pan":parseFloat(this.masterPanValue),
+          "gain":parseFloat(this.masterGainValue),
           "muted":this.masterMuted
         }
       };
@@ -239,14 +276,28 @@ export default {
 
   methods: {
 
+    detectedSoloChange(track)
+    {
+        let index = this.solodTracks.indexOf(track.index);
+        if (index > -1) {
+          if(!track.solo)
+            this.solodTracks.splice(index, 1);
+        }else{
+          if(track.solo)
+            this.solodTracks.push(track.index);
+        }
+    },
+
     playFromPercent(percent){
 
       if(this.playing){
         this.restart = true;
         EventBus.$emit(this.mixerVars.instance_id+'stop');
       }
+
+      this.currentTime =  Date.now();
       this.pausedAt =  (this.totalDuration/100) * percent;
-      this.startedAt = Date.now() - this.pausedAt;
+      this.startedAt = this.currentTime - this.pausedAt;
 
       if(this.restart)
         setTimeout( () => { EventBus.$emit(this.mixerVars.instance_id+'play',this.pausedAt) }, 10);
@@ -285,12 +336,16 @@ export default {
 
     togglePlay()
     {
+
       if(this.playing){
         this.pausedAt = this.progress;
         EventBus.$emit(this.mixerVars.instance_id+'stop');
+      }else if(this.progressPercent >= 100){ // it's at the end, so restart
+        this.playing = true;
+        this.playFromPercent(0);
       }else{
         this.startedAt = Date.now() - this.progress;
-        EventBus.$emit(this.mixerVars.instance_id+'play',this.pausedAt);
+        EventBus.$emit(this.mixerVars.instance_id+'play',this.pausedAt);      
       }
       
     },
@@ -319,11 +374,11 @@ export default {
 
 
     changeGain(value){
-      this.tracks[value.index].gain = value.gain;
+      this.tracks[value.index].gain = parseFloat(value.gain);
     },
 
     changePan(value){
-      this.tracks[value.index].pan = value.pan;
+      this.tracks[value.index].pan = parseFloat(value.pan);
     },
 
     changeMute(value){

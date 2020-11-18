@@ -3,9 +3,7 @@
   <div 
     class="vue-audio-mixer-progress-bar" 
     ref="vue-audio-mixer-progress-bar" 
-    v-on:mousemove="doDrag" 
     v-on:mousedown="startDrag" 
-    v-on:click="progressBarClick"
   >
     <div class="vue-audio-mixer-progress-cursor" :style="{left: progressBarPosition}"></div>
   </div> 
@@ -15,15 +13,17 @@
 <script>
 
 export default {
-  name: 'time',
+  name: 'progressbar',
   props: [
       'progressPercent'
   ],
   created(){
+    window.addEventListener('mousemove',this.doDrag);
     window.addEventListener("mouseup", this.triggerMouseUpEvent);
     window.addEventListener("touchend", this.triggerMouseUpEvent);
   },
   beforeDestroy() {
+    window.removeEventListener('mousemove',this.doDrag);
     window.removeEventListener("mouseup", this.triggerMouseUpEvent);
     window.removeEventListener("touchend", this.triggerMouseUpEvent);
   },
@@ -37,7 +37,7 @@ export default {
   watch: {
 
     progressPercent: function(newVal){
-      if(this.$refs['vue-audio-mixer-progress-bar'])
+      if(this.$refs['vue-audio-mixer-progress-bar'] && !this.dragging)
         this.progressBarPosition =  (this.$refs['vue-audio-mixer-progress-bar'].offsetWidth/100) * newVal +'px';
     },
 
@@ -54,6 +54,7 @@ export default {
     
   },
   methods:{
+
     startDrag(e){
       this.dragging = true;
       this.progressBarClick(e);
@@ -64,17 +65,22 @@ export default {
         this.progressBarClick(e);
     },
 
-    triggerMouseUpEvent(){
+    triggerMouseUpEvent(e){
+      let doIt = this.dragging ? true : false;
       this.dragging = false;
+      if(doIt)
+        this.progressBarClick(e, true);
+
     },
 
-    progressBarClick(e)
+    progressBarClick(e, fdsa)
     {
+
 
       let target = this.$refs['vue-audio-mixer-progress-bar'];
       var rect = target.getBoundingClientRect();
       var x = e.clientX - rect.left; //x position within the element.
-      var percent = (100/e.target.offsetWidth) * x;
+      var percent = (100/target.offsetWidth) * x;
 
       percent = Math.round(percent);
 
@@ -85,9 +91,8 @@ export default {
 
       if(!this.dragging)
         this.$emit('percent', percent);
-
-      this.progressBarPosition = Math.round(x) +'px';
-
+      else
+        this.progressBarPosition = Math.round(x) +'px';
 
     }
   }

@@ -11,6 +11,7 @@ $transition-time:0.1s;
   position: relative;
   display: block;
   clear:both;
+  overflow: hidden;
   cursor: pointer;
 }
 .vue-audio-mixer-progress-cursor{
@@ -24,6 +25,7 @@ $transition-time:0.1s;
 .time_and_transport{
   position: relative; 
   width:100%;
+  background: $transport-time-background;
 }
 
 .vue-audio-mixer-transport{
@@ -39,6 +41,31 @@ $transition-time:0.1s;
   position: absolute;
   top:2px;
   padding-left:10px;
+}
+
+.vue-audio-mixer-theme-tracks-1, .vue-audio-mixer-theme-tracks-2, .vue-audio-mixer-theme-tracks-3.vue-audio-mixer-theme-small, .vue-audio-mixer-theme-tracks-4.vue-audio-mixer-theme-small{
+
+  .vue-audio-mixer-progress-time{
+    width:100%;
+    text-align: right !important;
+  }
+
+}
+
+.vue-audio-mixer-theme-tracks-1, .vue-audio-mixer-theme-tracks-2{
+  .vue-audio-mixer-timer{
+    font-size: 0.7em;
+    .vue-audio-mixer-timer-number{// keep number the same
+      width: 13px;
+    }
+  }
+}
+
+.vue-audio-mixer-theme-tracks-3 .vue-audio-mixer-show-total-time{
+  font-size: 0.7em;
+  .vue-audio-mixer-timer-number{// keep number the same
+    width: 13px;
+  }
 }
 
 .vue-audio-mixer-timer{
@@ -57,17 +84,15 @@ $transition-time:0.1s;
   span{
     display: inline-block;
     text-align: left;
-    span{// keep number the same
+    .vue-audio-mixer-timer-number{// keep number the same
       width: 18px;
     }
   } 
-  .progress-time{
+  .vue-audio-mixer-progress-time{
     width:100%;
     text-align: center;
   }
   .total{
-    margin-left:5px;
-    width:140px;
   }
 } 
 
@@ -102,6 +127,7 @@ button{
   position:relative;
 
   &:before {
+
     content:'';
     position:absolute;
     top:($size*-1.5);
@@ -167,7 +193,7 @@ button{
 
 
 .vue-audio-mixer-transport-start-button {
-
+  outline: none;
   display:block;
   float: left;
   margin-left: 5px;
@@ -201,6 +227,8 @@ button{
   &:after {
      content: "";
      display: block;
+     position:absolute;
+
      width: 2px;
      height: 10px;
      background: $transport-buttons-colour;

@@ -1,19 +1,28 @@
 
 .vue-audio-mixer-channel-label{
-  margin-top: 10px;
+  line-height: 0.6rem;
+  font-size: 0.55rem;
+
+  display:table;
+  padding:2px;
+  margin-top: 5px;
   width: 100%;
-  font-size: 10px;
-  padding-top:5px;
-  padding-bottom: 5px;
-  height: 1em;
-  overflow: auto;
+  height: 30px;
+  overflow: hidden;
   clear: both;
   float: left;
   background: $channel-label-background-colour;
   color: $channel-label-text-colour;
   text-align: center;
   border: none;
-  box-sizing: content-box;    
+  box-sizing: border-box;  
+  overflow: hidden;
+  label{
+    word-wrap: break-word;  
+    display:table-cell;
+    vertical-align: middle;
+    word-break: break-word;
+  }
 }
 
 .logo{
@@ -42,17 +51,25 @@
 .vue-audio-mixer-theme-small{
   .vue-audio-mixer-channel{
     margin-right: #{$margin-between-channels-small}px;
+    width:#{$channel-width-small}px;
   }
 }
 .vue-audio-mixer-theme-medium{
   .vue-audio-mixer-channel{
     margin-right: #{$margin-between-channels-medium}px;
+    width:#{$channel-width-medium}px;
   }
 }
+
+.with-panner{
+  margin-top:40px;
+}
 .vue-audio-mixer-channel{
-  height: #{$channel-height + 40}px; 
+
+
+  height: #{$channel-height + 45}px; 
   padding: 5px;
-  padding-top: 50px;
+  padding-top: 41px;
   box-sizing: content-box;
   position: relative;
   float: left;

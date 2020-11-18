@@ -1,13 +1,19 @@
 <template>
 
   <div class="vue-audio-mixer-timer">
-    <span class="progress-time">
-      <span v-if="showMins">{{progressFormatted[0]}}</span><span>{{progressFormatted[1]}}</span>:<span>{{progressFormatted[2]}}</span>
-    </span>
-    <span v-if="showTotalTime"> / </span> 
-    <span class="total" v-if="showTotalTime">
+    <span class="vue-audio-mixer-progress-time" :class="{'vue-audio-mixer-show-total-time':mixerVars.show_total_time}">
+
+      <span v-if="showMins" class="vue-audio-mixer-timer-number">{{progressFormatted[0]}}</span><span v-if="showMins">:</span><span class="vue-audio-mixer-timer-number">{{progressFormatted[1]}}</span>:<span class="vue-audio-mixer-timer-number">{{progressFormatted[2]}}</span>
+
+      <span v-if="mixerVars.show_total_time"> / </span> 
+      <span class="total" v-if="mixerVars.show_total_time">
       <span v-if="showMins">{{totalLength[0]}}:</span><span>{{totalLength[1]}}</span>:<span>{{totalLength[2]}}</span>
     </span>
+
+    </span>
+
+
+   
   </div>
 
 </template>
@@ -19,14 +25,19 @@ export default {
   props: [
       'progressTime',
       'totalTime',
-      'showTotalTime',
-      'showMins'
+      'mixerVars'
   ],
   data : function(){       
       return {
       };
   },
   computed:{
+
+    showMins()
+    {
+      return this.totalTime > 61000;
+    },
+
     totalLength(){
       return this.formatTime(this.totalTime);
     },
@@ -42,7 +53,7 @@ export default {
         let  secs = Math.floor((millis % 6e4) / 1000);
         let  mill = Math.floor(millis % 1000);
 
-        if(!this.showMins){
+        if(!this.showMins){ // if 60 seconds or less, don't show minutes
           var returns = [0,this.pad(secs+(mins*60),2),this.pad(mill, 2).substring(2, 0)];
         }else{
           var returns = [this.pad(mins,2),this.pad(secs,2),this.pad(mill, 2).substring(2, 0)];
