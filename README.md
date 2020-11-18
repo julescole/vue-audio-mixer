@@ -157,12 +157,12 @@ Or use directly from a CDN
 
       <div style="position:relative; display: inline-block; ">
         <vue-audio-mixer 
-          :config="config" 
-          size="medium" 
-          @loaded="loadedChange"
-          @input="setConfig" 
-          :showPan="true"
-          :showTotalTime="true"
+            :config="config" 
+            size="medium" 
+            @loaded="loadedChange"
+            @input="setConfig" 
+            :show-pan="true"
+            :show-total-time="true"
         />
       </div>
 
