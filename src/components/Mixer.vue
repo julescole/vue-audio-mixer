@@ -93,12 +93,22 @@ import variables from '../scss/includes/_variables.scss';
 
 export default {
   name: 'app',
-  props: [
-      'config',
-      'size',
-      'showPan',
-      'showTotalTime'
-  ],
+
+  props: {
+    config: Object,
+    size: {
+      type: String,
+      default:'medium'
+    },
+    showPan: {
+      type: Boolean,
+      default:true
+    },
+    showTotalTime:{
+      type: Boolean,
+      default:true
+    }
+  },
   components: {
     MixerChannel,
     Channel,
@@ -134,6 +144,7 @@ export default {
       };
   },
   created(){
+
 
     this.currentTime =  Date.now()
     this.startedAt = this.currentTime;

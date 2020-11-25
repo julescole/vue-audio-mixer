@@ -11470,7 +11470,21 @@
   //
   var script$6 = {
     name: 'app',
-    props: ['config', 'size', 'showPan', 'showTotalTime'],
+    props: {
+      config: Object,
+      size: {
+        type: String,
+        default: 'medium'
+      },
+      showPan: {
+        type: Boolean,
+        default: true
+      },
+      showTotalTime: {
+        type: Boolean,
+        default: true
+      }
+    },
     components: {
       MixerChannel: __vue_component__$1,
       Channel: __vue_component__,
