@@ -236,7 +236,7 @@ export default {
 ## Events
 
 | Event                          | Type           | Description                              |
-|--------------------------------|----------------|------------- ----------------------------|
+|--------------------------------|----------------|------------------------------------------|
 | @loaded                         | Boolean       | Fires when the mixer is loaded          |
 | @input                          | Object        | Fires when the mixer is changed         |
 
