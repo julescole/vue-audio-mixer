@@ -228,17 +228,17 @@ export default {
 | Prop                          | Type            | Default     | Description                              |
 |-------------------------------|-----------------|-------------|------------------------------------------|
 | config                         | Object    |             | Mixer config             |
-| size                         | String    |  medium           | Size of mixer (small/medium)            |
+| size                         | String    |  medium           | Size of mixer (small/medium)              |
 | showPan                         | Boolean    |  true           | Show panners            |
-| showTotalTime                         | Boolean    |  true           | Show the total time in the display            |
+| showTotalTime                         | Boolean    |  true           | Show the total time in the display  |
 
 
 ## Events
 
 | Event                          | Type           | Description                              |
-|-------------------------------|-----------------|-------------|------------------------------------------|
-| loaded                         | Boolean        | Fires when the mixer is loaded             |
-| input                         | Object        | Fires when the mixer is changed           |
+|--------------------------------|----------------|------------- ----------------------------|
+| @loaded                         | Boolean       | Fires when the mixer is loaded          |
+| @input                          | Object        | Fires when the mixer is changed         |
 
 
 ## Support us
