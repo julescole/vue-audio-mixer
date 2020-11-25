@@ -11,7 +11,7 @@ https://audiomixer.io
 
 To view demo examples locally clone the repo and run `npm install && npm run serve`
 
-Use directly from a CDN
+## Use directly from a CDN
 ``` html
 <!DOCTYPE html>
 <html>
