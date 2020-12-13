@@ -49,9 +49,11 @@
           </div>
 
           <ProgressBar 
+            :recording="recording"
             :progressPercent="progressPercent" 
             @percent="playFromPercent" 
             :mixerVars="mixerVars"
+            :tracks="tracks"
           />
           <div class="time_and_transport">
             <TimeDisplay 
@@ -68,6 +70,10 @@
           </div>
 
 
+      </div>
+
+      <div class="text-center">
+        <button @click="saveAudioMix" class="downloadMix">Record and download mix</button>
       </div>
      
      
@@ -88,6 +94,7 @@ import TransportButtons from './TransportButtons.vue';
 import Loader from './Loader.vue';
 import EventBus from './../event-bus';
 import variables from '../scss/includes/_variables.scss';
+import Recorder from './../recorder';
 
 
 
@@ -140,7 +147,8 @@ export default {
         progressBarPosition        : 0,
         tracks                     : [],
         solodTracks                : [],
-        tracksLoaded               : 0
+        tracksLoaded               : 0,
+        recorder                   : null
       };
   },
   created(){
@@ -288,6 +296,39 @@ export default {
 
   methods: {
 
+    saveAudioMix(){
+        this.stop();
+        this.recording = true;
+        this.recorder = new Recorder(this.pannerNode);
+        this.play();
+        this.recorder.record();
+        this.stopMix();
+    },
+
+    stopMix() {
+      setTimeout(() => {
+        this.stopRecording();
+     }, this.totalDuration)
+    },
+
+    stopRecording(){
+
+      if(this.recording){
+        this.recording = false;
+        this.stop();
+        this.recorder.exportWAV((blob) => {
+            var a = document.createElement("a");
+            document.body.appendChild(a);
+            a.style = "display: none";
+            let url = window.URL.createObjectURL(blob);
+            a.href = url;
+            a.download = 'mix.wav';
+            a.click();
+            window.URL.revokeObjectURL(url);
+        });
+      }
+    },
+
     detectedSoloChange(track)
     {
         let index = this.solodTracks.indexOf(track.index);
@@ -342,6 +383,40 @@ export default {
       this.playing = false;
     },
 
+    pause()
+    {
+
+      // stop if already playing
+      if(this.playing){
+        this.stopRecording();
+        this.pausedAt = this.progress;
+        EventBus.$emit(this.mixerVars.instance_id+'stop');
+      }
+
+    },
+
+    play()
+    {
+      if(this.playing)
+        this.pause();
+
+      this.doPlay();
+
+      
+      
+    },
+    doPlay(){
+
+      if(this.progressPercent >= 100){ // it's at the end, so restart
+        this.playing = true;
+        this.playFromPercent(0);
+      }else{
+        this.startedAt = Date.now() - this.progress;
+        EventBus.$emit(this.mixerVars.instance_id+'play',this.pausedAt);      
+      }
+
+    },
+
 
 
 
@@ -350,20 +425,16 @@ export default {
     {
 
       if(this.playing){
-        this.pausedAt = this.progress;
-        EventBus.$emit(this.mixerVars.instance_id+'stop');
-      }else if(this.progressPercent >= 100){ // it's at the end, so restart
-        this.playing = true;
-        this.playFromPercent(0);
-      }else{
-        this.startedAt = Date.now() - this.progress;
-        EventBus.$emit(this.mixerVars.instance_id+'play',this.pausedAt);      
+        this.pause();
+      }else {
+        this.doPlay();
       }
       
     },
 
     stop()
     {
+      this.stopRecording();
       this.pausedAt = 0
       this.startedAt = this.currentTime;
       EventBus.$emit(this.mixerVars.instance_id+'stop');

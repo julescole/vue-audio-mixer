@@ -8434,6 +8434,10 @@
 
   var commonjsGlobal = typeof globalThis !== 'undefined' ? globalThis : typeof window !== 'undefined' ? window : typeof global !== 'undefined' ? global : typeof self !== 'undefined' ? self : {};
 
+  function commonjsRequire () {
+  	throw new Error('Dynamic requires are not currently supported by rollup-plugin-commonjs');
+  }
+
   function unwrapExports (x) {
   	return x && x.__esModule && Object.prototype.hasOwnProperty.call(x, 'default') ? x['default'] : x;
   }
@@ -10818,6 +10822,10 @@
           this.gainNode.gain.value = gain;
         }
 
+        EventBus.$emit('gainChange', {
+          index: this.trackIndex,
+          gain: gain
+        });
         this.$emit('gainChange', {
           index: this.trackIndex,
           gain: gain
@@ -10852,16 +10860,10 @@
           // decode the data
           this.context.decodeAudioData(request.response, buffer => {
             // sound loaded
-            var channels = 2;
-
-            for (var channel = 0; channel < channels; channel++) {
-              let data = buffer.getChannelData(channel);
-              EventBus.$emit("pcm_data_loaded", {
-                data: data,
-                channel: channel
-              });
-            } // when the audio is decoded play the sound
-
+            EventBus.$emit("pcm_data_loaded", {
+              buffer: buffer,
+              index: this.trackIndex
+            }); // when the audio is decoded play the sound
 
             this.buffer = buffer;
             EventBus.$emit(this.mixerVars.instance_id + 'track_loaded', this.buffer.duration);
@@ -11178,9 +11180,10 @@
   //
   var script$3 = {
     name: 'progressbar',
-    props: ['progressPercent', 'mixerVars'],
+    props: ['progressPercent', 'mixerVars', 'tracks', 'recording'],
 
     created() {
+      this.waveFormLastGenerated = new Date();
       window.addEventListener('mousemove', this.doDrag);
       window.addEventListener("mouseup", this.triggerMouseUpEvent);
       window.addEventListener("touchend", this.triggerMouseUpEvent);
@@ -11207,10 +11210,25 @@
         ctx: null,
         canvasWidth: 0,
         canvasHeight: 0,
-        waveformDataPoints: []
+        waveformDataPoints: [],
+        regenerate_pcm_data: false
       };
     },
     watch: {
+      tracks: {
+        // This will let Vue know to look inside the array
+        deep: true,
+
+        // We have to move our method to a handler field
+        handler() {
+          // only allow the canvas to be refreshed once every 1 seconds max
+          clearTimeout(this.regenerate_pcm_data);
+          this.regenerate_pcm_data = setTimeout(() => {
+            this.convertPCMDataToWaveform();
+          }, 1000);
+        }
+
+      },
       progressPercent: function (newVal) {
         if (this.$refs['vue-audio-mixer-progress-bar'] && !this.dragging) this.progress = this.$refs['vue-audio-mixer-progress-bar'].offsetWidth / 100 * newVal;
       },
@@ -11237,7 +11255,7 @@
         if (loaded) {
           if (!this.canvas) {
             this.$nextTick(() => {
-              this.resizeCanvas();
+              this.convertPCMDataToWaveform();
             });
           }
         }
@@ -11255,7 +11273,11 @@
         ctx.lineWidth = 1; // how thick the line is
 
         if (this.progress * this.dpr > x) {
-          ctx.strokeStyle = isEven ? "#38fedd" : "#99ffee"; // what color our line is
+          if (this.recording) {
+            ctx.strokeStyle = isEven ? "#8c0d0d" : "#bf1111"; // what color our line is
+          } else {
+            ctx.strokeStyle = isEven ? "#38fedd" : "#99ffee"; // what color our line is
+          }
         } else {
           ctx.strokeStyle = isEven ? "#a3a3a3" : "#d9d9d9"; // what color our line is
         }
@@ -11269,7 +11291,7 @@
       },
 
       // returns the loudness of an array of PCM data
-      getAmps(buffer) {
+      getAmps(buffer, track_index) {
         var rms = 0;
 
         for (var i = 0; i < buffer.length; i++) {
@@ -11277,8 +11299,10 @@
         }
 
         rms /= buffer.length;
-        rms = Math.sqrt(rms);
-        return rms;
+        rms = Math.sqrt(rms); // change to the gain/mute of the track
+
+        if (this.tracks[track_index].muted) return 0;
+        return rms * this.tracks[track_index].gain;
       },
 
       // splits array into chunks
@@ -11296,8 +11320,11 @@
       },
 
       // convert PCM data to waveform data points
-      resizeCanvas() {
-        this.createCanvas();
+      convertPCMDataToWaveform() {
+        if (!this.canvas) {
+          this.createCanvas();
+        }
+
         this.ctx.clearRect(0, 0, this.canvasWidth, this.canvasHeight);
         this.ctx.fillStyle = "#303030"; // create background to meters
 
@@ -11306,18 +11333,18 @@
         let length = 0;
 
         for (let i = 0; i < this.pcmData.length; i++) {
-          if (this.pcmData[i].length > length) {
-            length = this.pcmData[i].length;
+          if (this.pcmData[i].data.length > length) {
+            length = this.pcmData[i].data.length;
           }
         }
 
         let chunk_size = Math.floor(length / this.canvasWidth);
 
         for (let i = 0; i < this.pcmData.length; i++) {
-          let newArray = this.chunkArray(this.pcmData[i], chunk_size);
+          let newArray = this.chunkArray(this.pcmData[i].data, chunk_size);
 
           for (let c = 0; c < newArray.length; c++) {
-            let amps = this.getAmps(newArray[c]);
+            let amps = this.getAmps(newArray[c], this.pcmData[i].index);
 
             if (finalData[c] === undefined) {
               finalData.push(0);
@@ -11375,8 +11402,17 @@
       },
 
       // Called when a new audio source is loaded. Adds the PCM data to the array
-      addWavelengthPointData(data) {
-        this.pcmData.push(data.data);
+      addWavelengthPointData(raw) {
+        var channels = 2;
+
+        for (var channel = 0; channel < channels; channel++) {
+          let data = raw.buffer.getChannelData(channel);
+          this.pcmData.push({
+            data: data,
+            index: raw.index,
+            channel: channel
+          });
+        }
       },
 
       startDrag(e) {
@@ -11395,6 +11431,8 @@
       },
 
       progressBarClick(e, fdsa) {
+        // can't click while recording
+        if (this.recording) return;
         let target = this.$refs['vue-audio-mixer-progress-bar'];
         var rect = target.getBoundingClientRect();
         var x = e.clientX - rect.left; //x position within the element.
@@ -11498,7 +11536,7 @@
     /* style */
     const __vue_inject_styles__$3 = function (inject) {
       if (!inject) return
-      inject("data-v-29bd164c_0", { source: "\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n", map: {"version":3,"sources":[],"names":[],"mappings":"","file":"ProgressBar.vue"}, media: undefined });
+      inject("data-v-eb3e4eb0_0", { source: "\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n", map: {"version":3,"sources":[],"names":[],"mappings":"","file":"ProgressBar.vue"}, media: undefined });
 
     };
     /* scoped */
@@ -11694,6 +11732,471 @@
       undefined
     );
 
+  var recorder = createCommonjsModule(function (module, exports) {
+    (function (f) {
+      {
+        module.exports = f();
+      }
+    })(function () {
+      return function e(t, n, r) {
+        function s(o, u) {
+          if (!n[o]) {
+            if (!t[o]) {
+              var a = typeof commonjsRequire == "function" && commonjsRequire;
+              if (!u && a) return a(o, !0);
+              if (i) return i(o, !0);
+              var f = new Error("Cannot find module '" + o + "'");
+              throw f.code = "MODULE_NOT_FOUND", f;
+            }
+
+            var l = n[o] = {
+              exports: {}
+            };
+            t[o][0].call(l.exports, function (e) {
+              var n = t[o][1][e];
+              return s(n ? n : e);
+            }, l, l.exports, e, t, n, r);
+          }
+
+          return n[o].exports;
+        }
+
+        var i = typeof commonjsRequire == "function" && commonjsRequire;
+
+        for (var o = 0; o < r.length; o++) s(r[o]);
+
+        return s;
+      }({
+        1: [function (require, module, exports) {
+
+          module.exports = require("./recorder").Recorder;
+        }, {
+          "./recorder": 2
+        }],
+        2: [function (require, module, exports) {
+
+          var _createClass = function () {
+            function defineProperties(target, props) {
+              for (var i = 0; i < props.length; i++) {
+                var descriptor = props[i];
+                descriptor.enumerable = descriptor.enumerable || false;
+                descriptor.configurable = true;
+                if ("value" in descriptor) descriptor.writable = true;
+                Object.defineProperty(target, descriptor.key, descriptor);
+              }
+            }
+
+            return function (Constructor, protoProps, staticProps) {
+              if (protoProps) defineProperties(Constructor.prototype, protoProps);
+              if (staticProps) defineProperties(Constructor, staticProps);
+              return Constructor;
+            };
+          }();
+
+          Object.defineProperty(exports, "__esModule", {
+            value: true
+          });
+          exports.Recorder = undefined;
+
+          var _inlineWorker = require('inline-worker');
+
+          var _inlineWorker2 = _interopRequireDefault(_inlineWorker);
+
+          function _interopRequireDefault(obj) {
+            return obj && obj.__esModule ? obj : {
+              default: obj
+            };
+          }
+
+          function _classCallCheck(instance, Constructor) {
+            if (!(instance instanceof Constructor)) {
+              throw new TypeError("Cannot call a class as a function");
+            }
+          }
+
+          var Recorder = exports.Recorder = function () {
+            function Recorder(source, cfg) {
+              var _this = this;
+
+              _classCallCheck(this, Recorder);
+
+              this.config = {
+                bufferLen: 4096,
+                numChannels: 2,
+                mimeType: 'audio/wav'
+              };
+              this.recording = false;
+              this.callbacks = {
+                getBuffer: [],
+                exportWAV: []
+              };
+              Object.assign(this.config, cfg);
+              this.context = source.context;
+              this.node = (this.context.createScriptProcessor || this.context.createJavaScriptNode).call(this.context, this.config.bufferLen, this.config.numChannels, this.config.numChannels);
+
+              this.node.onaudioprocess = function (e) {
+                if (!_this.recording) return;
+                var buffer = [];
+
+                for (var channel = 0; channel < _this.config.numChannels; channel++) {
+                  buffer.push(e.inputBuffer.getChannelData(channel));
+                }
+
+                _this.worker.postMessage({
+                  command: 'record',
+                  buffer: buffer
+                });
+              };
+
+              source.connect(this.node);
+              this.node.connect(this.context.destination); //this should not be necessary
+
+              var self = {};
+              this.worker = new _inlineWorker2.default(function () {
+                var recLength = 0,
+                    recBuffers = [],
+                    sampleRate = undefined,
+                    numChannels = undefined;
+
+                self.onmessage = function (e) {
+                  switch (e.data.command) {
+                    case 'init':
+                      init(e.data.config);
+                      break;
+
+                    case 'record':
+                      record(e.data.buffer);
+                      break;
+
+                    case 'exportWAV':
+                      exportWAV(e.data.type);
+                      break;
+
+                    case 'getBuffer':
+                      getBuffer();
+                      break;
+
+                    case 'clear':
+                      clear();
+                      break;
+                  }
+                };
+
+                function init(config) {
+                  sampleRate = config.sampleRate;
+                  numChannels = config.numChannels;
+                  initBuffers();
+                }
+
+                function record(inputBuffer) {
+                  for (var channel = 0; channel < numChannels; channel++) {
+                    recBuffers[channel].push(inputBuffer[channel]);
+                  }
+
+                  recLength += inputBuffer[0].length;
+                }
+
+                function exportWAV(type) {
+                  var buffers = [];
+
+                  for (var channel = 0; channel < numChannels; channel++) {
+                    buffers.push(mergeBuffers(recBuffers[channel], recLength));
+                  }
+
+                  var interleaved = undefined;
+
+                  if (numChannels === 2) {
+                    interleaved = interleave(buffers[0], buffers[1]);
+                  } else {
+                    interleaved = buffers[0];
+                  }
+
+                  var dataview = encodeWAV(interleaved);
+                  var audioBlob = new Blob([dataview], {
+                    type: type
+                  });
+                  self.postMessage({
+                    command: 'exportWAV',
+                    data: audioBlob
+                  });
+                }
+
+                function getBuffer() {
+                  var buffers = [];
+
+                  for (var channel = 0; channel < numChannels; channel++) {
+                    buffers.push(mergeBuffers(recBuffers[channel], recLength));
+                  }
+
+                  self.postMessage({
+                    command: 'getBuffer',
+                    data: buffers
+                  });
+                }
+
+                function clear() {
+                  recLength = 0;
+                  recBuffers = [];
+                  initBuffers();
+                }
+
+                function initBuffers() {
+                  for (var channel = 0; channel < numChannels; channel++) {
+                    recBuffers[channel] = [];
+                  }
+                }
+
+                function mergeBuffers(recBuffers, recLength) {
+                  var result = new Float32Array(recLength);
+                  var offset = 0;
+
+                  for (var i = 0; i < recBuffers.length; i++) {
+                    result.set(recBuffers[i], offset);
+                    offset += recBuffers[i].length;
+                  }
+
+                  return result;
+                }
+
+                function interleave(inputL, inputR) {
+                  var length = inputL.length + inputR.length;
+                  var result = new Float32Array(length);
+                  var index = 0,
+                      inputIndex = 0;
+
+                  while (index < length) {
+                    result[index++] = inputL[inputIndex];
+                    result[index++] = inputR[inputIndex];
+                    inputIndex++;
+                  }
+
+                  return result;
+                }
+
+                function floatTo16BitPCM(output, offset, input) {
+                  for (var i = 0; i < input.length; i++, offset += 2) {
+                    var s = Math.max(-1, Math.min(1, input[i]));
+                    output.setInt16(offset, s < 0 ? s * 0x8000 : s * 0x7FFF, true);
+                  }
+                }
+
+                function writeString(view, offset, string) {
+                  for (var i = 0; i < string.length; i++) {
+                    view.setUint8(offset + i, string.charCodeAt(i));
+                  }
+                }
+
+                function encodeWAV(samples) {
+                  var buffer = new ArrayBuffer(44 + samples.length * 2);
+                  var view = new DataView(buffer);
+                  /* RIFF identifier */
+
+                  writeString(view, 0, 'RIFF');
+                  /* RIFF chunk length */
+
+                  view.setUint32(4, 36 + samples.length * 2, true);
+                  /* RIFF type */
+
+                  writeString(view, 8, 'WAVE');
+                  /* format chunk identifier */
+
+                  writeString(view, 12, 'fmt ');
+                  /* format chunk length */
+
+                  view.setUint32(16, 16, true);
+                  /* sample format (raw) */
+
+                  view.setUint16(20, 1, true);
+                  /* channel count */
+
+                  view.setUint16(22, numChannels, true);
+                  /* sample rate */
+
+                  view.setUint32(24, sampleRate, true);
+                  /* byte rate (sample rate * block align) */
+
+                  view.setUint32(28, sampleRate * 4, true);
+                  /* block align (channel count * bytes per sample) */
+
+                  view.setUint16(32, numChannels * 2, true);
+                  /* bits per sample */
+
+                  view.setUint16(34, 16, true);
+                  /* data chunk identifier */
+
+                  writeString(view, 36, 'data');
+                  /* data chunk length */
+
+                  view.setUint32(40, samples.length * 2, true);
+                  floatTo16BitPCM(view, 44, samples);
+                  return view;
+                }
+              }, self);
+              this.worker.postMessage({
+                command: 'init',
+                config: {
+                  sampleRate: this.context.sampleRate,
+                  numChannels: this.config.numChannels
+                }
+              });
+
+              this.worker.onmessage = function (e) {
+                var cb = _this.callbacks[e.data.command].pop();
+
+                if (typeof cb == 'function') {
+                  cb(e.data.data);
+                }
+              };
+            }
+
+            _createClass(Recorder, [{
+              key: 'record',
+              value: function record() {
+                this.recording = true;
+              }
+            }, {
+              key: 'stop',
+              value: function stop() {
+                this.recording = false;
+              }
+            }, {
+              key: 'clear',
+              value: function clear() {
+                this.worker.postMessage({
+                  command: 'clear'
+                });
+              }
+            }, {
+              key: 'getBuffer',
+              value: function getBuffer(cb) {
+                cb = cb || this.config.callback;
+                if (!cb) throw new Error('Callback not set');
+                this.callbacks.getBuffer.push(cb);
+                this.worker.postMessage({
+                  command: 'getBuffer'
+                });
+              }
+            }, {
+              key: 'exportWAV',
+              value: function exportWAV(cb, mimeType) {
+                mimeType = mimeType || this.config.mimeType;
+                cb = cb || this.config.callback;
+                if (!cb) throw new Error('Callback not set');
+                this.callbacks.exportWAV.push(cb);
+                this.worker.postMessage({
+                  command: 'exportWAV',
+                  type: mimeType
+                });
+              }
+            }], [{
+              key: 'forceDownload',
+              value: function forceDownload(blob, filename) {
+                var url = (window.URL || window.webkitURL).createObjectURL(blob);
+                var link = window.document.createElement('a');
+                link.href = url;
+                link.download = filename || 'output.wav';
+                var click = document.createEvent("Event");
+                click.initEvent("click", true, true);
+                link.dispatchEvent(click);
+              }
+            }]);
+
+            return Recorder;
+          }();
+
+          exports.default = Recorder;
+        }, {
+          "inline-worker": 3
+        }],
+        3: [function (require, module, exports) {
+
+          module.exports = require("./inline-worker");
+        }, {
+          "./inline-worker": 4
+        }],
+        4: [function (require, module, exports) {
+          (function (global) {
+
+            var _createClass = function () {
+              function defineProperties(target, props) {
+                for (var key in props) {
+                  var prop = props[key];
+                  prop.configurable = true;
+                  if (prop.value) prop.writable = true;
+                }
+
+                Object.defineProperties(target, props);
+              }
+
+              return function (Constructor, protoProps, staticProps) {
+                if (protoProps) defineProperties(Constructor.prototype, protoProps);
+                if (staticProps) defineProperties(Constructor, staticProps);
+                return Constructor;
+              };
+            }();
+
+            var _classCallCheck = function (instance, Constructor) {
+              if (!(instance instanceof Constructor)) {
+                throw new TypeError("Cannot call a class as a function");
+              }
+            };
+
+            var WORKER_ENABLED = !!(global === global.window && global.URL && global.Blob && global.Worker);
+
+            var InlineWorker = function () {
+              function InlineWorker(func, self) {
+                var _this = this;
+
+                _classCallCheck(this, InlineWorker);
+
+                if (WORKER_ENABLED) {
+                  var functionBody = func.toString().trim().match(/^function\s*\w*\s*\([\w\s,]*\)\s*{([\w\W]*?)}$/)[1];
+                  var url = global.URL.createObjectURL(new global.Blob([functionBody], {
+                    type: "text/javascript"
+                  }));
+                  return new global.Worker(url);
+                }
+
+                this.self = self;
+
+                this.self.postMessage = function (data) {
+                  setTimeout(function () {
+                    _this.onmessage({
+                      data: data
+                    });
+                  }, 0);
+                };
+
+                setTimeout(function () {
+                  func.call(self);
+                }, 0);
+              }
+
+              _createClass(InlineWorker, {
+                postMessage: {
+                  value: function postMessage(data) {
+                    var _this = this;
+
+                    setTimeout(function () {
+                      _this.self.onmessage({
+                        data: data
+                      });
+                    }, 0);
+                  }
+                }
+              });
+
+              return InlineWorker;
+            }();
+
+            module.exports = InlineWorker;
+          }).call(this, typeof commonjsGlobal !== "undefined" ? commonjsGlobal : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {});
+        }, {}]
+      }, {}, [1])(1);
+    });
+  });
+  var Recorder = unwrapExports(recorder);
+
   //
   var script$6 = {
     name: 'app',
@@ -11743,7 +12246,8 @@
         progressBarPosition: 0,
         tracks: [],
         solodTracks: [],
-        tracksLoaded: 0
+        tracksLoaded: 0,
+        recorder: null
       };
     },
 
@@ -11863,6 +12367,38 @@
 
     },
     methods: {
+      saveAudioMix() {
+        this.stop();
+        this.recording = true;
+        this.recorder = new Recorder(this.pannerNode);
+        this.play();
+        this.recorder.record();
+        this.stopMix();
+      },
+
+      stopMix() {
+        setTimeout(() => {
+          this.stopRecording();
+        }, this.totalDuration);
+      },
+
+      stopRecording() {
+        if (this.recording) {
+          this.recording = false;
+          this.stop();
+          this.recorder.exportWAV(blob => {
+            var a = document.createElement("a");
+            document.body.appendChild(a);
+            a.style = "display: none";
+            let url = window.URL.createObjectURL(blob);
+            a.href = url;
+            a.download = 'mix.wav';
+            a.click();
+            window.URL.revokeObjectURL(url);
+          });
+        }
+      },
+
       detectedSoloChange(track) {
         let index = this.solodTracks.indexOf(track.index);
 
@@ -11908,11 +12444,22 @@
         this.playing = false;
       },
 
-      togglePlay() {
+      pause() {
+        // stop if already playing
         if (this.playing) {
+          this.stopRecording();
           this.pausedAt = this.progress;
           EventBus.$emit(this.mixerVars.instance_id + 'stop');
-        } else if (this.progressPercent >= 100) {
+        }
+      },
+
+      play() {
+        if (this.playing) this.pause();
+        this.doPlay();
+      },
+
+      doPlay() {
+        if (this.progressPercent >= 100) {
           // it's at the end, so restart
           this.playing = true;
           this.playFromPercent(0);
@@ -11922,7 +12469,16 @@
         }
       },
 
+      togglePlay() {
+        if (this.playing) {
+          this.pause();
+        } else {
+          this.doPlay();
+        }
+      },
+
       stop() {
+        this.stopRecording();
         this.pausedAt = 0;
         this.startedAt = this.currentTime;
         EventBus.$emit(this.mixerVars.instance_id + 'stop');
@@ -12124,8 +12680,10 @@
                 _vm._v(" "),
                 _c("ProgressBar", {
                   attrs: {
+                    recording: _vm.recording,
                     progressPercent: _vm.progressPercent,
-                    mixerVars: _vm.mixerVars
+                    mixerVars: _vm.mixerVars,
+                    tracks: _vm.tracks
                   },
                   on: { percent: _vm.playFromPercent }
                 }),
@@ -12151,7 +12709,15 @@
                 )
               ],
               1
-            )
+            ),
+            _vm._v(" "),
+            _c("div", { staticClass: "text-center" }, [
+              _c(
+                "button",
+                { staticClass: "downloadMix", on: { click: _vm.saveAudioMix } },
+                [_vm._v("Record and download mix")]
+              )
+            ])
           ]
         )
       ],

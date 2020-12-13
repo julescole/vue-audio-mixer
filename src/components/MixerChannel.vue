@@ -171,6 +171,8 @@ export default {
         this.gainNode.gain.value = gain;
       }
 
+        EventBus.$emit('gainChange', {index:this.trackIndex,gain:gain});
+
         this.$emit('gainChange', {index:this.trackIndex,gain:gain});
     },
 
@@ -200,17 +202,7 @@ export default {
         request.onload = () => { 
             // decode the data
             this.context.decodeAudioData(request.response, (buffer) => { // sound loaded
-
-
-                  var channels = 2;
-
-
-                for (var channel = 0; channel < channels; channel++) {
-                 let  data = buffer.getChannelData(channel);
-                 EventBus.$emit("pcm_data_loaded", {data:data, channel:channel});
-                }
-
-
+                EventBus.$emit("pcm_data_loaded", {buffer:buffer, index:this.trackIndex});
                 // when the audio is decoded play the sound
                 this.buffer=buffer;
                 EventBus.$emit(this.mixerVars.instance_id+'track_loaded', this.buffer.duration);

@@ -1,10 +1,6 @@
 <template>
 
   <div>
-
-
-
-
       <div 
         class="vue-audio-mixer-progress-bar" 
         ref="vue-audio-mixer-progress-bar" 
@@ -25,9 +21,12 @@ export default {
   name: 'progressbar',
   props: [
       'progressPercent',
-      'mixerVars'
+      'mixerVars',
+      'tracks',
+      'recording'
   ],
   created(){
+    this.waveFormLastGenerated = new Date();
     window.addEventListener('mousemove',this.doDrag);
     window.addEventListener("mouseup", this.triggerMouseUpEvent);
     window.addEventListener("touchend", this.triggerMouseUpEvent);
@@ -54,10 +53,32 @@ export default {
         canvasWidth:0,
         canvasHeight:0,
 
-        waveformDataPoints:[]
+        waveformDataPoints:[],
+        regenerate_pcm_data:false,
       };
   },
   watch: {
+
+    tracks: {
+      // This will let Vue know to look inside the array
+      deep: true,
+
+      // We have to move our method to a handler field
+      handler(){
+
+      // only allow the canvas to be refreshed once every 1 seconds max
+       clearTimeout(this.regenerate_pcm_data);
+
+        this.regenerate_pcm_data = setTimeout(() => {
+            this.convertPCMDataToWaveform();
+        }, 1000);
+      
+
+
+
+      }
+    },
+
 
     progressPercent: function(newVal){
       if(this.$refs['vue-audio-mixer-progress-bar'] && !this.dragging)
@@ -92,7 +113,7 @@ export default {
       if(loaded){
         if(!this.canvas){
           this.$nextTick(() => {
-            this.resizeCanvas();
+            this.convertPCMDataToWaveform();
           });
         }
       }
@@ -113,10 +134,16 @@ export default {
       ctx.lineWidth = 1; // how thick the line is
 
       if(this.progress*this.dpr > x){
-        ctx.strokeStyle = isEven ?  "#38fedd" : "#99ffee"; // what color our line is
+        if(this.recording){
+          ctx.strokeStyle = isEven ?  "#8c0d0d" : "#bf1111"; // what color our line is
+        }else{
+          ctx.strokeStyle = isEven ?  "#38fedd" : "#99ffee"; // what color our line is
+        }
       }else{
         ctx.strokeStyle = isEven ?  "#a3a3a3" : "#d9d9d9"; // what color our line is
       }
+
+      
 
       ctx.beginPath();
       y = isEven ? y : -y;
@@ -129,7 +156,7 @@ export default {
     },
 
     // returns the loudness of an array of PCM data
-    getAmps(buffer)
+    getAmps(buffer, track_index)
     {
 
       var rms = 0;
@@ -140,7 +167,11 @@ export default {
 
       rms /= buffer.length;
       rms = Math.sqrt(rms);
-      return rms;
+
+      // change to the gain/mute of the track
+      if(this.tracks[track_index].muted)
+        return 0;
+      return rms * this.tracks[track_index].gain;
 
     },
 
@@ -154,13 +185,17 @@ export default {
           chunks.push(array.slice(i,i+chunk));
       }
       return chunks;
-  },
+    },
+
 
     // convert PCM data to waveform data points
-    resizeCanvas()
+    convertPCMDataToWaveform()
     {
 
-      this.createCanvas();
+      if(!this.canvas){
+        this.createCanvas();
+      }
+
       this.ctx.clearRect(0, 0, this.canvasWidth, this.canvasHeight);
       this.ctx.fillStyle="#303030";
       // create background to meters
@@ -170,8 +205,8 @@ export default {
 
       let length = 0;
       for (let i = 0; i < this.pcmData.length; i++){
-        if(this.pcmData[i].length > length){
-          length = this.pcmData[i].length;
+        if(this.pcmData[i].data.length > length){
+          length = this.pcmData[i].data.length;
         }
       }
 
@@ -179,10 +214,10 @@ export default {
 
       for (let i = 0; i < this.pcmData.length; i++){
 
-        let newArray = this.chunkArray(this.pcmData[i],chunk_size);
+        let newArray = this.chunkArray(this.pcmData[i].data,chunk_size);
    
         for (let c = 0; c < newArray.length; c++){
-          let amps = this.getAmps(newArray[c]);
+          let amps = this.getAmps(newArray[c],this.pcmData[i].index);
           if(finalData[c] === undefined){
             finalData.push(0);
           }
@@ -243,8 +278,12 @@ export default {
     },
 
     // Called when a new audio source is loaded. Adds the PCM data to the array
-    addWavelengthPointData(data){
-      this.pcmData.push(data.data);
+    addWavelengthPointData(raw){
+      var channels = 2;
+      for (var channel = 0; channel < channels; channel++) {
+        let  data = raw.buffer.getChannelData(channel);
+        this.pcmData.push({data:data,index:raw.index,channel:channel});
+      }
     },
 
     startDrag(e){
@@ -266,6 +305,10 @@ export default {
 
     progressBarClick(e, fdsa)
     {
+
+      // can't click while recording
+      if(this.recording)
+        return;
 
       let target = this.$refs['vue-audio-mixer-progress-bar'];
       var rect = target.getBoundingClientRect();
