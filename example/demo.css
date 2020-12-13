@@ -190,6 +190,13 @@
 #vue-audio-mixer-waveform {
   width: 100% !important; }
 
+.vue-audio-mixer-download-mix {
+  cursor: pointer;
+  background-color: #bf1111;
+  border-radius: 5px;
+  color: white;
+  padding: 5px; }
+
 * {
   box-sizing: content-box; }
 

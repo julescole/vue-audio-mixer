@@ -73,7 +73,7 @@
       </div>
 
       <div class="text-center">
-        <button @click="saveAudioMix" class="downloadMix">Record and download mix</button>
+        <button @click="saveAudioMix" class="vue-audio-mixer-download-mix">Record and download mix</button>
       </div>
      
      
