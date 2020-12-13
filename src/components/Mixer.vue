@@ -187,6 +187,7 @@ export default {
     },
 
     loading(newVal) {
+      EventBus.$emit('loaded',!newVal);
       this.$emit('loaded',!newVal)
     },
 
@@ -221,10 +222,10 @@ export default {
     mixerVars()
     {
       return {
-        'theme_size' : this.themeSize,
-        'instance_id': this._uid,
-        'show_pan' : this.showPan,
-        'show_total_time' : this.showTotalTime
+        'theme_size'     : this.themeSize,
+        'instance_id'    : this._uid,
+        'show_pan'       : this.showPan,
+        'show_total_time': this.showTotalTime
       }
     },
 

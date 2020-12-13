@@ -200,6 +200,17 @@ export default {
         request.onload = () => { 
             // decode the data
             this.context.decodeAudioData(request.response, (buffer) => { // sound loaded
+
+
+                  var channels = 2;
+
+
+                for (var channel = 0; channel < channels; channel++) {
+                 let  data = buffer.getChannelData(channel);
+                 EventBus.$emit("pcm_data_loaded", {data:data, channel:channel});
+                }
+
+
                 // when the audio is decoded play the sound
                 this.buffer=buffer;
                 EventBus.$emit(this.mixerVars.instance_id+'track_loaded', this.buffer.duration);
@@ -253,6 +264,7 @@ export default {
 
         // create a buffer source node
         this.sourceNode = this.context.createBufferSource();
+
         this.sourceNode.buffer = this.buffer;
 
        
@@ -262,6 +274,7 @@ export default {
       //  this.sourceNode.muted = false; 
 
 
+       // this.sourceNode.playbackRate.value = 1;
 
         // setup a analyzers
         this.leftAnalyser = this.context.createAnalyser();

@@ -187,6 +187,9 @@
 .vue-audio-mixer-loading-hider {
   display: inline-block; }
 
+#vue-audio-mixer-waveform {
+  width: 100% !important; }
+
 * {
   box-sizing: content-box; }
 
@@ -416,10 +419,13 @@
 .vue-audio-mixer-channel-slider-input:focus::-ms-track {
   background: #15181b; }
 
+.waveform {
+  width: 100%; }
+
 .vue-audio-mixer-progress-bar {
   margin-top: 1px;
   background: #4c4c4c;
-  height: 5px;
+  height: 50px;
   position: relative;
   display: block;
   clear: both;
@@ -427,11 +433,12 @@
   cursor: pointer; }
 
 .vue-audio-mixer-progress-cursor {
-  width: 2px;
+  width: 1px;
   height: 100%;
   background: #b6c8e1;
   position: absolute;
-  left: 0; }
+  left: 0;
+  top: 0; }
 
 .time_and_transport {
   position: relative;

@@ -4,10 +4,14 @@ $recordsize:48px;
 $ratio:1.2;
 $transition-time:0.1s;
 
+.waveform{
+  width:100%;
+}
+
 .vue-audio-mixer-progress-bar{
   margin-top: 1px;
   background: $progress-bar-background-colour; 
-  height: 5px;
+  height: 50px;
   position: relative;
   display: block;
   clear:both;
@@ -15,11 +19,13 @@ $transition-time:0.1s;
   cursor: pointer;
 }
 .vue-audio-mixer-progress-cursor{
-  width: 2px;
+  width: 1px;
   height: 100%;
   background: $progress-bar-cursor-colour; 
   position: absolute;
   left:0;
+  top:0;
+
 } 
 
 .time_and_transport{
