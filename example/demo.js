@@ -11208,7 +11208,8 @@
         canvasHeight: 0,
         waveformDataPoints: [],
         regenerate_pcm_data: false,
-        waveformPadding: 20
+        waveformPadding: 20,
+        reduced_pcm_data: []
       };
     },
     watch: {
@@ -11222,7 +11223,7 @@
           clearTimeout(this.regenerate_pcm_data);
           this.regenerate_pcm_data = setTimeout(() => {
             this.convertPCMDataToWaveform();
-          }, 1000);
+          }, 100);
         }
 
       },
@@ -11252,7 +11253,7 @@
         if (loaded) {
           if (!this.canvas) {
             this.$nextTick(() => {
-              this.convertPCMDataToWaveform();
+              this.reducePCMData();
             });
           }
         }
@@ -11288,7 +11289,11 @@
       },
 
       // returns the loudness of an array of PCM data
-      getAmps(buffer, track_index) {
+      getAmps(buffer) {
+        // change to the gain/mute of the track
+
+        /*if(this.tracks[track_index].muted)
+          return 0;*/
         var rms = 0;
 
         for (var i = 0; i < buffer.length; i++) {
@@ -11296,58 +11301,36 @@
         }
 
         rms /= buffer.length;
-        rms = Math.sqrt(rms); // change to the gain/mute of the track
-
-        if (this.tracks[track_index].muted) return 0;
-        return rms * this.tracks[track_index].gain;
+        rms = Math.sqrt(rms);
+        return rms
+        /** this.tracks[track_index].gain*/
+        ;
       },
 
       // splits array into chunks
-      chunkArray(array, chunk_size) {
-        let chunks = [];
-        var i,
-            j,
-            chunk = chunk_size;
-
-        for (i = 0, j = array.length; i < j; i += chunk) {
-          chunks.push(array.slice(i, i + chunk));
-        }
-
-        return chunks;
+      chunkArray(arr, size) {
+        return Array.from({
+          length: Math.ceil(arr.length / size)
+        }, (v, i) => arr.slice(i * size, i * size + size));
       },
 
       // convert PCM data to waveform data points
       convertPCMDataToWaveform() {
-        if (!this.canvas) {
-          this.createCanvas();
-        }
-
         this.ctx.clearRect(0, 0, this.canvasWidth, this.canvasHeight);
         this.ctx.fillStyle = "#303030"; // create background to meters
 
         this.ctx.fillRect(0, 0, this.canvasWidth, this.canvasHeight);
         let finalData = [];
-        let length = 0;
 
-        for (let i = 0; i < this.pcmData.length; i++) {
-          if (this.pcmData[i].data.length > length) {
-            length = this.pcmData[i].data.length;
-          }
-        }
-
-        let chunk_size = Math.floor(length / this.canvasWidth);
-
-        for (let i = 0; i < this.pcmData.length; i++) {
-          let newArray = this.chunkArray(this.pcmData[i].data, chunk_size);
-
-          for (let c = 0; c < newArray.length; c++) {
-            let amps = this.getAmps(newArray[c], this.pcmData[i].index);
-
-            if (finalData[c] === undefined) {
+        for (let i = 0; i < this.reduced_pcm_data.length; i++) {
+          for (let d = 0; d < this.reduced_pcm_data[i].data.length; d++) {
+            if (finalData[d] === undefined) {
               finalData.push(0);
-            }
+            } // timex value by current gain and mute
 
-            finalData[c] = finalData[c] + amps;
+
+            let track_value = this.tracks[this.reduced_pcm_data[i].index].muted ? 0 : this.reduced_pcm_data[i].data[d] * this.tracks[this.reduced_pcm_data[i].index].gain;
+            finalData[d] = finalData[d] + track_value;
           }
         }
 
@@ -11396,6 +11379,51 @@
         }
 
         return filteredData;
+      },
+
+      reducePCMData(data) {
+        if (!this.canvas) {
+          this.createCanvas();
+        } // get overall maximum length of tracks
+
+
+        let length = 0;
+
+        for (let i = 0; i < this.pcmData.length; i++) {
+          if (this.pcmData[i].data.length > length) {
+            length = this.pcmData[i].data.length;
+          }
+        } // the number of pcm data parts we want to analyse per pixel
+
+
+        let chunk_size = Math.floor(length / this.canvasWidth);
+
+        for (let i = 0; i < this.pcmData.length; i++) {
+          // split data into chunk sizes
+          let newArray = this.chunkArray(this.pcmData[i].data, chunk_size); // make an array of the amps of each track for each pixel
+
+          let finalData = [];
+
+          for (let c = 0; c < newArray.length; c++) {
+            let amps = this.getAmps(newArray[c]);
+
+            if (finalData[c] === undefined) {
+              finalData.push(0);
+            }
+
+            finalData[c] = finalData[c] + amps;
+          } // create new data array with reduced data
+
+
+          this.reduced_pcm_data.push({
+            data: finalData,
+            index: this.pcmData[i].index
+          });
+        }
+
+        this.pcmData = []; // remove this massive data from the storage
+
+        this.convertPCMDataToWaveform();
       },
 
       // Called when a new audio source is loaded. Adds the PCM data to the array
@@ -11533,7 +11561,7 @@
     /* style */
     const __vue_inject_styles__$3 = function (inject) {
       if (!inject) return
-      inject("data-v-07ac8e1f_0", { source: "\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n", map: {"version":3,"sources":[],"names":[],"mappings":"","file":"ProgressBar.vue"}, media: undefined });
+      inject("data-v-252d3f3f_0", { source: "\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n", map: {"version":3,"sources":[],"names":[],"mappings":"","file":"ProgressBar.vue"}, media: undefined });
 
     };
     /* scoped */
