@@ -55,6 +55,7 @@ export default {
 
         waveformDataPoints:[],
         regenerate_pcm_data:false,
+        waveformPadding:20
       };
   },
   watch: {
@@ -128,7 +129,7 @@ export default {
     // Fraws the waveform
     drawWaveformLineSegment (ctx, x, y, width, isEven) {
 
-      let halfway = this.canvas.offsetHeight;
+      let halfway = this.canvasHeight / 2;
 
 
       ctx.lineWidth = 1; // how thick the line is
@@ -244,7 +245,7 @@ export default {
 
       for (let i = 0; i < normalizedData.length; i++) {
         const x = i;
-        let height = normalizedData[i] * (this.canvas.offsetHeight/2);
+        let height = normalizedData[i] * ((this.canvasHeight-this.waveformPadding)/2);
         this.drawWaveformLineSegment(this.ctx, x, height, width, i%2 == 0);
       }
 

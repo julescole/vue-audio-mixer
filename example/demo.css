@@ -188,7 +188,8 @@
   display: inline-block; }
 
 #vue-audio-mixer-waveform {
-  width: 100% !important; }
+  width: 100% !important;
+  display: block; }
 
 .vue-audio-mixer-download-mix {
   cursor: pointer;
@@ -446,11 +447,10 @@
 .vue-audio-mixer-progress-bar {
   margin-top: 1px;
   background: #4c4c4c;
-  height: 50px;
   position: relative;
   display: block;
   clear: both;
-  overflow: hidden;
+  overflow: auto;
   cursor: pointer; }
 
 .vue-audio-mixer-progress-cursor {

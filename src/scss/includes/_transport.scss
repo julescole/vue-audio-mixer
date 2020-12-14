@@ -11,11 +11,10 @@ $transition-time:0.1s;
 .vue-audio-mixer-progress-bar{
   margin-top: 1px;
   background: $progress-bar-background-colour; 
-  height: 50px;
   position: relative;
   display: block;
   clear:both;
-  overflow: hidden;
+  overflow: auto;
   cursor: pointer;
 }
 .vue-audio-mixer-progress-cursor{
