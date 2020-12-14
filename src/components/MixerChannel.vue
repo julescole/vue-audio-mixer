@@ -171,8 +171,6 @@ export default {
         this.gainNode.gain.value = gain;
       }
 
-        EventBus.$emit('gainChange', {index:this.trackIndex,gain:gain});
-
         this.$emit('gainChange', {index:this.trackIndex,gain:gain});
     },
 
