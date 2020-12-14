@@ -79,7 +79,6 @@ export default {
       }
     },
 
-
     progressPercent: function(newVal){
       if(this.$refs['vue-audio-mixer-progress-bar'] && !this.dragging)
         this.progress =  (this.$refs['vue-audio-mixer-progress-bar'].offsetWidth/100) * newVal;
@@ -130,6 +129,7 @@ export default {
     drawWaveformLineSegment (ctx, x, y, width, isEven) {
 
       let halfway = this.canvas.offsetHeight;
+
 
       ctx.lineWidth = 1; // how thick the line is
 
@@ -215,7 +215,7 @@ export default {
       for (let i = 0; i < this.pcmData.length; i++){
 
         let newArray = this.chunkArray(this.pcmData[i].data,chunk_size);
-   
+
         for (let c = 0; c < newArray.length; c++){
           let amps = this.getAmps(newArray[c],this.pcmData[i].index);
           if(finalData[c] === undefined){
@@ -240,7 +240,8 @@ export default {
 
       // draw the line segments
       const width = this.canvasWidth;
-    
+
+
       for (let i = 0; i < normalizedData.length; i++) {
         const x = i;
         let height = normalizedData[i] * (this.canvas.offsetHeight/2);
@@ -281,7 +282,7 @@ export default {
     addWavelengthPointData(raw){
       var channels = 2;
       for (var channel = 0; channel < channels; channel++) {
-        let  data = raw.buffer.getChannelData(channel);
+        let  data = Array.from(raw.buffer.getChannelData(channel));
         this.pcmData.push({data:data,index:raw.index,channel:channel});
       }
     },

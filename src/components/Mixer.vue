@@ -73,7 +73,7 @@
       </div>
 
       <div class="text-center">
-        <button @click="saveAudioMix" class="vue-audio-mixer-download-mix">Record and download mix</button>
+        <button @click="saveAudioMix" class="vue-audio-mixer-download-mix" :class="{'recording':recording}">Record and download mix</button>
       </div>
      
      
@@ -148,7 +148,8 @@ export default {
         tracks                     : [],
         solodTracks                : [],
         tracksLoaded               : 0,
-        recorder                   : null
+        recorder                   : null,
+        recording                  :false
       };
   },
   created(){
@@ -434,6 +435,8 @@ export default {
 
     stop()
     {
+      if(!this.playing)
+        return;
       this.stopRecording();
       this.pausedAt = 0
       this.startedAt = this.currentTime;

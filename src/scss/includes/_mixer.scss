@@ -28,4 +28,23 @@
   border-radius: 5px;
   color: white;
   padding:5px;
+  margin:5px;
+  outline:0 !important;
+  &.recording{
+  background-color: #fc9595;
+  animation: anim-glow 2s ease infinite;
+  -webkit-animation: anim-glow 2s ease infinite;
+  -moz-animation: anim-glow 2s ease infinite;
+
+  }
+}
+
+@keyframes anim-glow {
+  0% {
+    box-shadow: 0 0 rgba(#bf1111, 1);
+  }
+  100% {
+    box-shadow: 0 0 10px 8px transparent;
+    border-width: 2px;
+  }
 }
