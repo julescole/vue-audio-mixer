@@ -56,7 +56,8 @@ export default {
         waveformDataPoints:[],
         regenerate_pcm_data:false,
         waveformPadding:20,
-        reduced_pcm_data:[]
+        reduced_pcm_data:[],
+        max_length:0
       };
   },
   watch: {
@@ -266,16 +267,8 @@ export default {
       }
 
 
-      // get overall maximum length of tracks
-      let length = 0;
-      for (let i = 0; i < this.pcmData.length; i++){
-        if(this.pcmData[i].data.length > length){
-          length = this.pcmData[i].data.length;
-        }
-      }
-
       // the number of pcm data parts we want to analyse per pixel
-      let chunk_size = Math.floor(length/this.canvasWidth);
+      let chunk_size = Math.floor(this.max_length/this.canvasWidth);
       for (let i = 0; i < this.pcmData.length; i++){
 
         // split data into chunk sizes
@@ -304,6 +297,11 @@ export default {
       var channels = 2;
       for (var channel = 0; channel < channels; channel++) {
         let  data = Array.from(raw.buffer.getChannelData(channel));
+
+        if(data.length > this.max_length)
+          this.max_length = data.length;
+
+
         this.pcmData.push({data:data,index:raw.index,channel:channel});
       }
     },
