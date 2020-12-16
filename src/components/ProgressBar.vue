@@ -157,10 +157,6 @@ export default {
     getAmps(buffer)
     {
 
-      // change to the gain/mute of the track
-      /*if(this.tracks[track_index].muted)
-        return 0;*/
-
       var rms = 0;
 
       for (var i = 0; i < buffer.length; i++) {
@@ -169,8 +165,7 @@ export default {
 
       rms /= buffer.length;
       rms = Math.sqrt(rms);
-
-      
+ 
       return rms;
 
     },
@@ -260,6 +255,11 @@ export default {
       return filteredData;
     },
 
+
+    /**
+     * Reduced the PCM data to the ammount of pixels in the canvas
+     */
+
     reducePCMData(data)
     {
 
@@ -293,34 +293,43 @@ export default {
 
     },
 
-    // Called when a new audio source is loaded. Adds the PCM data to the array
+    
+    /*
+    * Called when a new audio source is loaded. Adds the PCM data to the array
+    *
+    * Raw buffer data is massive, so we need to reduce this down before using it
+    *
+    **/
+    
     addWavelengthPointData(raw){
-      var channels = 2;
 
-     
+
+      var channels = 2;
       let finalData = [];
 
       for (var channel = 0; channel < channels; channel++) {
+
+        // get the raw buffer data
         let buffer = raw.buffer.getChannelData(channel);
 
+        // chunk this into chunks of 1000 points
         let newArray = this.chunkArray(buffer,1000);
 
-        // make an array of the amps of each track for each pixel
+        // make an array of the amps of each track for each chunk
         for (let c = 0; c < newArray.length; c++){
-          let amps = this.getAmps(newArray[c]);
           if(finalData[c] === undefined){
             finalData.push(0);
           }
-          finalData[c] =  finalData[c] + amps;
+          finalData[c] =  finalData[c] + this.getAmps(newArray[c]);
         }
-        // create new data array with reduced data
-
       }
 
+      // Calculates the most data points there is
       if(finalData.length > this.max_length)
           this.max_length = finalData.length;
 
       this.pcmData.push({data:finalData,index:raw.index});
+
     },
 
     startDrag(e){

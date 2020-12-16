@@ -9988,7 +9988,8 @@
 	      regenerate_pcm_data: false,
 	      waveformPadding: 20,
 	      reduced_pcm_data: [],
-	      max_length: 0
+	      max_length: 0,
+	      newPCMdata: []
 	    };
 	  },
 	  watch: {
@@ -10081,9 +10082,7 @@
 
 	      rms /= buffer.length;
 	      rms = Math.sqrt(rms);
-	      return rms
-	      /** this.tracks[track_index].gain*/
-	      ;
+	      return rms;
 	    },
 
 	    // splits array into chunks
@@ -10175,7 +10174,7 @@
 	        let finalData = [];
 
 	        for (let c = 0; c < newArray.length; c++) {
-	          let amps = this.getAmps(newArray[c]);
+	          let amps = this.tracks[this.pcmData[i].index].muted ? 0 : this.getAmps(newArray[c]) * this.tracks[this.pcmData[i].index].gain;
 
 	          if (finalData[c] === undefined) {
 	            finalData.push(0);
@@ -10199,16 +10198,29 @@
 	    // Called when a new audio source is loaded. Adds the PCM data to the array
 	    addWavelengthPointData(raw) {
 	      var channels = 2;
+	      let finalData = [];
 
 	      for (var channel = 0; channel < channels; channel++) {
-	        let data = Array.from(raw.buffer.getChannelData(channel));
-	        if (data.length > this.max_length) this.max_length = data.length;
-	        this.pcmData.push({
-	          data: data,
-	          index: raw.index,
-	          channel: channel
-	        });
+	        let buffer = raw.buffer.getChannelData(channel);
+	        let newArray = this.chunkArray(buffer, 1000); // make an array of the amps of each track for each pixel
+
+	        for (let c = 0; c < newArray.length; c++) {
+	          let amps = this.getAmps(newArray[c]);
+
+	          if (finalData[c] === undefined) {
+	            finalData.push(0);
+	          }
+
+	          finalData[c] = finalData[c] + amps;
+	        } // create new data array with reduced data
+
 	      }
+
+	      if (finalData.length > this.max_length) this.max_length = finalData.length;
+	      this.pcmData.push({
+	        data: finalData,
+	        index: raw.index
+	      });
 	    },
 
 	    startDrag(e) {
