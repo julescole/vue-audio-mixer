@@ -10064,10 +10064,6 @@ var script$3 = {
 
     // returns the loudness of an array of PCM data
     getAmps(buffer) {
-      // change to the gain/mute of the track
-
-      /*if(this.tracks[track_index].muted)
-        return 0;*/
       var rms = 0;
 
       for (var i = 0; i < buffer.length; i++) {
@@ -10153,6 +10149,9 @@ var script$3 = {
       return filteredData;
     },
 
+    /**
+     * Reduced the PCM data to the ammount of pixels in the canvas
+     */
     reducePCMData(data) {
       if (!this.canvas) {
         this.createCanvas();
@@ -10189,26 +10188,31 @@ var script$3 = {
       this.convertPCMDataToWaveform();
     },
 
-    // Called when a new audio source is loaded. Adds the PCM data to the array
+    /*
+    * Called when a new audio source is loaded. Adds the PCM data to the array
+    *
+    * Raw buffer data is massive, so we need to reduce this down before using it
+    *
+    **/
     addWavelengthPointData(raw) {
       var channels = 2;
       let finalData = [];
 
       for (var channel = 0; channel < channels; channel++) {
-        let buffer = raw.buffer.getChannelData(channel);
-        let newArray = this.chunkArray(buffer, 1000); // make an array of the amps of each track for each pixel
+        // get the raw buffer data
+        let buffer = raw.buffer.getChannelData(channel); // chunk this into chunks of 1000 points
+
+        let newArray = this.chunkArray(buffer, 1000); // make an array of the amps of each track for each chunk
 
         for (let c = 0; c < newArray.length; c++) {
-          let amps = this.getAmps(newArray[c]);
-
           if (finalData[c] === undefined) {
             finalData.push(0);
           }
 
-          finalData[c] = finalData[c] + amps;
-        } // create new data array with reduced data
+          finalData[c] = finalData[c] + this.getAmps(newArray[c]);
+        }
+      } // Calculates the most data points there is
 
-      }
 
       if (finalData.length > this.max_length) this.max_length = finalData.length;
       this.pcmData.push({
