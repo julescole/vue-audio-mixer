@@ -2,7 +2,9 @@
 
   <div class="vue-audio-mixer" :class="[themeClass, trackClass]" :style="{ width: mixerWidth }">
 
-    <Loader v-if="loading" :percentLoaded="loadingPercent" />
+    <p class="vue-audio-mixer-error" v-if="track_load_error">Track {{track_load_error}} failed to load. Check that the track is hosted on the same domain as the mixer, or that CORS is enabled on the track's hosting service.</p>
+
+    <Loader v-else-if="loading" :percentLoaded="loadingPercent" />
 
     <div class="vue-audio-mixer-loading-hider" v-show="!loading">
 
@@ -149,7 +151,8 @@ export default {
         solodTracks                : [],
         tracksLoaded               : 0,
         recorder                   : null,
-        recording                  :false
+        recording                  :false,
+        track_load_error           : false
       };
   },
   created(){
@@ -174,6 +177,8 @@ export default {
     EventBus.$on(this.mixerVars.instance_id+'stop', this.stopped);
     EventBus.$on(this.mixerVars.instance_id+'play', this.started);
     EventBus.$on(this.mixerVars.instance_id+'soloChange', this.detectedSoloChange);
+
+    EventBus.$on('track_load_error',this.trackLoadError);
 
     setInterval(() => {
       if(this.playing)
@@ -218,6 +223,10 @@ export default {
 
     mixerWidth()
     {
+
+      if(this.track_load_error){
+        return '500px';
+      }
 
 
       let width = 69; // channel width of medium
@@ -296,6 +305,13 @@ export default {
   },
 
   methods: {
+
+    trackLoadError(track_url)
+    {
+
+      this.track_load_error = track_url;
+
+    },
 
     saveAudioMix(){
         this.stop();

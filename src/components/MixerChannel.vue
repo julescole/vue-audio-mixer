@@ -193,6 +193,9 @@ export default {
     // load the specified sound
     loadSound() {
         var request = new XMLHttpRequest();
+        request.onerror = (e) => {
+          EventBus.$emit("track_load_error", this.url);
+        };
         request.open('GET', this.url, true);
         request.responseType = 'arraybuffer';
 
