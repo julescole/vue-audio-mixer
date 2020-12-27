@@ -184,6 +184,10 @@
     -webkit-user-select: none;
     /* Disable selection/copy in UIWebView */ }
 
+.vue-audio-mixer-error {
+  color: red;
+  background-color: white; }
+
 .vue-audio-mixer-loading-hider {
   display: inline-block; }
 
