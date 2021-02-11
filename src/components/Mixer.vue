@@ -1,6 +1,6 @@
 <template>
 
-  <div class="vue-audio-mixer" :class="[themeClass, trackClass]" :style="{ width: mixerWidth }">
+  <div class="vue-audio-mixer" :class="[themeClassSize, themeClassColour, trackClass]" :style="{ width: mixerWidth }">
 
     <p class="vue-audio-mixer-error" v-if="track_load_error">Track {{track_load_error}} failed to load. Check that the track is hosted on the same domain as the mixer, or that CORS is enabled on the track's hosting service.</p>
 
@@ -104,6 +104,10 @@ export default {
   name: 'app',
 
   props: {
+    theme:{
+      String, 
+      default:'default'
+    },
     config: Object,
     size: {
       type: String,
@@ -241,6 +245,7 @@ export default {
     {
       return {
         'theme_size'     : this.themeSize,
+        'theme_colour'     : this.theme,
         'instance_id'    : this._uid,
         'show_pan'       : this.showPan,
         'show_total_time': this.showTotalTime
@@ -254,7 +259,11 @@ export default {
 
     },
 
-    themeClass() {
+    themeClassColour(){
+      return 'vue-audio-mixer-theme-'+this.theme;
+    },
+
+    themeClassSize() {
       let className = 'vue-audio-mixer-theme-'+(this.themeSize.toLowerCase());
       let toReturn = {};
       toReturn[className] = true;

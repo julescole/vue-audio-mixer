@@ -1,4 +1,3 @@
-
 .vue-audio-mixer-channel-label{
   line-height: 0.6rem;
   font-size: 0.55rem;
@@ -11,7 +10,6 @@
   overflow: hidden;
   clear: both;
   float: left;
-  background: $channel-label-background-colour;
   color: $channel-label-text-colour;
   text-align: center;
   border: none;
@@ -74,10 +72,8 @@
   position: relative;
   float: left;
   display: block;
-  background: $channel-background-colour;
   &:last-child { // master track 
     margin-right: 0px;
-      background: $master-channel-background-colour !important; 
       .vue-audio-mixer-channel-label{
         background: $master-channel-label-background-colour !important;  
       }

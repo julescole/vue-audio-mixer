@@ -11,7 +11,6 @@
   overflow: hidden;
   clear: both;
   float: left;
-  background: #4ba7b7;
   color: #FFFFFF;
   text-align: center;
   border: none;
@@ -58,11 +57,9 @@
   box-sizing: content-box;
   position: relative;
   float: left;
-  display: block;
-  background: rgba(41, 44, 48, 0.2); }
+  display: block; }
   .vue-audio-mixer-channel:last-child {
-    margin-right: 0px;
-    background: #4ba7b7 !important; }
+    margin-right: 0px; }
     .vue-audio-mixer-channel:last-child .vue-audio-mixer-channel-label {
       background: #000 !important; }
 
@@ -293,11 +290,8 @@
   left: 0;
   position: absolute;
   width: 100%;
-  background: rgba(41, 44, 48, 0.2);
   padding-left: 12px;
   box-sizing: border-box; }
-  .vue-audio-mixer-channel-panner-container.vue-audio-mixer-is-master {
-    background: #4ba7b7 !important; }
 
 .vue-audio-mixer-theme-small .vue-audio-mixer-channel-panner-container {
   top: -27px; }
@@ -599,3 +593,39 @@ button {
     -moz-transform: scale(1.1); }
   .vue-audio-mixer-transport-record-button.vue-audio-mixer-transport-record-button-active {
     border-color: red; }
+
+.vue-audio-mixer-theme-default .slider_value {
+  color: #000; }
+
+.vue-audio-mixer-theme-dark .slider_value {
+  color: #C0C0C0; }
+
+.vue-audio-mixer-theme-default .vue-audio-mixer-channel-label {
+  background: #4ba7b7; }
+
+.vue-audio-mixer-theme-dark .vue-audio-mixer-channel-label {
+  background: #27547B; }
+
+.vue-audio-mixer-theme-default .vue-audio-mixer-channel {
+  background: rgba(41, 44, 48, 0.2); }
+
+.vue-audio-mixer-theme-dark .vue-audio-mixer-channel {
+  background: #282D30; }
+
+.vue-audio-mixer-theme-default .vue-audio-mixer-channel-panner-container {
+  background: rgba(41, 44, 48, 0.2); }
+
+.vue-audio-mixer-theme-dark .vue-audio-mixer-channel-panner-container {
+  background: #282D30; }
+
+.vue-audio-mixer-theme-default .vue-audio-mixer-channel:last-child {
+  background: #4ba7b7; }
+
+.vue-audio-mixer-theme-dark .vue-audio-mixer-channel:last-child {
+  background: #383F44; }
+
+.vue-audio-mixer-theme-default .vue-audio-mixer-channel-panner-container.vue-audio-mixer-is-master {
+  background: #4ba7b7; }
+
+.vue-audio-mixer-theme-dark .vue-audio-mixer-channel-panner-container.vue-audio-mixer-is-master {
+  background: #383F44; }

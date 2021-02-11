@@ -7,6 +7,7 @@
         <vue-audio-mixer 
           :config="config" 
           size="medium" 
+          theme="dark" 
           @loaded="loadedChange"
           @input="setConfig" 
           :showPan="true"

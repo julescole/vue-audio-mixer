@@ -14,7 +14,7 @@
           class="vue-audio-mixer-channel-panner"
           primaryColor="#c40303"
           secondaryColor="#adadad"
-          textColor="#000"
+          :textColor="knobTextColour"
         ></VueKnobControl>
       </div>
 
@@ -22,7 +22,7 @@
       <canvas :id="'canvas'+_uid"  width="25" :height="meterHeight" style="display: block;" class="vue-audio-mixer-channel-meter-canvas"></canvas>
 
       <div class="slider_value">{{formattedGain}}</div>
-      
+
       <Slider v-model="gain" v-on:input="changeGain" />
 
       <div class="vue-audio-mixer-channel-mute-button" v-show="showMute">
@@ -102,6 +102,19 @@ export default {
   },
 
   computed:{
+
+    knobTextColour()
+    {
+
+      if(this.mixerVars.theme_colour == 'default'){
+        return variables.knobTextColourDefault;
+      }
+
+      if(this.mixerVars.theme_colour == 'dark'){
+        return variables.knobTextColourDark;
+      }
+
+    },
 
     pannerSize()
     {

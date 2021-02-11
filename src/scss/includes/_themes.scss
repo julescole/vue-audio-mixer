@@ -1,0 +1,35 @@
+@mixin themableBackgroundColour($theme-name, $container-class, $background-colour) {
+   .vue-audio-mixer-theme-#{$theme-name} {
+        .#{$container-class} {
+            background: $background-colour;
+        }
+    }
+}
+
+@mixin themableColour($theme-name, $container-class, $background-colour) {
+   .vue-audio-mixer-theme-#{$theme-name} {
+        .#{$container-class} {
+            color: $background-colour;
+        }
+    }
+}
+
+
+@include themableColour(default, slider_value, $knob-text-colour-default);
+@include themableColour(dark, slider_value, $knob-text-colour-dark);
+
+@include themableBackgroundColour(default, vue-audio-mixer-channel-label, #4ba7b7);
+@include themableBackgroundColour(dark, vue-audio-mixer-channel-label, #27547B);
+
+@include themableBackgroundColour(default, vue-audio-mixer-channel, rgba(41,44,48,0.2));
+@include themableBackgroundColour(dark, vue-audio-mixer-channel, #282D30);
+
+@include themableBackgroundColour(default, vue-audio-mixer-channel-panner-container, rgba(41,44,48,0.2));
+@include themableBackgroundColour(dark, vue-audio-mixer-channel-panner-container, #282D30);
+
+@include themableBackgroundColour(default, "vue-audio-mixer-channel:last-child", #4ba7b7);
+@include themableBackgroundColour(dark, "vue-audio-mixer-channel:last-child", #383F44);
+
+@include themableBackgroundColour(default, "vue-audio-mixer-channel-panner-container.vue-audio-mixer-is-master", #4ba7b7);
+@include themableBackgroundColour(dark, "vue-audio-mixer-channel-panner-container.vue-audio-mixer-is-master", #383F44);
+

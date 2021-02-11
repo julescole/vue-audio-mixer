@@ -3,13 +3,8 @@
     left: 0;
     position: absolute;
     width: 100%;
-    background: $channel-background-colour;
     padding-left: 12px;
     box-sizing: border-box;
-    &.vue-audio-mixer-is-master { // master track 
-      background: $master-channel-background-colour !important;       
-    } 
-
 }
 
 .vue-audio-mixer-theme-small{

@@ -1,0 +1,7 @@
+@mixin theme($name, $color) {
+  .#{$name} {
+    .element {
+      color: $color;
+    }
+  }
+}

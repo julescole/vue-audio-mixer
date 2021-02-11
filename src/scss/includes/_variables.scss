@@ -1,3 +1,10 @@
+////// THEME VARS
+
+$knob-text-colour-default:#000;
+$knob-text-colour-dark:#C0C0C0;
+
+//////
+
 $margin-between-channels-small:1;
 $channel-height:200;
 
@@ -16,16 +23,12 @@ $margin-between-channels-medium:2;
 $channel-slider-thumb-size-medium:0.6;
 
 
-$colour-scheme-one: #4ba7b7;
-$colour-scheme-two: #4ba7b7;
+
 
 // Channel Colours
-$channel-label-background-colour: $colour-scheme-one;
 $master-channel-label-background-colour: #000;
 $channel-label-text-colour: #FFFFFF;
 $channel-strip-background-colour: #16191c;
-$channel-background-colour : rgba(41,44,48,0.2);
-$master-channel-background-colour: $colour-scheme-one;
 
 // Mute buttons
 $channel-mute-button-background-colour: #666B73;
