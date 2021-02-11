@@ -229,6 +229,7 @@ export default {
 |-------------------------------|-----------------|-------------|------------------------------------------|
 | config                         | Object    |             | Mixer config             |
 | size                         | String    |  medium           | Size of mixer (small/medium)              |
+| theme                         | String    |  default           | colour theme (default/dark)              |
 | showPan                         | Boolean    |  true           | Show panners            |
 | showTotalTime                         | Boolean    |  true           | Show the total time in the display  |
 
