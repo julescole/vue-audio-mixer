@@ -451,12 +451,20 @@ export default {
 
     stop()
     {
-      if(!this.playing)
-        return;
-      this.stopRecording();
+      if(!this.playing){
+        this.stopRecording();
+      }
+
+      if(this.playing){
+        this.pause();
+      }
+      
       this.pausedAt = 0
-      this.startedAt = this.currentTime;
-      EventBus.$emit(this.mixerVars.instance_id+'stop');
+
+      if(!this.playing){
+        this.startedAt = this.currentTime;
+        EventBus.$emit(this.mixerVars.instance_id+'stop');
+      }
     },
 
     trackLoaded(duration){

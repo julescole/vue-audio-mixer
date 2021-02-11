@@ -1,138 +1,93 @@
-
-
-.vue-audio-mixer-channel-slider-input {
-  align-self: center;
-  margin: 2px;
-  padding: 0;
-  width:  #{$channel-height - 10}px; // actually height
-  margin-right:7px; // actually margin-top
-  background:transparent;
-  background: $slider-input-background;
-  background-size: #{$channel-height - 20}px 0.625em, #{$channel-height - 20}px 0.225em, 100% 2.25em;
-  font-size: 1em;
-  cursor: pointer;
-  height:1em;
-}
-.vue-audio-mixer-channel-slider-input, .vue-audio-mixer-channel-slider-input::-webkit-slider-runnable-track, .vue-audio-mixer-channel-slider-input::-webkit-slider-thumb {
-  -webkit-appearance: none;
-}
-.vue-audio-mixer-channel-slider-input::-webkit-slider-runnable-track {
-  position: relative;
-  width: #{$channel-height - 20}px;
-  height: 0.1em; // width of track
-  border-radius: .1875em;
-  background: $slider-track-colour;
-}
-.vue-audio-mixer-channel-slider-input::-moz-range-track {
-  width: #{$channel-height - 20}px;
-  height: 0.1em; // width of track
-  border-radius: .1875em;
- background: $slider-track-colour;
-}
-.vue-audio-mixer-channel-slider-input::-ms-track {
-  border: none;
-  width: #{$channel-height - 20}px;
-  height: 0.1em; // width of track
-  border-radius: .1875em;
-  color: transparent;
-  background: $slider-track-colour;
-}
-.vue-audio-mixer-channel-slider-input::-ms-fill-lower {
-  display: none;
+.vue-audio-mixer-fader-thumb{
+    touch-action: none;
 }
 
-.vue-audio-mixer-theme-small{
-  .vue-audio-mixer-channel-slider-input::-webkit-slider-thumb {
-      font-size: #{$channel-slider-thumb-size-small}em; 
-  }
-  .vue-audio-mixer-channel-slider-input::-moz-range-thumb {
-      font-size: #{$channel-slider-thumb-size-small}em; 
-  }
-  .vue-audio-mixer-channel-slider-input:-ms-thumb {
-      font-size: #{$channel-slider-thumb-size-small}em; 
-  }
-}
 
-.vue-audio-mixer-theme-medium{
-  .vue-audio-mixer-channel-slider-input::-webkit-slider-thumb {
-      font-size: #{$channel-slider-thumb-size-medium}em; 
-  }
-  .vue-audio-mixer-channel-slider-input::-moz-range-thumb {
-      font-size: #{$channel-slider-thumb-size-medium}em; 
-  }
-  .vue-audio-mixer-channel-slider-input:-ms-thumb {
-      font-size: #{$channel-slider-thumb-size-medium}em; 
-  }
-}
-
-.vue-audio-mixer-channel-slider-input::-webkit-slider-thumb {
-  margin-top: -0.90em;
-  border: none;
-  width: 4em;
-  height: 2em;
-  border-radius: .5em;
-  box-shadow: -.125em 0 .25em #928886,  inset -1px 0 1px #fff;
-  background: $slider-thumb-background;
-  background-size: 0.825em 100%;
-}
-.vue-audio-mixer-channel-slider-input::-moz-range-thumb {
-  border: none;
-  width: 4em;
-  height: 2em;
-  border-radius: .5em;
-  box-shadow: -.125em 0 .25em #928886,  inset -1px 0 1px #fff;
-  background: $slider-thumb-background;
-  background-size: 0.825em 100%;
-}
-.vue-audio-mixer-channel-slider-input::-ms-thumb {
-  margin-top: -0.15em;
-  border: none;
-  width: 4em;
-  height: 2em;
-  border-radius: .5em;
-  box-shadow: -.125em 0 .25em #928886,  inset -1px 0 1px #fff;
-  background: $slider-thumb-background;
-  background-size: 0.825em 100%;
-}
-.vue-audio-mixer-channel-slider-input::-webkit-slider-runnable-track:before, .vue-audio-mixer-channel-slider-input::-webkit-slider-runnable-track:after, .vue-audio-mixer-channel-slider-input  #track:before, .vue-audio-mixer-channel-slider-input  #track:after {
+.vue-audio-mixer-slider{
+  height: #{$meter-height}px;
   position: absolute;
-  font: 0.75em/8em trebuchet ms, arial, sans-serif;
+  width: 50%;
+  right:0px;
 }
+
+.vue-audio-mixer-fader-slider-row, .vue-audio-mixer-fader-slider-row-right{
+  position:absolute;
+  width:100%;
+  background: black;
+  height:1px;
+  width:4px;
+  left:50%;
+  margin-left: -10px;
+}
+
+.vue-audio-mixer-fader-slider-row-right{
+  margin-left: 4px;
+}
+
+.vue-audio-mixer-fader-slider-track{
+  position: absolute;
+  height:90%;
+  background: black;
+  width:2px;
+  margin-left: -2px;
+  left:50%; 
+  margin-top: 1rem;
+}
+
+.vue-audio-mixer-fader-thumb {
+
+      position: absolute;
+      z-index: 1;
+      border: none;
+      height: 3rem;
+      width: 1.5rem;
+      left: 50%;
+      margin-left: -0.75rem;
+      margin-top: -2rem;
+      border-radius: 0px;
+      
+      cursor: move;
+      user-select: none;
+      
+      background: 
+      repeating-linear-gradient(
+        0deg,
+        transparent,
+        transparent 5px,
+        rgba(0,0,0,1) 6px
+      ),
+   
+      linear-gradient(0deg, 
+        rgb(70,70,70) 0%, 
+        rgb(90,90,90) 14%, 
+        rgb(20,20,20) 15%, 
+        rgb(20,20,20) 50%,
+        rgb(90,90,90) 84%,
+        rgb(20,20,20) 85%,
+        rgb(30,30,30) 100%
+      );
+      box-shadow: 
+        //0 0 0 2px rgba(0,0,0,.25) inset,
+        0 .25rem .5rem 0 rgba(0,0,0,.5);
+      
+      &:after {
+        content: '';
+        position: absolute;
+        top: 50%;
+        left: 0; right: 0;
+        margin-top: -1px;
+        height: 3px;
+        background: rgba(255,255,255,.75);
+      }
+    
+}
+  
+
+
 
 .slider_value{
   position: absolute;
   right: 10px;
   top:37px;
   font-size: 10px;
-}
-.vue-audio-mixer-channel-slider-input::-webkit-slider-runnable-track:before, .vue-audio-mixer-channel-slider-input  #track:before {
-  top: 50%;
-  right: 100%;
-  transform: translate(50%, -50%) rotate(90deg) translate(0, 32%);
-}
-.vue-audio-mixer-channel-slider-input::-webkit-slider-runnable-track:after, .vue-audio-mixer-channel-slider-input  #track:after {
-  left: 50%;
-  width: 3em;
-  word-spacing: 1em;
-}
-.vue-audio-mixer-channel-slider-input:nth-of-type(1)::-webkit-slider-runnable-track:after, .vue-audio-mixer-channel-slider-input:nth-of-type(1)  #track:after {
-  bottom: 100%;
-  transform: translate(-50%, 50%) rotate(90deg) translate(-4.375em);
-  text-align: right;
-}
-.vue-audio-mixer-channel-slider-input:nth-of-type(6)::-webkit-slider-runnable-track:after, .vue-audio-mixer-channel-slider-input:nth-of-type(6)  #track:after {
-  top: 100%;
-  transform: translate(-50%, -50%) rotate(90deg) translate(4.375em);
-}
-.vue-audio-mixer-channel-slider-input:focus {
-  outline: none;
-}
-.vue-audio-mixer-channel-slider-input:focus::-webkit-slider-runnable-track {
-  background: $slider-track-colour;
-}
-.vue-audio-mixer-channel-slider-input:focus::-moz-range-track {
-  background: $slider-track-colour;
-}
-.vue-audio-mixer-channel-slider-input:focus::-ms-track {
-  background: $slider-track-colour;
 }

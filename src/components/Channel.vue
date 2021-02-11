@@ -20,11 +20,10 @@
 
 
       <canvas :id="'canvas'+_uid"  width="25" :height="meterHeight" style="display: block;" class="vue-audio-mixer-channel-meter-canvas"></canvas>
-      <div class="slider_value">{{formattedGain}}</div>
 
-      <div class="vue-audio-mixer-channel-slider"> 
-        <input class="vue-audio-mixer-channel-slider-input" type="range" min="0" max="1.5" step="0.01" v-on:input="changeGain" v-model="gain" />
-      </div>
+      <div class="slider_value">{{formattedGain}}</div>
+      
+      <Slider v-model="gain" v-on:input="changeGain" />
 
       <div class="vue-audio-mixer-channel-mute-button" v-show="showMute">
         <label>
@@ -60,6 +59,8 @@ import VueKnobControl from 'vue-knob-control'
 import EventBus from './../event-bus';
 import variables from '../scss/includes/_variables.scss';
 
+import Slider from './Slider.vue';
+
 export default {
   name: 'Channel',
   props: [
@@ -81,7 +82,8 @@ export default {
     'solodTracks'
   ],
   components:{
-    VueKnobControl
+    VueKnobControl,
+    Slider
   },
   data : function(){       
       return {
@@ -94,7 +96,8 @@ export default {
           soloModel   : false,
           mute        : false,
           meterHeight : parseInt(variables.meterHeight),
-          titleModel  : ''
+          titleModel  : '',
+          loaded      : false
       };
   },
 
@@ -149,6 +152,7 @@ export default {
   },
 
   created(){
+   // EventBus.$on('loaded',()=>{this.loaded = true});
     this.titleModel = 'Track '+(this.trackIndex+1);
     EventBus.$on(this.mixerVars.instance_id+'ended', this.ended);
     this.scriptProcessorNode.onaudioprocess = () => {

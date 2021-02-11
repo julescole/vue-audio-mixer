@@ -44,7 +44,7 @@ export default {
                 "title":"Bass",
                 "url":"https://api.soundcloud.com/tracks/841840237/stream?client_id=ae1dadcc70f054f451de8c6358bcf396",
                 "pan":-30,
-                "gain":0.5,
+                "gain":1,
                 "muted":false,
                 "hidden":false
             },
