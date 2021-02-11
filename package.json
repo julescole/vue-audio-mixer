@@ -1,6 +1,6 @@
 {
   "name": "vue-audio-mixer",
-  "version": "1.1.7",
+  "version": "1.2.0",
   "description": "An audio mixer component for vue.js",
   "author": "Julian Cole <julian@juliancole.co.uk>",
   "keywords": [
