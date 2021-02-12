@@ -28,6 +28,7 @@ To view demo examples locally clone the repo and run `npm install && npm run ser
         <vue-audio-mixer 
             :config="config" 
             size="medium" 
+            theme="dark" 
             :show-pan="true"
             :show-total-time="true"
         />
@@ -133,6 +134,7 @@ npm install vue-audio-mixer --save
         <vue-audio-mixer 
           :config="config" 
           size="medium" 
+          theme="dark" 
           :showPan="true"
           :showTotalTime="true"
         />
