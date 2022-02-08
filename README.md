@@ -38,7 +38,7 @@ To view demo examples locally clone the repo and run `npm install && npm run ser
 
   </div>
 </div>
-<script src="https://unpkg.com/vue"></script>
+<script src="https://unpkg.com/vue@2.6.14/dist/vue.js"></script>
 <script src="https://unpkg.com/vue-audio-mixer/dist/vue-audio-mixer.min.js"></script>
 
 <script>
