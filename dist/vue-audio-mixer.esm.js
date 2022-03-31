@@ -10347,7 +10347,7 @@ var script$4 = {
     *
     **/
     addWavelengthPointData(raw) {
-      var channels = 2; 
+      var channels = Math.min(2, raw.buffer.numberOfChannels);
       let finalData = [];
 
       for (var channel = 0; channel < channels; channel++) {
