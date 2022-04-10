@@ -42,7 +42,9 @@
                     <Channel
                         title="Master"
                         :defaultPan="masterPanValue"
+                        :pan="config.master.pan"
                         :defaultGain="masterGainValue"
+                        :gain="config.master.gain"
                         :defaultMuted="masterMuted"
                         @muteChange="changeMasterMute"
                         @gainChange="changeMasterGain"
