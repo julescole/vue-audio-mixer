@@ -5,9 +5,11 @@
       :index="_uid" 
       :trackIndex="trackIndex" 
       :title="title" 
-      :defaultPan="pan" 
       :defaultMuted="muted" 
+      :defaultPan="pan" 
+      :pan="pan" 
       :defaultGain="defaultGain" 
+      :gain="gain" 
       @gainChange="changeGain" 
       @muteChange="muteChange" 
       @soloChange="soloChange" 
@@ -27,14 +29,16 @@ import EventBus from './../event-bus';
 
 export default {
   name: 'MixerChannel',
-  props: [
+  props: [          
       'title',
       'context', 
       'url',
       'output',
-      'defaultPan',
-      'defaultGain',
       'defaultMuted',
+      'defaultPan',      
+      'pan',  
+      'defaultGain',
+      'gain',  
       'trackIndex',
       'mixerVars',
       'hidden',

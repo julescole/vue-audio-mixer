@@ -37,6 +37,10 @@ export default {
    
      watch:{
 
+      value: function(){
+        this.inputVal = this.value
+      },
+
       inputVal: function(){
         this.setProgress();
       },
