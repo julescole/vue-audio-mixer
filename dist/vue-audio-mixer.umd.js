@@ -9734,8 +9734,6 @@
 	      playFrom: false,
 	      playing: false,
 	      gainValue: 0,
-	      pan: 0,
-	      gain: 0.8,
 	      loaded: false,
 	      mutedBySolo: false,
 	      mutedByMute: false
