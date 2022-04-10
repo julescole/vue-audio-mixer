@@ -234,7 +234,8 @@ export default {
       this.canvas = document.getElementById('vue-audio-mixer-waveform');
       this.dpr = window.devicePixelRatio || 1;
       this.padding = 20;
-      this.canvasWidth = this.$refs['vue-audio-mixer-progress-bar'].offsetWidth * this.dpr;
+      if(this.$refs['vue-audio-mixer-progress-bar'])
+        this.canvasWidth = this.$refs['vue-audio-mixer-progress-bar'].offsetWidth * this.dpr;
       this.canvas.width = this.canvasWidth;
       this.canvas.height = 100;
       this.canvasHeight = this.canvas.offsetHeight * this.dpr;
