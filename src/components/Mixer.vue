@@ -36,6 +36,7 @@
                         @muteChange="changeMute"
                         @soloChange="changeSolo"
                         :mixerVars="mixerVars"
+                        :file="files[index]"
                     />
 
                     <!-- master channel -->
@@ -125,6 +126,12 @@ export default {
             type: Boolean,
             default: true,
         },
+        files: {
+            type: Array,
+            default() {
+                return [];
+            },
+        },
     },
     components: {
         MixerChannel,
@@ -195,6 +202,7 @@ export default {
         );
 
         EventBus.$on("track_load_error", this.trackLoadError);
+        EventBus.$on("file_loaded", this.fileLoaded);
 
         setInterval(() => {
             if (this.playing) this.currentTime = Date.now();
@@ -210,8 +218,13 @@ export default {
             this.mixerVars.instance_id + "track_loaded",
             this.trackLoaded
         );
+        EventBus.$off(
+            this.mixerVars.instance_id + "file_loaded",
+            this.fileLoaded
+        );
         EventBus.$off(this.mixerVars.instance_id + "stop", this.stopped);
         EventBus.$off(this.mixerVars.instance_id + "play", this.started);
+        EventBus.$off("file_loaded", this.fileLoaded);
     },
 
     watch: {
@@ -550,6 +563,9 @@ export default {
             this.changeMasterGain(this.masterGainValue);
             this.changeMasterPan(this.masterPanValue);
             // this.changeMasterMute(this.masterMuted);
+        },
+        fileLoaded(value) {
+            this.files[value.id] = value.file;
         },
     },
 };

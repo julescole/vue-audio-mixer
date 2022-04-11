@@ -10932,8 +10932,8 @@
 
   //
   var script$2 = {
-    name: 'MixerChannel',
-    props: ['title', 'context', 'url', 'output', 'defaultMuted', 'defaultPan', 'pan', 'defaultGain', 'gain', 'trackIndex', 'mixerVars', 'hidden', 'solodTracks'],
+    name: "MixerChannel",
+    props: ["title", "context", "url", "output", "defaultMuted", "defaultPan", "pan", "defaultGain", "gain", "trackIndex", "mixerVars", "hidden", "solodTracks", "file"],
     components: {
       Channel: __vue_component__$1
     },
@@ -10945,6 +10945,7 @@
         pannerNode: false,
         muted: false,
         leftAnalyser: false,
+        fileBuffer: null,
         leftBouncer: {
           average: 0,
           opacity: 1
@@ -10980,14 +10981,14 @@
       this.pan = this.defaultPan;
       this.gainValue = this.defaultGain.toString();
       this.scriptProcessorNode = this.context.createScriptProcessor(2048, 1, 1);
-      EventBus.$on(this.mixerVars.instance_id + 'play', this.playSound);
-      EventBus.$on(this.mixerVars.instance_id + 'stop', this.stopSound);
+      EventBus.$on(this.mixerVars.instance_id + "play", this.playSound);
+      EventBus.$on(this.mixerVars.instance_id + "stop", this.stopSound);
       this.loadSound();
     },
 
     beforeDestroy() {
-      EventBus.$off(this.mixerVars.instance_id + 'play', this.playSound);
-      EventBus.$off(this.mixerVars.instance_id + 'stop', this.stopSound);
+      EventBus.$off(this.mixerVars.instance_id + "play", this.playSound);
+      EventBus.$off(this.mixerVars.instance_id + "stop", this.stopSound);
     },
 
     mounted() {},
@@ -10999,7 +11000,7 @@
         this.gainNode.gain.value = 0; // mute the gain node
 
         this.muted = true;
-        this.$emit('muteChange', {
+        this.$emit("muteChange", {
           index: this.trackIndex,
           muted: this.muted
         });
@@ -11009,16 +11010,16 @@
         this.muted = false;
         this.gainNode.gain.value = this.gainValue; // restore previous gain value
 
-        this.$emit('muteChange', {
+        this.$emit("muteChange", {
           index: this.trackIndex,
           muted: this.muted
         });
       },
 
       /*
-      * MUTE CHANGE
-      * Event when mute changes
-      */
+       * MUTE CHANGE
+       * Event when mute changes
+       */
       muteChange(value, triggered_from_solo) {
         // don't mute hidden tracks
         if (this.hidden) return;
@@ -11035,7 +11036,7 @@
       },
 
       soloChange(value) {
-        this.$emit('soloChange', {
+        this.$emit("soloChange", {
           index: this.trackIndex
         });
       },
@@ -11047,7 +11048,7 @@
           this.gainNode.gain.value = gain;
         }
 
-        this.$emit('gainChange', {
+        this.$emit("gainChange", {
           index: this.trackIndex,
           gain: gain
         });
@@ -11065,7 +11066,7 @@
         var x = Math.sin(xDeg * (Math.PI / 180));
         var z = Math.sin(zDeg * (Math.PI / 180));
         this.pannerNode.setPosition(x, 0, z);
-        this.$emit('panChange', {
+        this.$emit("panChange", {
           index: this.trackIndex,
           pan: pan
         });
@@ -11079,11 +11080,16 @@
           EventBus.$emit("track_load_error", this.url);
         };
 
-        request.open('GET', this.url, true);
-        request.responseType = 'arraybuffer'; // When loaded decode the data
+        request.open("GET", this.url, true);
+        request.responseType = "arraybuffer"; // When loaded decode the data
 
         request.onload = () => {
-          // decode the data
+          // file loaded
+          EventBus.$emit("file_loaded", {
+            file: new Uint8Array(request.response),
+            id: this.trackIndex
+          }); // decode the data
+
           this.context.decodeAudioData(request.response, buffer => {
             // sound loaded
             EventBus.$emit("pcm_data_loaded", {
@@ -11092,7 +11098,7 @@
             }); // when the audio is decoded play the sound
 
             this.buffer = buffer;
-            EventBus.$emit(this.mixerVars.instance_id + 'track_loaded', this.buffer.duration);
+            EventBus.$emit(this.mixerVars.instance_id + "track_loaded", this.buffer.duration);
             this.setupAudioNodes();
           }, this.onError);
         };
@@ -11132,7 +11138,7 @@
         // create a buffer source node
         this.sourceNode = this.context.createBufferSource();
         this.sourceNode.buffer = this.buffer; // this.sourceNode.loop = false; // false to stop looping
-        //  this.sourceNode.muted = false; 
+        //  this.sourceNode.muted = false;
         // this.sourceNode.playbackRate.value = 1;
         // setup a analyzers
 
@@ -11159,7 +11165,7 @@
         this.splitter.connect(this.rightAnalyser, 1, 0);
         this.pannerNode.connect(this.output); //this.leftAnalyser.connect(this.scriptProcessorNode);
         // initial values
-        // 
+        //
 
         let mutedBySolo = this.mutedBySolo;
         this.mutedBySolo = false;
@@ -11185,8 +11191,8 @@
         this.leftAnalyser.disconnect();
         this.rightAnalyser.disconnect();
         this.splitter.disconnect();
-        if (this.playFrom) EventBus.$emit(this.mixerVars.instance_id + 'play', this.playFrom);
-        EventBus.$emit(this.mixerVars.instance_id + 'ended', this._uid);
+        if (this.playFrom) EventBus.$emit(this.mixerVars.instance_id + "play", this.playFrom);
+        EventBus.$emit(this.mixerVars.instance_id + "ended", this._uid);
       }
 
     }
@@ -12429,6 +12435,14 @@
       showTotalTime: {
         type: Boolean,
         default: true
+      },
+      files: {
+        type: Array,
+
+        default() {
+          return [];
+        }
+
       }
     },
     components: {
@@ -12486,6 +12500,7 @@
       EventBus.$on(this.mixerVars.instance_id + "play", this.started);
       EventBus.$on(this.mixerVars.instance_id + "soloChange", this.detectedSoloChange);
       EventBus.$on("track_load_error", this.trackLoadError);
+      EventBus.$on("file_loaded", this.fileLoaded);
       setInterval(() => {
         if (this.playing) this.currentTime = Date.now();
       }, 1);
@@ -12494,8 +12509,10 @@
     beforeDestroy() {
       EventBus.$off(this.mixerVars.instance_id + "soloChange", this.detectedSoloChange);
       EventBus.$off(this.mixerVars.instance_id + "track_loaded", this.trackLoaded);
+      EventBus.$off(this.mixerVars.instance_id + "file_loaded", this.fileLoaded);
       EventBus.$off(this.mixerVars.instance_id + "stop", this.stopped);
       EventBus.$off(this.mixerVars.instance_id + "play", this.started);
+      EventBus.$off("file_loaded", this.fileLoaded);
     },
 
     watch: {
@@ -12815,6 +12832,10 @@
 
         this.changeMasterGain(this.masterGainValue);
         this.changeMasterPan(this.masterPanValue); // this.changeMasterMute(this.masterMuted);
+      },
+
+      fileLoaded(value) {
+        this.files[value.id] = value.file;
       }
 
     }
@@ -12896,7 +12917,8 @@
                           url: track.url,
                           solodTracks: _vm.solodTracks,
                           trackIndex: index,
-                          mixerVars: _vm.mixerVars
+                          mixerVars: _vm.mixerVars,
+                          file: _vm.files[index]
                         },
                         on: {
                           panChange: _vm.changePan,
