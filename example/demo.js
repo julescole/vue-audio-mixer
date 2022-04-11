@@ -10493,8 +10493,8 @@
 
   //
   var script$1 = {
-    name: 'Channel',
-    props: ['index', 'trackIndex', 'title', 'context', 'url', 'output', 'leftAnalyser', 'rightAnalyser', 'scriptProcessorNode', 'defaultPan', 'pan', 'defaultGain', 'gain', 'defaultMuted', 'showMute', 'isMaster', 'mixerVars', 'solodTracks'],
+    name: "Channel",
+    props: ["index", "trackIndex", "title", "context", "url", "output", "leftAnalyser", "rightAnalyser", "scriptProcessorNode", "defaultPan", "pan", "defaultGain", "defaultMuted", "showMute", "isMaster", "mixerVars", "solodTracks", "gain"],
     components: {
       VueKnobControl,
       Slider: __vue_component__
@@ -10514,31 +10514,33 @@
         soloModel: false,
         mute: false,
         meterHeight: parseInt(variables.meterHeight),
-        titleModel: '',
-        loaded: false
+        titleModel: "",
+        loaded: false,
+        v_model_gain: this.gain,
+        v_model_pan: this.pan
       };
     },
     computed: {
       knobTextColour() {
-        if (this.mixerVars.theme_colour == 'default') {
+        if (this.mixerVars.theme_colour == "default") {
           return variables.knobTextColourDefault;
         }
 
-        if (this.mixerVars.theme_colour == 'dark') {
+        if (this.mixerVars.theme_colour == "dark") {
           return variables.knobTextColourDark;
         }
       },
 
       pannerSize() {
-        return this.mixerVars.theme_size == 'Small' ? 30 : 40;
+        return this.mixerVars.theme_size == "Small" ? 30 : 40;
       },
 
       meterWidth() {
-        return parseInt(variables['meterWidth' + this.mixerVars.theme_size]);
+        return parseInt(variables["meterWidth" + this.mixerVars.theme_size]);
       },
 
       meterWidthBetween() {
-        return parseInt(variables['meterWidthBetween' + this.mixerVars.theme_size]);
+        return parseInt(variables["meterWidthBetween" + this.mixerVars.theme_size]);
       },
 
       formattedGain() {
@@ -10548,7 +10550,7 @@
     },
     watch: {
       pan: function () {
-        this.changePan();
+        this.v_model_pan = this.pan;
       },
       mute: function () {
         this.muteChange();
@@ -10558,13 +10560,16 @@
       },
       titleModel: function () {
         this.titleChange();
+      },
+      gain: function () {
+        this.v_model_gain = this.gain;
       }
     },
 
     created() {
       // EventBus.$on('loaded',()=>{this.loaded = true});
-      this.titleModel = 'Track ' + (this.trackIndex + 1);
-      EventBus.$on(this.mixerVars.instance_id + 'ended', this.ended);
+      this.titleModel = "Track " + (this.trackIndex + 1);
+      EventBus.$on(this.mixerVars.instance_id + "ended", this.ended);
 
       this.scriptProcessorNode.onaudioprocess = () => {
         this.drawMeter();
@@ -10572,16 +10577,16 @@
     },
 
     beforeDestroy() {
-      EventBus.$off(this.mixerVars.instance_id + 'ended', this.ended);
+      EventBus.$off(this.mixerVars.instance_id + "ended", this.ended);
     },
 
     mounted() {
-      this.ctx = document.getElementById('canvas' + this._uid).getContext("2d");
+      this.ctx = document.getElementById("canvas" + this._uid).getContext("2d");
       this.gradient = this.ctx.createLinearGradient(0, 0, 0, 400);
-      this.gradient.addColorStop(1, '#31e2fc');
-      this.gradient.addColorStop(0.75, '#38fedd');
-      this.gradient.addColorStop(0.25, '#38fedd');
-      this.gradient.addColorStop(0, '#31e0fc');
+      this.gradient.addColorStop(1, "#31e2fc");
+      this.gradient.addColorStop(0.75, "#38fedd");
+      this.gradient.addColorStop(0.25, "#38fedd");
+      this.gradient.addColorStop(0, "#31e0fc");
       this.pan = this.defaultPan === undefined ? 0 : this.defaultPan;
       this.gain = this.defaultGain === undefined ? 0 : this.defaultGain;
       this.mute = this.defaultMuted === undefined ? false : this.defaultMuted;
@@ -10592,8 +10597,8 @@
 
     methods: {
       pad(n, width, z) {
-        z = z || '0';
-        n = n + '';
+        z = z || "0";
+        n = n + "";
         return n.length >= width ? n : new Array(width - n.length + 1).join(z) + n;
       },
 
@@ -10606,26 +10611,26 @@
       },
 
       changeGain() {
-        this.$emit('gainChange', this.gain);
+        this.$emit("gainChange", this.v_model_gain);
       },
 
       changePan() {
-        this.$emit('panChange', this.pan);
+        this.$emit("panChange", this.v_model_pan);
       },
 
       muteChange() {
-        this.$emit('muteChange', this.mute);
+        this.$emit("muteChange", this.mute);
       },
 
       soloChange(trackIndex, is_solo) {
-        EventBus.$emit(this.mixerVars.instance_id + 'soloChange', {
+        EventBus.$emit(this.mixerVars.instance_id + "soloChange", {
           index: trackIndex,
           solo: is_solo
         });
       },
 
       titleChange() {
-        this.$emit(this.mixerVars.instance_id + 'titleChange', this.titleModel);
+        this.$emit(this.mixerVars.instance_id + "titleChange", this.titleModel);
       },
 
       getAverageVolume(array) {
@@ -10728,11 +10733,11 @@
                     textColor: _vm.knobTextColour
                   },
                   model: {
-                    value: _vm.pan,
+                    value: _vm.v_model_pan,
                     callback: function($$v) {
-                      _vm.pan = $$v;
+                      _vm.v_model_pan = $$v;
                     },
-                    expression: "pan"
+                    expression: "v_model_pan"
                   }
                 })
               : _vm._e()
@@ -10753,11 +10758,11 @@
         _c("Slider", {
           on: { input: _vm.changeGain },
           model: {
-            value: _vm.gain,
+            value: _vm.v_model_gain,
             callback: function($$v) {
-              _vm.gain = $$v;
+              _vm.v_model_gain = $$v;
             },
-            expression: "gain"
+            expression: "v_model_gain"
           }
         }),
         _vm._v(" "),
@@ -11224,10 +11229,16 @@
             mixerVars: _vm.mixerVars
           },
           on: {
-            gainChange: _vm.changeGain,
+            "update:pan": function($event) {
+              _vm.pan = $event;
+            },
+            "update:gain": function($event) {
+              _vm.gain = $event;
+            },
             muteChange: _vm.muteChange,
             soloChange: _vm.soloChange,
-            panChange: _vm.changePan
+            panChange: _vm.changePan,
+            gainChange: _vm.changeGain
           }
         })
       : _vm._e()
@@ -12921,6 +12932,12 @@
                           file: _vm.files[index]
                         },
                         on: {
+                          "update:pan": function($event) {
+                            return _vm.$set(track, "pan", $event)
+                          },
+                          "update:gain": function($event) {
+                            return _vm.$set(track, "gain", $event)
+                          },
                           panChange: _vm.changePan,
                           gainChange: _vm.changeGain,
                           muteChange: _vm.changeMute,

@@ -6,13 +6,13 @@
         :title="title"
         :defaultMuted="muted"
         :defaultPan="pan"
-        :pan="pan"
+        :pan.sync="pan"
         :defaultGain="defaultGain"
-        :gain="gain"
-        @gainChange="changeGain"
+        :gain.sync="gain"
         @muteChange="muteChange"
         @soloChange="soloChange"
         @panChange="changePan"
+        @gainChange="changeGain"
         :leftAnalyser="leftAnalyser"
         :rightAnalyser="rightAnalyser"
         :scriptProcessorNode="scriptProcessorNode"
@@ -41,7 +41,7 @@ export default {
         "mixerVars",
         "hidden",
         "solodTracks",
-        "file"
+        "file",
     ],
     components: { Channel },
     data: function () {

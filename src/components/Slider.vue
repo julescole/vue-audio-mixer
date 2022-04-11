@@ -51,17 +51,6 @@ export default {
     },
 
     created(){
-
-
-
-
-
-      
-
-      //console.log(this.progress);
-      //        this.inputVal = ((percent/100) * 1.5).toFixed(1);
-      //        
-  
       window.addEventListener('mousemove',this.doDrag);
       window.addEventListener('touchmove',this.doDrag);
 
