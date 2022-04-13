@@ -59,7 +59,7 @@
                     />
                 </div>
 
-                <ProgressBar
+                <ProgressBar ref="vue-audio-mixer-progress-bar"
                     :recording="recording"
                     :progressPercent="progressPercent"
                     @percent="playFromPercent"
