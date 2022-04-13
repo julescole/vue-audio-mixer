@@ -31,7 +31,7 @@
 
         <div class="slider_value">{{ formattedGain }}</div>
 
-        <Slider v-model="v_model_gain" v-on:input="changeGain" />
+        <Slider v-model="v_model_gain"/>
 
         <div class="vue-audio-mixer-channel-mute-button" v-show="showMute">
             <label>
@@ -76,15 +76,15 @@ export default {
         "leftAnalyser",
         "rightAnalyser",
         "scriptProcessorNode",
-        "defaultPan",
-        "pan",
-        "defaultGain",
         "defaultMuted",
         "showMute",
         "isMaster",
         "mixerVars",
         "solodTracks",
-        "gain"
+        "defaultGain",
+        "defaultPan",
+        "gain",
+        "pan",
     ],
     components: {
         VueKnobControl,
@@ -101,8 +101,6 @@ export default {
             meterHeight: parseInt(variables.meterHeight),
             titleModel: "",
             loaded: false,
-            v_model_gain: this.gain,
-            v_model_pan: this.pan,
         };
     },
 
@@ -136,13 +134,25 @@ export default {
         formattedGain() {
             return this.pad(Math.round(this.gain * 100), 3);
         },
+        v_model_pan: {
+            get() {
+                return this.pan;
+            },
+            set(newValue) {
+                this.changePan(newValue);
+            },
+        },
+        v_model_gain: {
+            get() {
+                return this.gain;
+            },
+            set(newValue) {
+                this.changeGain(newValue);
+            },
+        },
     },
 
     watch: {
-        pan: function () {
-            this.v_model_pan = this.pan;
-        },
-
         mute: function () {
             this.muteChange();
         },
@@ -154,11 +164,6 @@ export default {
         titleModel: function () {
             this.titleChange();
         },
-        
-        gain: function () {
-            this.v_model_gain = this.gain;
-        },
-
     },
 
     created() {
@@ -184,12 +189,7 @@ export default {
         this.gradient.addColorStop(0.25, "#38fedd");
         this.gradient.addColorStop(0, "#31e0fc");
 
-        this.pan = this.defaultPan === undefined ? 0 : this.defaultPan;
-        this.gain = this.defaultGain === undefined ? 0 : this.defaultGain;
         this.mute = this.defaultMuted === undefined ? false : this.defaultMuted;
-
-        this.changePan();
-        this.changeGain();
 
         this.drawMeter();
     },
@@ -210,12 +210,12 @@ export default {
             }
         },
 
-        changeGain() {
-            this.$emit("gainChange", this.v_model_gain);
+        changeGain(newValue) {
+            this.$emit("gainChange", newValue);
         },
 
-        changePan() {
-            this.$emit("panChange", this.v_model_pan);
+        changePan(newValue) {
+            this.$emit("panChange", newValue);
         },
 
         muteChange() {

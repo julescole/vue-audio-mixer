@@ -20,9 +20,9 @@
                         v-for="(track, index) in tracks"
                         :title="track.title"
                         :defaultPan="track.pan"
-                        :pan.sync="track.pan"
+                        :pan="track.pan"
                         :defaultGain="track.gain"                        
-                        :gain.sync="track.gain"
+                        :gain="track.gain"
                         :defaultMuted="track.muted"
                         :hidden="track.hidden"
                         :context="context"
@@ -510,6 +510,7 @@ export default {
 
         changeMasterGain(gain) {
             this.masterGainValue = gain;
+            this.config.master.gain = gain
             if (!this.masterMuted) this.gainNode.gain.value = gain;
         },
 
@@ -525,7 +526,8 @@ export default {
             var z = Math.sin(zDeg * (Math.PI / 180));
             this.pannerNode.setPosition(x, 0, z);
 
-            this.masterPanValue = pan;
+            this.masterPanValue = pan;            
+            this.config.master.pan = pan
         },
 
         // Master Audio Nodes

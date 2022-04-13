@@ -10218,9 +10218,6 @@
     },
 
     created() {
-      //console.log(this.progress);
-      //        this.inputVal = ((percent/100) * 1.5).toFixed(1);
-      //        
       window.addEventListener('mousemove', this.doDrag);
       window.addEventListener('touchmove', this.doDrag);
       window.addEventListener("mouseup", this.triggerMouseUpEvent);
@@ -10463,7 +10460,7 @@
     /* style */
     const __vue_inject_styles__ = function (inject) {
       if (!inject) return
-      inject("data-v-6d752904_0", { source: "\n\n\n\n\n\n\n\n\n\n\n\n\n\n", map: {"version":3,"sources":[],"names":[],"mappings":"","file":"Slider.vue"}, media: undefined });
+      inject("data-v-657b3484_0", { source: "\n\n\n\n\n\n\n\n\n\n\n\n\n\n", map: {"version":3,"sources":[],"names":[],"mappings":"","file":"Slider.vue"}, media: undefined });
 
     };
     /* scoped */
@@ -10494,7 +10491,7 @@
   //
   var script$1 = {
     name: "Channel",
-    props: ["index", "trackIndex", "title", "context", "url", "output", "leftAnalyser", "rightAnalyser", "scriptProcessorNode", "defaultPan", "pan", "defaultGain", "defaultMuted", "showMute", "isMaster", "mixerVars", "solodTracks", "gain"],
+    props: ["index", "trackIndex", "title", "context", "url", "output", "leftAnalyser", "rightAnalyser", "scriptProcessorNode", "defaultMuted", "showMute", "isMaster", "mixerVars", "solodTracks", "defaultGain", "defaultPan", "gain", "pan"],
     components: {
       VueKnobControl,
       Slider: __vue_component__
@@ -10515,9 +10512,7 @@
         mute: false,
         meterHeight: parseInt(variables.meterHeight),
         titleModel: "",
-        loaded: false,
-        v_model_gain: this.gain,
-        v_model_pan: this.pan
+        loaded: false
       };
     },
     computed: {
@@ -10545,13 +10540,30 @@
 
       formattedGain() {
         return this.pad(Math.round(this.gain * 100), 3);
-      }
+      },
 
+      v_model_pan: {
+        get() {
+          return this.pan;
+        },
+
+        set(newValue) {
+          this.changePan(newValue);
+        }
+
+      },
+      v_model_gain: {
+        get() {
+          return this.gain;
+        },
+
+        set(newValue) {
+          this.changeGain(newValue);
+        }
+
+      }
     },
     watch: {
-      pan: function () {
-        this.v_model_pan = this.pan;
-      },
       mute: function () {
         this.muteChange();
       },
@@ -10560,9 +10572,6 @@
       },
       titleModel: function () {
         this.titleChange();
-      },
-      gain: function () {
-        this.v_model_gain = this.gain;
       }
     },
 
@@ -10587,11 +10596,7 @@
       this.gradient.addColorStop(0.75, "#38fedd");
       this.gradient.addColorStop(0.25, "#38fedd");
       this.gradient.addColorStop(0, "#31e0fc");
-      this.pan = this.defaultPan === undefined ? 0 : this.defaultPan;
-      this.gain = this.defaultGain === undefined ? 0 : this.defaultGain;
       this.mute = this.defaultMuted === undefined ? false : this.defaultMuted;
-      this.changePan();
-      this.changeGain();
       this.drawMeter();
     },
 
@@ -10610,12 +10615,12 @@
         }
       },
 
-      changeGain() {
-        this.$emit("gainChange", this.v_model_gain);
+      changeGain(newValue) {
+        this.$emit("gainChange", newValue);
       },
 
-      changePan() {
-        this.$emit("panChange", this.v_model_pan);
+      changePan(newValue) {
+        this.$emit("panChange", newValue);
       },
 
       muteChange() {
@@ -10756,7 +10761,6 @@
         ]),
         _vm._v(" "),
         _c("Slider", {
-          on: { input: _vm.changeGain },
           model: {
             value: _vm.v_model_gain,
             callback: function($$v) {
@@ -10938,7 +10942,7 @@
   //
   var script$2 = {
     name: "MixerChannel",
-    props: ["title", "context", "url", "output", "defaultMuted", "defaultPan", "pan", "defaultGain", "gain", "trackIndex", "mixerVars", "hidden", "solodTracks", "file"],
+    props: ["title", "context", "url", "output", "defaultMuted", "defaultGain", "defaultPan", "gain", "pan", "trackIndex", "mixerVars", "hidden", "solodTracks", "file"],
     components: {
       Channel: __vue_component__$1
     },
@@ -11060,7 +11064,7 @@
       },
 
       changePan(pan) {
-        this.pan = pan;
+        //this.pan = pan;
         var xDeg = parseInt(pan);
         var zDeg = xDeg + 90;
 
@@ -11229,12 +11233,6 @@
             mixerVars: _vm.mixerVars
           },
           on: {
-            "update:pan": function($event) {
-              _vm.pan = $event;
-            },
-            "update:gain": function($event) {
-              _vm.gain = $event;
-            },
             muteChange: _vm.muteChange,
             soloChange: _vm.soloChange,
             panChange: _vm.changePan,
@@ -12798,6 +12796,7 @@
       // Master Gain
       changeMasterGain(gain) {
         this.masterGainValue = gain;
+        this.config.master.gain = gain;
         if (!this.masterMuted) this.gainNode.gain.value = gain;
       },
 
@@ -12814,6 +12813,7 @@
         var z = Math.sin(zDeg * (Math.PI / 180));
         this.pannerNode.setPosition(x, 0, z);
         this.masterPanValue = pan;
+        this.config.master.pan = pan;
       },
 
       // Master Audio Nodes
@@ -12932,12 +12932,6 @@
                           file: _vm.files[index]
                         },
                         on: {
-                          "update:pan": function($event) {
-                            return _vm.$set(track, "pan", $event)
-                          },
-                          "update:gain": function($event) {
-                            return _vm.$set(track, "gain", $event)
-                          },
                           panChange: _vm.changePan,
                           gainChange: _vm.changeGain,
                           muteChange: _vm.changeMute,

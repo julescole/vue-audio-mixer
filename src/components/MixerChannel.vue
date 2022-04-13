@@ -6,9 +6,9 @@
         :title="title"
         :defaultMuted="muted"
         :defaultPan="pan"
-        :pan.sync="pan"
+        :pan="pan"
         :defaultGain="defaultGain"
-        :gain.sync="gain"
+        :gain="gain"
         @muteChange="muteChange"
         @soloChange="soloChange"
         @panChange="changePan"
@@ -33,10 +33,10 @@ export default {
         "url",
         "output",
         "defaultMuted",
-        "defaultPan",
-        "pan",
         "defaultGain",
+        "defaultPan",
         "gain",
+        "pan",
         "trackIndex",
         "mixerVars",
         "hidden",
@@ -166,7 +166,7 @@ export default {
         },
 
         changePan(pan) {
-            this.pan = pan;
+            //this.pan = pan;
             var xDeg = parseInt(pan);
             var zDeg = xDeg + 90;
             if (zDeg > 90) {

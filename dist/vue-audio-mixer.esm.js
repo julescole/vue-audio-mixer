@@ -9457,7 +9457,7 @@ var __vue_staticRenderFns__ = [];
 //
 var script$1 = {
   name: "Channel",
-  props: ["index", "trackIndex", "title", "context", "url", "output", "leftAnalyser", "rightAnalyser", "scriptProcessorNode", "defaultPan", "pan", "defaultGain", "defaultMuted", "showMute", "isMaster", "mixerVars", "solodTracks", "gain"],
+  props: ["index", "trackIndex", "title", "context", "url", "output", "leftAnalyser", "rightAnalyser", "scriptProcessorNode", "defaultMuted", "showMute", "isMaster", "mixerVars", "solodTracks", "defaultGain", "defaultPan", "gain", "pan"],
   components: {
     VueKnobControl,
     Slider: __vue_component__
@@ -9478,9 +9478,7 @@ var script$1 = {
       mute: false,
       meterHeight: parseInt(variables.meterHeight),
       titleModel: "",
-      loaded: false,
-      v_model_gain: this.gain,
-      v_model_pan: this.pan
+      loaded: false
     };
   },
   computed: {
@@ -9508,13 +9506,30 @@ var script$1 = {
 
     formattedGain() {
       return this.pad(Math.round(this.gain * 100), 3);
-    }
+    },
 
+    v_model_pan: {
+      get() {
+        return this.pan;
+      },
+
+      set(newValue) {
+        this.changePan(newValue);
+      }
+
+    },
+    v_model_gain: {
+      get() {
+        return this.gain;
+      },
+
+      set(newValue) {
+        this.changeGain(newValue);
+      }
+
+    }
   },
   watch: {
-    pan: function () {
-      this.v_model_pan = this.pan;
-    },
     mute: function () {
       this.muteChange();
     },
@@ -9523,9 +9538,6 @@ var script$1 = {
     },
     titleModel: function () {
       this.titleChange();
-    },
-    gain: function () {
-      this.v_model_gain = this.gain;
     }
   },
 
@@ -9550,11 +9562,7 @@ var script$1 = {
     this.gradient.addColorStop(0.75, "#38fedd");
     this.gradient.addColorStop(0.25, "#38fedd");
     this.gradient.addColorStop(0, "#31e0fc");
-    this.pan = this.defaultPan === undefined ? 0 : this.defaultPan;
-    this.gain = this.defaultGain === undefined ? 0 : this.defaultGain;
     this.mute = this.defaultMuted === undefined ? false : this.defaultMuted;
-    this.changePan();
-    this.changeGain();
     this.drawMeter();
   },
 
@@ -9573,12 +9581,12 @@ var script$1 = {
       }
     },
 
-    changeGain() {
-      this.$emit("gainChange", this.v_model_gain);
+    changeGain(newValue) {
+      this.$emit("gainChange", newValue);
     },
 
-    changePan() {
-      this.$emit("panChange", this.v_model_pan);
+    changePan(newValue) {
+      this.$emit("panChange", newValue);
     },
 
     muteChange() {
@@ -9665,7 +9673,7 @@ var script$1 = {
 const __vue_script__$1 = script$1;
 
 /* template */
-var __vue_render__$1 = function () {var _vm=this;var _h=_vm.$createElement;var _c=_vm._self._c||_h;return _c('div',{staticClass:"vue-audio-mixer-channel",class:{ 'with-panner': _vm.mixerVars.show_pan }},[_c('div',{staticClass:"vue-audio-mixer-channel-panner-container",class:{ 'vue-audio-mixer-is-master': _vm.isMaster }},[(_vm.mixerVars.show_pan)?_c('VueKnobControl',{staticClass:"vue-audio-mixer-channel-panner",attrs:{"min":-90,"max":90,"size":_vm.pannerSize,"stroke-width":7,"primaryColor":"#c40303","secondaryColor":"#adadad","textColor":_vm.knobTextColour},model:{value:(_vm.v_model_pan),callback:function ($$v) {_vm.v_model_pan=$$v;},expression:"v_model_pan"}}):_vm._e()],1),_vm._v(" "),_c('canvas',{staticClass:"vue-audio-mixer-channel-meter-canvas",staticStyle:{"display":"block"},attrs:{"id":'canvas' + _vm._uid,"width":"25","height":_vm.meterHeight}}),_vm._v(" "),_c('div',{staticClass:"slider_value"},[_vm._v(_vm._s(_vm.formattedGain))]),_vm._v(" "),_c('Slider',{on:{"input":_vm.changeGain},model:{value:(_vm.v_model_gain),callback:function ($$v) {_vm.v_model_gain=$$v;},expression:"v_model_gain"}}),_vm._v(" "),_c('div',{directives:[{name:"show",rawName:"v-show",value:(_vm.showMute),expression:"showMute"}],staticClass:"vue-audio-mixer-channel-mute-button"},[_c('label',[_c('input',{directives:[{name:"model",rawName:"v-model",value:(_vm.mute),expression:"mute"}],attrs:{"type":"checkbox"},domProps:{"checked":Array.isArray(_vm.mute)?_vm._i(_vm.mute,null)>-1:(_vm.mute)},on:{"change":function($event){var $$a=_vm.mute,$$el=$event.target,$$c=$$el.checked?(true):(false);if(Array.isArray($$a)){var $$v=null,$$i=_vm._i($$a,$$v);if($$el.checked){$$i<0&&(_vm.mute=$$a.concat([$$v]));}else {$$i>-1&&(_vm.mute=$$a.slice(0,$$i).concat($$a.slice($$i+1)));}}else {_vm.mute=$$c;}}}}),_vm._v(" "),_c('span',{staticClass:"vue-audio-mixer-channel-mute-button-label"},[_vm._v("M")])])]),_vm._v(" "),(_vm.isMaster && !_vm.showMute)?_c('div',{staticClass:"logo"}):_vm._e(),_vm._v(" "),_c('div',{directives:[{name:"show",rawName:"v-show",value:(!_vm.isMaster),expression:"!isMaster"}],staticClass:"vue-audio-mixer-channel-solo-button"},[_c('label',[_c('input',{directives:[{name:"model",rawName:"v-model",value:(_vm.soloModel),expression:"soloModel"}],attrs:{"type":"checkbox"},domProps:{"checked":Array.isArray(_vm.soloModel)?_vm._i(_vm.soloModel,null)>-1:(_vm.soloModel)},on:{"change":function($event){var $$a=_vm.soloModel,$$el=$event.target,$$c=$$el.checked?(true):(false);if(Array.isArray($$a)){var $$v=null,$$i=_vm._i($$a,$$v);if($$el.checked){$$i<0&&(_vm.soloModel=$$a.concat([$$v]));}else {$$i>-1&&(_vm.soloModel=$$a.slice(0,$$i).concat($$a.slice($$i+1)));}}else {_vm.soloModel=$$c;}}}}),_vm._v(" "),_c('span',{staticClass:"vue-audio-mixer-channel-solo-button-label"},[_vm._v("S")])])]),_vm._v(" "),_c('div',{staticClass:"vue-audio-mixer-channel-label"},[_c('label',{attrs:{"data-label":"0"}},[_vm._v(" "+_vm._s(_vm.title))])])],1)};
+var __vue_render__$1 = function () {var _vm=this;var _h=_vm.$createElement;var _c=_vm._self._c||_h;return _c('div',{staticClass:"vue-audio-mixer-channel",class:{ 'with-panner': _vm.mixerVars.show_pan }},[_c('div',{staticClass:"vue-audio-mixer-channel-panner-container",class:{ 'vue-audio-mixer-is-master': _vm.isMaster }},[(_vm.mixerVars.show_pan)?_c('VueKnobControl',{staticClass:"vue-audio-mixer-channel-panner",attrs:{"min":-90,"max":90,"size":_vm.pannerSize,"stroke-width":7,"primaryColor":"#c40303","secondaryColor":"#adadad","textColor":_vm.knobTextColour},model:{value:(_vm.v_model_pan),callback:function ($$v) {_vm.v_model_pan=$$v;},expression:"v_model_pan"}}):_vm._e()],1),_vm._v(" "),_c('canvas',{staticClass:"vue-audio-mixer-channel-meter-canvas",staticStyle:{"display":"block"},attrs:{"id":'canvas' + _vm._uid,"width":"25","height":_vm.meterHeight}}),_vm._v(" "),_c('div',{staticClass:"slider_value"},[_vm._v(_vm._s(_vm.formattedGain))]),_vm._v(" "),_c('Slider',{model:{value:(_vm.v_model_gain),callback:function ($$v) {_vm.v_model_gain=$$v;},expression:"v_model_gain"}}),_vm._v(" "),_c('div',{directives:[{name:"show",rawName:"v-show",value:(_vm.showMute),expression:"showMute"}],staticClass:"vue-audio-mixer-channel-mute-button"},[_c('label',[_c('input',{directives:[{name:"model",rawName:"v-model",value:(_vm.mute),expression:"mute"}],attrs:{"type":"checkbox"},domProps:{"checked":Array.isArray(_vm.mute)?_vm._i(_vm.mute,null)>-1:(_vm.mute)},on:{"change":function($event){var $$a=_vm.mute,$$el=$event.target,$$c=$$el.checked?(true):(false);if(Array.isArray($$a)){var $$v=null,$$i=_vm._i($$a,$$v);if($$el.checked){$$i<0&&(_vm.mute=$$a.concat([$$v]));}else {$$i>-1&&(_vm.mute=$$a.slice(0,$$i).concat($$a.slice($$i+1)));}}else {_vm.mute=$$c;}}}}),_vm._v(" "),_c('span',{staticClass:"vue-audio-mixer-channel-mute-button-label"},[_vm._v("M")])])]),_vm._v(" "),(_vm.isMaster && !_vm.showMute)?_c('div',{staticClass:"logo"}):_vm._e(),_vm._v(" "),_c('div',{directives:[{name:"show",rawName:"v-show",value:(!_vm.isMaster),expression:"!isMaster"}],staticClass:"vue-audio-mixer-channel-solo-button"},[_c('label',[_c('input',{directives:[{name:"model",rawName:"v-model",value:(_vm.soloModel),expression:"soloModel"}],attrs:{"type":"checkbox"},domProps:{"checked":Array.isArray(_vm.soloModel)?_vm._i(_vm.soloModel,null)>-1:(_vm.soloModel)},on:{"change":function($event){var $$a=_vm.soloModel,$$el=$event.target,$$c=$$el.checked?(true):(false);if(Array.isArray($$a)){var $$v=null,$$i=_vm._i($$a,$$v);if($$el.checked){$$i<0&&(_vm.soloModel=$$a.concat([$$v]));}else {$$i>-1&&(_vm.soloModel=$$a.slice(0,$$i).concat($$a.slice($$i+1)));}}else {_vm.soloModel=$$c;}}}}),_vm._v(" "),_c('span',{staticClass:"vue-audio-mixer-channel-solo-button-label"},[_vm._v("S")])])]),_vm._v(" "),_c('div',{staticClass:"vue-audio-mixer-channel-label"},[_c('label',{attrs:{"data-label":"0"}},[_vm._v(" "+_vm._s(_vm.title))])])],1)};
 var __vue_staticRenderFns__$1 = [];
 
   /* style */
@@ -9700,7 +9708,7 @@ var __vue_staticRenderFns__$1 = [];
 //
 var script$2 = {
   name: "MixerChannel",
-  props: ["title", "context", "url", "output", "defaultMuted", "defaultPan", "pan", "defaultGain", "gain", "trackIndex", "mixerVars", "hidden", "solodTracks", "file"],
+  props: ["title", "context", "url", "output", "defaultMuted", "defaultGain", "defaultPan", "gain", "pan", "trackIndex", "mixerVars", "hidden", "solodTracks", "file"],
   components: {
     Channel: __vue_component__$1
   },
@@ -9822,7 +9830,7 @@ var script$2 = {
     },
 
     changePan(pan) {
-      this.pan = pan;
+      //this.pan = pan;
       var xDeg = parseInt(pan);
       var zDeg = xDeg + 90;
 
@@ -9969,7 +9977,7 @@ var script$2 = {
 const __vue_script__$2 = script$2;
 
 /* template */
-var __vue_render__$2 = function () {var _vm=this;var _h=_vm.$createElement;var _c=_vm._self._c||_h;return (_vm.loaded)?_c('Channel',{attrs:{"index":_vm._uid,"trackIndex":_vm.trackIndex,"title":_vm.title,"defaultMuted":_vm.muted,"defaultPan":_vm.pan,"pan":_vm.pan,"defaultGain":_vm.defaultGain,"gain":_vm.gain,"leftAnalyser":_vm.leftAnalyser,"rightAnalyser":_vm.rightAnalyser,"scriptProcessorNode":_vm.scriptProcessorNode,"showMute":true,"mixerVars":_vm.mixerVars},on:{"update:pan":function($event){_vm.pan=$event;},"update:gain":function($event){_vm.gain=$event;},"muteChange":_vm.muteChange,"soloChange":_vm.soloChange,"panChange":_vm.changePan,"gainChange":_vm.changeGain}}):_vm._e()};
+var __vue_render__$2 = function () {var _vm=this;var _h=_vm.$createElement;var _c=_vm._self._c||_h;return (_vm.loaded)?_c('Channel',{attrs:{"index":_vm._uid,"trackIndex":_vm.trackIndex,"title":_vm.title,"defaultMuted":_vm.muted,"defaultPan":_vm.pan,"pan":_vm.pan,"defaultGain":_vm.defaultGain,"gain":_vm.gain,"leftAnalyser":_vm.leftAnalyser,"rightAnalyser":_vm.rightAnalyser,"scriptProcessorNode":_vm.scriptProcessorNode,"showMute":true,"mixerVars":_vm.mixerVars},on:{"muteChange":_vm.muteChange,"soloChange":_vm.soloChange,"panChange":_vm.changePan,"gainChange":_vm.changeGain}}):_vm._e()};
 var __vue_staticRenderFns__$2 = [];
 
   /* style */
@@ -11397,6 +11405,7 @@ var script$7 = {
     // Master Gain
     changeMasterGain(gain) {
       this.masterGainValue = gain;
+      this.config.master.gain = gain;
       if (!this.masterMuted) this.gainNode.gain.value = gain;
     },
 
@@ -11413,6 +11422,7 @@ var script$7 = {
       var z = Math.sin(zDeg * (Math.PI / 180));
       this.pannerNode.setPosition(x, 0, z);
       this.masterPanValue = pan;
+      this.config.master.pan = pan;
     },
 
     // Master Audio Nodes
@@ -11455,7 +11465,7 @@ var script$7 = {
 const __vue_script__$7 = script$7;
 
 /* template */
-var __vue_render__$7 = function () {var _vm=this;var _h=_vm.$createElement;var _c=_vm._self._c||_h;return _c('div',{staticClass:"vue-audio-mixer",class:[_vm.themeClassSize, _vm.themeClassColour, _vm.trackClass],style:({ width: _vm.mixerWidth })},[(_vm.track_load_error)?_c('p',{staticClass:"vue-audio-mixer-error"},[_vm._v("\n        Track "+_vm._s(_vm.track_load_error)+" failed to load. Check that the track is\n        hosted on the same domain as the mixer, or that CORS is enabled on\n        the track's hosting service.\n    ")]):(_vm.loading)?_c('Loader',{attrs:{"percentLoaded":_vm.loadingPercent}}):_vm._e(),_vm._v(" "),_c('div',{directives:[{name:"show",rawName:"v-show",value:(!_vm.loading),expression:"!loading"}],staticClass:"vue-audio-mixer-loading-hider"},[_c('div',{ref:"channelstrip",staticClass:"vue-audio-mixer-channel-strip"},[_c('div',[_vm._l((_vm.tracks),function(track,index){return _c('MixerChannel',{directives:[{name:"show",rawName:"v-show",value:(!track.hidden),expression:"!track.hidden"}],key:index,attrs:{"title":track.title,"defaultPan":track.pan,"pan":track.pan,"defaultGain":track.gain,"gain":track.gain,"defaultMuted":track.muted,"hidden":track.hidden,"context":_vm.context,"output":_vm.gainNode,"url":track.url,"solodTracks":_vm.solodTracks,"trackIndex":index,"mixerVars":_vm.mixerVars,"file":_vm.files[index]},on:{"update:pan":function($event){return _vm.$set(track, "pan", $event)},"update:gain":function($event){return _vm.$set(track, "gain", $event)},"panChange":_vm.changePan,"gainChange":_vm.changeGain,"muteChange":_vm.changeMute,"soloChange":_vm.changeSolo}})}),_vm._v(" "),_c('Channel',{attrs:{"title":"Master","defaultPan":_vm.masterPanValue,"pan":_vm.config.master.pan,"defaultGain":_vm.masterGainValue,"gain":_vm.config.master.gain,"defaultMuted":_vm.masterMuted,"leftAnalyser":_vm.leftAnalyser,"rightAnalyser":_vm.rightAnalyser,"scriptProcessorNode":_vm.scriptProcessorNode,"showMute":false,"isMaster":true,"mixerVars":_vm.mixerVars},on:{"muteChange":_vm.changeMasterMute,"gainChange":_vm.changeMasterGain,"panChange":_vm.changeMasterPan}})],2),_vm._v(" "),_c('ProgressBar',{attrs:{"recording":_vm.recording,"progressPercent":_vm.progressPercent,"mixerVars":_vm.mixerVars,"tracks":_vm.tracks},on:{"percent":_vm.playFromPercent}}),_vm._v(" "),_c('div',{staticClass:"time_and_transport"},[_c('TimeDisplay',{attrs:{"progressTime":_vm.progress,"totalTime":_vm.totalDuration,"mixerVars":_vm.mixerVars}}),_vm._v(" "),_c('TransportButtons',{attrs:{"playing":_vm.playing,"mixerVars":_vm.mixerVars},on:{"stop":_vm.stop,"togglePlay":_vm.togglePlay}})],1)],1),_vm._v(" "),_c('div',{staticClass:"text-center"},[_c('button',{staticClass:"vue-audio-mixer-download-mix",class:{ recording: _vm.recording },on:{"click":_vm.saveAudioMix}},[_vm._v("\n                Record and download mix\n            ")])])])],1)};
+var __vue_render__$7 = function () {var _vm=this;var _h=_vm.$createElement;var _c=_vm._self._c||_h;return _c('div',{staticClass:"vue-audio-mixer",class:[_vm.themeClassSize, _vm.themeClassColour, _vm.trackClass],style:({ width: _vm.mixerWidth })},[(_vm.track_load_error)?_c('p',{staticClass:"vue-audio-mixer-error"},[_vm._v("\n        Track "+_vm._s(_vm.track_load_error)+" failed to load. Check that the track is\n        hosted on the same domain as the mixer, or that CORS is enabled on\n        the track's hosting service.\n    ")]):(_vm.loading)?_c('Loader',{attrs:{"percentLoaded":_vm.loadingPercent}}):_vm._e(),_vm._v(" "),_c('div',{directives:[{name:"show",rawName:"v-show",value:(!_vm.loading),expression:"!loading"}],staticClass:"vue-audio-mixer-loading-hider"},[_c('div',{ref:"channelstrip",staticClass:"vue-audio-mixer-channel-strip"},[_c('div',[_vm._l((_vm.tracks),function(track,index){return _c('MixerChannel',{directives:[{name:"show",rawName:"v-show",value:(!track.hidden),expression:"!track.hidden"}],key:index,attrs:{"title":track.title,"defaultPan":track.pan,"pan":track.pan,"defaultGain":track.gain,"gain":track.gain,"defaultMuted":track.muted,"hidden":track.hidden,"context":_vm.context,"output":_vm.gainNode,"url":track.url,"solodTracks":_vm.solodTracks,"trackIndex":index,"mixerVars":_vm.mixerVars,"file":_vm.files[index]},on:{"panChange":_vm.changePan,"gainChange":_vm.changeGain,"muteChange":_vm.changeMute,"soloChange":_vm.changeSolo}})}),_vm._v(" "),_c('Channel',{attrs:{"title":"Master","defaultPan":_vm.masterPanValue,"pan":_vm.config.master.pan,"defaultGain":_vm.masterGainValue,"gain":_vm.config.master.gain,"defaultMuted":_vm.masterMuted,"leftAnalyser":_vm.leftAnalyser,"rightAnalyser":_vm.rightAnalyser,"scriptProcessorNode":_vm.scriptProcessorNode,"showMute":false,"isMaster":true,"mixerVars":_vm.mixerVars},on:{"muteChange":_vm.changeMasterMute,"gainChange":_vm.changeMasterGain,"panChange":_vm.changeMasterPan}})],2),_vm._v(" "),_c('ProgressBar',{attrs:{"recording":_vm.recording,"progressPercent":_vm.progressPercent,"mixerVars":_vm.mixerVars,"tracks":_vm.tracks},on:{"percent":_vm.playFromPercent}}),_vm._v(" "),_c('div',{staticClass:"time_and_transport"},[_c('TimeDisplay',{attrs:{"progressTime":_vm.progress,"totalTime":_vm.totalDuration,"mixerVars":_vm.mixerVars}}),_vm._v(" "),_c('TransportButtons',{attrs:{"playing":_vm.playing,"mixerVars":_vm.mixerVars},on:{"stop":_vm.stop,"togglePlay":_vm.togglePlay}})],1)],1),_vm._v(" "),_c('div',{staticClass:"text-center"},[_c('button',{staticClass:"vue-audio-mixer-download-mix",class:{ recording: _vm.recording },on:{"click":_vm.saveAudioMix}},[_vm._v("\n                Record and download mix\n            ")])])])],1)};
 var __vue_staticRenderFns__$7 = [];
 
   /* style */
