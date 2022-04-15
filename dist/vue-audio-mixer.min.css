@@ -31,7 +31,6 @@
     width: 100%; }
 
 .vue-audio-mixer-channel-strip {
-  background: transparent !important;
   background: #16191c;
   position: relative;
   overflow: auto;
