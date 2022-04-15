@@ -12,6 +12,7 @@
           @input="setConfig" 
           :showPan="true"
           :showTotalTime="true"
+          :showRecord="false"
         />
       </div>
 

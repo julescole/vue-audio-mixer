@@ -81,7 +81,7 @@
                 </div>
             </div>
 
-            <div class="text-center">
+            <div v-if="showRecord" class="text-center">
                 <button
                     @click="saveAudioMix"
                     class="vue-audio-mixer-download-mix"
@@ -123,6 +123,10 @@ export default {
             default: true,
         },
         showTotalTime: {
+            type: Boolean,
+            default: true,
+        },
+        showRecord: {
             type: Boolean,
             default: true,
         },
