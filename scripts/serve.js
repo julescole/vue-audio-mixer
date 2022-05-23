@@ -39,8 +39,8 @@ export default {
     serve({
       open: true,
       contentBase: path.join(__dirname, '..', 'example'),
-      host: 'localhost',
-      port: 10001
+      host: '192.168.0.125',
+      port: 8080
     }),
     livereload({
       verbose: true,

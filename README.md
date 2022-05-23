@@ -10,6 +10,8 @@ To view a demo online:
 https://audiomixer.io
 
 To view demo examples locally clone the repo and run `npm install && npm run serve`
+Make sure you use node version 12-14 (with node version manager `nvm use 12.17.3`
+If problems with node-sass accor (missing styling) run `npm rebuild node-sass`
 
 ## Use directly from a CDN
 ``` html
