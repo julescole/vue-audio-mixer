@@ -1,55 +1,63 @@
 @keyframes rotate {
   0% {
     -webkit-transform: rotate(0deg) scale(1);
-            transform: rotate(0deg) scale(1); 
+    transform: rotate(0deg) scale(1);
   }
+
   50% {
     -webkit-transform: rotate(180deg) scale(0.6);
-            transform: rotate(180deg) scale(0.6); 
+    transform: rotate(180deg) scale(0.6);
   }
+
   100% {
     -webkit-transform: rotate(360deg) scale(1);
-            transform: rotate(360deg) scale(1); 
-  } 
+    transform: rotate(360deg) scale(1);
+  }
 }
 
 @-webkit-keyframes ball-scale-ripple {
   0% {
     -webkit-transform: scale(0.1);
-            transform: scale(0.1);
-    opacity: 1; }
+    transform: scale(0.1);
+    opacity: 1;
+  }
 
   70% {
     -webkit-transform: scale(1);
-            transform: scale(1);
-    opacity: 0.7; }
+    transform: scale(1);
+    opacity: 0.7;
+  }
 
   100% {
-    opacity: 0.0; } 
+    opacity: 0.0;
+  }
 }
 
 @keyframes ball-scale-ripple {
   0% {
     -webkit-transform: scale(0.1);
-            transform: scale(0.1);
-    opacity: 1; }
+    transform: scale(0.1);
+    opacity: 1;
+  }
 
   70% {
     -webkit-transform: scale(1);
-            transform: scale(1);
-    opacity: 0.7; }
+    transform: scale(1);
+    opacity: 0.7;
+  }
 
   100% {
-    opacity: 0.0; } 
+    opacity: 0.0;
+  }
 }
 
 .vue-audio-mixer-loader-inner {
-  position: relative; 
+  position: relative;
 }
 
-.vue-audio-mixer-loader-inner > div {
+.vue-audio-mixer-loader-inner>div {
   -webkit-animation-fill-mode: both;
-          animation-fill-mode: both;
+  animation-fill-mode: both;
   position: absolute;
   left: -20px;
   top: -20px;
@@ -60,38 +68,41 @@
   height: 35px;
   width: 35px;
   -webkit-animation: rotate 1s 0s ease-in-out infinite;
-          animation: rotate 1s 0s ease-in-out infinite; 
+  animation: rotate 1s 0s ease-in-out infinite;
 }
 
-.vue-audio-mixer-loader-inner > div:last-child {
+.vue-audio-mixer-loader-inner>div:last-child {
   display: inline-block;
   top: -10px;
   left: -10px;
   width: 15px;
   height: 15px;
   -webkit-animation-duration: 0.5s;
-          animation-duration: 0.5s;
+  animation-duration: 0.5s;
   border-color: $loader-outer-colour transparent $loader-outer-colour transparent;
   -webkit-animation-direction: reverse;
-          animation-direction: reverse; 
+  animation-direction: reverse;
 }
 
-.vue-audio-mixer-loader{
+.vue-audio-mixer-loader {
   width: 100%;
   height: 100px;
-  position: relative;
+  position: absolute;
+  top: 50%;
+  -ms-transform: translateY(-50%);
+  transform: translateY(-50%);
 }
 
-.vue-audio-mixer-loader-inner{
-  margin:0 auto;
-  width:1px;
+.vue-audio-mixer-loader-inner {
+  margin: 0 auto;
+  width: 1px;
 }
 
-.vue-audio-mixer-loader-text{
+.vue-audio-mixer-loader-text {
   color: $loader-text-colour;
   text-align: center;
   width: 100%;
   font-size: 0.7em;
   position: relative;
-  top:50%;
+  top: 50%;
 }

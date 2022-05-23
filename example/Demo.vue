@@ -3,7 +3,7 @@
   <div>
     <div style="text-align: center;">
 
-      <div style="overflow: hidden; ">
+      <div style="overflow: hidden; height:100vh;">
         <vue-audio-mixer 
           :config="config" 
           size="medium" 
@@ -44,7 +44,7 @@ export default {
         "tracks":[
             {
                 "title":"Bass",
-                "url":"https://audio.jukehost.co.uk/pr3Z0ZGjFa2AtYwzE3h2PpYGLGd60XaO",
+                "url":"https:// audio.jukehost.co.uk/pr3Z0ZGjFa2AtYwzE3h2PpYGLGd60XaO",
                 "pan":-30,
                 "gain":1,
                 "muted":false,

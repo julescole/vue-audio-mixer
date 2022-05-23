@@ -1,5 +1,6 @@
 .vue-audio-mixer{
   min-width: 105px;
+  height:100%;
   margin:0 auto;
   font-family: 'Open Sans', sans-serif;
   text-align: center;
@@ -16,8 +17,7 @@
 }
 
 .vue-audio-mixer-loading-hider{
-  /*width: 100%;
-  display: inline-block;*/
+  height: 100%;
 }
 
 
