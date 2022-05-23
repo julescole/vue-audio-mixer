@@ -4,8 +4,9 @@
 
 .vue-audio-mixer-channel-mute-button, .vue-audio-mixer-channel-solo-button{
     position: absolute;
-    left:2px;
+    left:5%;
     top:5px;
+    width: 40%;
     cursor: pointer;
 }
 
@@ -18,7 +19,7 @@
 
 .vue-audio-mixer-theme-medium{
     .vue-audio-mixer-channel-solo-button{
-        left:35px;
+        left: 55%;
     }
 }
 
@@ -34,7 +35,7 @@
 }
 
 .vue-audio-mixer-channel-mute-button, .vue-audio-mixer-channel-solo-button {
-    margin:4px;
+    /*margin:4px;*/
     background-color:$channel-mute-button-background-colour;
     border-radius:4px;
     border:1px solid $channel-mute-button-border-colour;
@@ -44,7 +45,6 @@
 }
 
 .vue-audio-mixer-channel-mute-button label,.vue-audio-mixer-channel-solo-button label {
-    float:left; 
     margin-bottom: 0;
     box-sizing: content-box;
 }
@@ -59,15 +59,14 @@
 
 .vue-audio-mixer-theme-medium{
     .vue-audio-mixer-channel-mute-button label span, .vue-audio-mixer-channel-solo-button label span {
-        width:14px;
+        width:100%;
         font-size: 12px;    
     }
 }
 
 .vue-audio-mixer-channel-mute-button label span, .vue-audio-mixer-channel-solo-button label span {
     text-align:center;
-    padding:3px;
-    width:8px;
+    padding:3px 0;
     display:block;
     border-radius:4px;
     box-sizing: content-box;

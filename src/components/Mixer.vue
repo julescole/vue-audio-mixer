@@ -4,31 +4,32 @@
         :class="[themeClassSize, themeClassColour, trackClass]"
         :style="{ width: mixerWidth }"
     >
+        <button v-if="false" @click="setupAudioContext()">setupAudioContext</button>
+        <button v-if="false" @click="showUser()">user agent</button>
         <p class="vue-audio-mixer-error" v-if="track_load_error">
             Track {{ track_load_error }} failed to load. Check that the track is
             hosted on the same domain as the mixer, or that CORS is enabled on
             the track's hosting service.
         </p>
-
         <Loader v-else-if="loading" :percentLoaded="loadingPercent" />
 
         <div class="vue-audio-mixer-loading-hider" v-show="!loading">
             <div class="vue-audio-mixer-channel-strip" ref="channelstrip">
-                <div>
+                <div class="vue-audio-mixer-channel-container">
                     <MixerChannel
                         v-show="!track.hidden"
                         v-for="(track, index) in tracks"
                         :title="track.title"
                         :defaultPan="track.pan"
                         :pan="track.pan"
-                        :defaultGain="track.gain"                        
+                        :defaultGain="track.gain"
                         :gain="track.gain"
                         :defaultMuted="track.muted"
                         :hidden="track.hidden"
                         :context="context"
                         :output="gainNode"
                         :url="track.url"
-                        :key="index"
+                        :key="index + refreshed"
                         :solodTracks="solodTracks"
                         :trackIndex="index"
                         @panChange="changePan"
@@ -57,9 +58,19 @@
                         :isMaster="true"
                         :mixerVars="mixerVars"
                     />
+                    <div
+                        style="
+                            height: 0 !important;
+                            border: none;
+                            padding: 0;
+                            padding-top: 0;
+                        "
+                        class="vue-audio-mixer-channel"
+                    ></div>
                 </div>
 
-                <ProgressBar ref="vue-audio-mixer-progress-bar"
+                <ProgressBar
+                    ref="vue-audio-mixer-progress-bar"
                     :recording="recording"
                     :progressPercent="progressPercent"
                     @percent="playFromPercent"
@@ -81,7 +92,7 @@
                 </div>
             </div>
 
-            <div v-if="showRecord" class="text-center">
+            <div v-if="showRecord && false" class="text-center">
                 <button
                     @click="saveAudioMix"
                     class="vue-audio-mixer-download-mix"
@@ -172,6 +183,7 @@ export default {
             recorder: null,
             recording: false,
             track_load_error: false,
+            refreshed: 0,
         };
     },
     created() {
@@ -180,20 +192,11 @@ export default {
 
         this.checkConfig();
 
-        var AudioContext =
-            window.AudioContext || // Default
-            window.webkitAudioContext || // Safari and old versions of Chrome
-            false;
+        // debugging to find browser verisons with problems (iphones only?)
+        //alert(navigator.userAgent);
 
-        this.context = new AudioContext();
-        this.gainNode = this.context.createGain();
-        this.gainNode.connect(this.context.destination);
-        this.scriptProcessorNode = this.context.createScriptProcessor(
-            2048,
-            1,
-            1
-        );
-        this.setupAudioNodes();
+        this.setupAudioContext();
+
         EventBus.$on(
             this.mixerVars.instance_id + "track_loaded",
             this.trackLoaded
@@ -253,6 +256,7 @@ export default {
         },
 
         mixerWidth() {
+            return "100%";
             if (this.track_load_error) {
                 return "500px";
             }
@@ -330,6 +334,9 @@ export default {
     },
 
     methods: {
+        showUser() {
+            alert(navigator.userAgent);
+        },
         trackLoadError(track_url) {
             this.track_load_error = track_url;
         },
@@ -514,7 +521,7 @@ export default {
 
         changeMasterGain(gain) {
             this.masterGainValue = gain;
-            this.config.master.gain = gain
+            this.config.master.gain = gain;
             if (!this.masterMuted) this.gainNode.gain.value = gain;
         },
 
@@ -530,8 +537,28 @@ export default {
             var z = Math.sin(zDeg * (Math.PI / 180));
             this.pannerNode.setPosition(x, 0, z);
 
-            this.masterPanValue = pan;            
-            this.config.master.pan = pan
+            this.masterPanValue = pan;
+            this.config.master.pan = pan;
+        },
+
+        // Audio Setup
+        setupAudioContext() {
+            this.tracksLoaded = 0;
+            this.refreshed += 100;
+            var AudioContext =
+                window.AudioContext || // Default
+                window.webkitAudioContext || // Safari and old versions of Chrome
+                false;
+
+            this.context = new AudioContext();
+            this.gainNode = this.context.createGain();
+            this.gainNode.connect(this.context.destination);
+            this.scriptProcessorNode = this.context.createScriptProcessor(
+                2048,
+                1,
+                1
+            );
+            this.setupAudioNodes();
         },
 
         // Master Audio Nodes

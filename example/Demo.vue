@@ -3,7 +3,7 @@
   <div>
     <div style="text-align: center;">
 
-      <div style="position:relative; display: inline-block; ">
+      <div style="overflow: hidden; ">
         <vue-audio-mixer 
           :config="config" 
           size="medium" 
@@ -12,13 +12,13 @@
           @input="setConfig" 
           :showPan="true"
           :showTotalTime="true"
-          :showRecord="false"
+          :showRecord="true"
         />
       </div>
 
     </div>
 
-    <pre v-html="syntaxHighlight(newConfig)"></pre>
+    <!--<pre v-html="syntaxHighlight(newConfig)"></pre>-->
 
   </div>
 
@@ -126,7 +126,7 @@ export default {
 </script>
 
 <style>
-
+* {margin: 0}
 pre {outline: 1px solid #ccc; padding: 5px; margin: 5px; }
 .string { color: green; }
 .number { color: darkorange; }

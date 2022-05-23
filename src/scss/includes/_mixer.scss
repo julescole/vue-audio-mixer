@@ -1,12 +1,8 @@
 .vue-audio-mixer{
-  display: inline-block;
-
   min-width: 105px;
-  overflow: auto;
   margin:0 auto;
   font-family: 'Open Sans', sans-serif;
   text-align: center;
-
   * {
       -webkit-touch-callout: none;
       -webkit-user-select: none; /* Disable selection/copy in UIWebView */
@@ -20,7 +16,8 @@
 }
 
 .vue-audio-mixer-loading-hider{
-  display: inline-block;
+  /*width: 100%;
+  display: inline-block;*/
 }
 
 
