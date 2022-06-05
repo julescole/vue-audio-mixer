@@ -1,7 +1,7 @@
 # Audio Mixer
 
 - [Demo](#demo)
-- [Install](#install)
+- [Install](#install-via-npm)
 - [Support us](#support-us)
 
 ## Demo
