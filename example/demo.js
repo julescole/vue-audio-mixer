@@ -10460,7 +10460,7 @@
     /* style */
     const __vue_inject_styles__ = function (inject) {
       if (!inject) return
-      inject("data-v-86ea37a0_0", { source: "\n\n\n\n\n\n\n\n\n\n\n\n\n\n", map: {"version":3,"sources":[],"names":[],"mappings":"","file":"Slider.vue"}, media: undefined });
+      inject("data-v-19383cf0_0", { source: "\n\n\n\n\n\n\n\n\n\n\n\n\n\n", map: {"version":3,"sources":[],"names":[],"mappings":"","file":"Slider.vue"}, media: undefined });
 
     };
     /* scoped */
@@ -11747,7 +11747,7 @@
     /* style */
     const __vue_inject_styles__$4 = function (inject) {
       if (!inject) return
-      inject("data-v-3a75e187_0", { source: "\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n", map: {"version":3,"sources":[],"names":[],"mappings":"","file":"ProgressBar.vue"}, media: undefined });
+      inject("data-v-8d2c8b72_0", { source: "\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n", map: {"version":3,"sources":[],"names":[],"mappings":"","file":"ProgressBar.vue"}, media: undefined });
 
     };
     /* scoped */
@@ -13050,53 +13050,46 @@
         is_loaded: false,
         newConfig: null,
         config: {
-          "tracks": [{
-            "title": "Bass",
-            "url": "https://api.soundcloud.com/tracks/841840237/stream?client_id=ae1dadcc70f054f451de8c6358bcf396",
-            "pan": -30,
-            "gain": 1,
-            "muted": false,
-            "hidden": false
+          tracks: [{
+            title: 'Bass',
+            url: 'https://audiomixer.io/stems/bass.mp3',
+            pan: -30,
+            gain: 1.2,
+            muted: false,
+            hidden: false
           }, {
-            "title": "Flutes",
-            "url": "https://api.soundcloud.com/tracks/841840234/stream?client_id=ae1dadcc70f054f451de8c6358bcf396",
-            "pan": 81,
-            "gain": 1.08,
-            "muted": false,
-            "hidden": false
+            title: 'Flutes',
+            url: 'https://audiomixer.io/stems/flutes.mp3',
+            pan: 73,
+            gain: 0.9,
+            muted: false,
+            hidden: false
           }, {
-            "title": "Perc",
-            "url": "https://api.soundcloud.com/tracks/841840222/stream?client_id=ae1dadcc70f054f451de8c6358bcf396",
-            "pan": -49,
-            "gain": 0.85,
-            "muted": false,
-            "hidden": false
+            title: 'Perc',
+            url: 'https://audiomixer.io/stems/perc.mp3',
+            pan: 26,
+            gain: 0.85,
+            muted: false,
+            hidden: false
           }, {
-            "title": "Piano",
-            "url": "https://api.soundcloud.com/tracks/841840216/stream?client_id=ae1dadcc70f054f451de8c6358bcf396",
-            "pan": -60,
-            "gain": 0.6,
-            "muted": false,
-            "hidden": false
+            title: 'Piano',
+            url: 'https://audiomixer.io/stems/piano.mp3',
+            pan: 10,
+            gain: 1.2,
+            muted: false,
+            hidden: false
           }, {
-            "title": "Strings",
-            "url": "https://api.soundcloud.com/tracks/841840174/stream?client_id=ae1dadcc70f054f451de8c6358bcf396",
-            "pan": -49,
-            "gain": 0.85,
-            "muted": false,
-            "hidden": false
-          }, {
-            "title": "Bass",
-            "url": "https://api.soundcloud.com/tracks/841840237/stream?client_id=ae1dadcc70f054f451de8c6358bcf396",
-            "pan": -30,
-            "gain": 0.5,
-            "muted": false,
-            "hidden": false
+            title: 'Strings',
+            url: 'https://audiomixer.io/stems/strings.mp3',
+            pan: -49,
+            gain: 0.9,
+            muted: false,
+            hidden: false
           }],
-          "master": {
-            "pan": 0,
-            "gain": 1,
-            "muted": false
+          master: {
+            pan: 0,
+            gain: 0.3,
+            muted: false
           }
         }
       };
@@ -13188,7 +13181,7 @@
     /* style */
     const __vue_inject_styles__$8 = function (inject) {
       if (!inject) return
-      inject("data-v-1328fa93_0", { source: "\npre {outline: 1px solid #ccc; padding: 5px; margin: 5px;\n}\n.string { color: green;\n}\n.number { color: darkorange;\n}\n.boolean { color: blue;\n}\n.null { color: magenta;\n}\n.key { color: red;\n}\n\n", map: {"version":3,"sources":["/Users/juliancole/Code/vue-audio-mixer/example/Demo.vue"],"names":[],"mappings":";AAgKA,KAAA,uBAAA,EAAA,YAAA,EAAA,WAAA;AAAA;AACA,UAAA,YAAA;AAAA;AACA,UAAA,iBAAA;AAAA;AACA,WAAA,WAAA;AAAA;AACA,QAAA,cAAA;AAAA;AACA,OAAA,UAAA;AAAA","file":"Demo.vue","sourcesContent":["<template>\n\n  <div>\n    <div style=\"text-align: center;\">\n\n      <div style=\"position:relative; display: inline-block; \">\n        <vue-audio-mixer \n          :config=\"config\" \n          size=\"medium\" \n          theme=\"dark\" \n          @loaded=\"loadedChange\"\n          @input=\"setConfig\" \n          :showPan=\"true\"\n          :showTotalTime=\"true\"\n        />\n      </div>\n\n    </div>\n\n    <pre v-html=\"syntaxHighlight(newConfig)\"></pre>\n\n  </div>\n\n</template>\n\n\n<script>\n\nimport VueAudioMixer from '../src/components/Mixer.vue';\nimport '../src/scss/main.scss'; \n\nexport default {\n  name: 'app',\n  components: {\n    VueAudioMixer\n  },\n  data : function(){     \n\n    return {\n      is_loaded:false,\n      newConfig: null,\n      config: {\n        \"tracks\":[\n            {\n                \"title\":\"Bass\",\n                \"url\":\"https://api.soundcloud.com/tracks/841840237/stream?client_id=ae1dadcc70f054f451de8c6358bcf396\",\n                \"pan\":-30,\n                \"gain\":1,\n                \"muted\":false,\n                \"hidden\":false\n            },\n            {\n                \"title\":\"Flutes\",\n                \"url\":\"https://api.soundcloud.com/tracks/841840234/stream?client_id=ae1dadcc70f054f451de8c6358bcf396\",\n                \"pan\":81,\n                \"gain\":1.08,\n                \"muted\":false,\n                \"hidden\":false\n            },\n            {\n                \"title\":\"Perc\",\n                \"url\":\"https://api.soundcloud.com/tracks/841840222/stream?client_id=ae1dadcc70f054f451de8c6358bcf396\",\n                \"pan\":-49,\n                \"gain\":0.85,\n                \"muted\":false,\n                \"hidden\":false\n            },\n            {\n                \"title\":\"Piano\",\n                \"url\":\"https://api.soundcloud.com/tracks/841840216/stream?client_id=ae1dadcc70f054f451de8c6358bcf396\",\n                \"pan\":-60,\n                \"gain\":0.6,\n                \"muted\":false,\n                \"hidden\":false\n            },\n            {\n                \"title\":\"Strings\",\n                \"url\":\"https://api.soundcloud.com/tracks/841840174/stream?client_id=ae1dadcc70f054f451de8c6358bcf396\",\n                \"pan\":-49,\n                \"gain\":0.85,\n                \"muted\":false,\n                \"hidden\":false\n            },\n            {\n                \"title\":\"Bass\",\n                \"url\":\"https://api.soundcloud.com/tracks/841840237/stream?client_id=ae1dadcc70f054f451de8c6358bcf396\",\n                \"pan\":-30,\n                \"gain\":0.5,\n                \"muted\":false,\n                \"hidden\":false\n            }\n        ],\n        \"master\":{\n            \"pan\":0,\n            \"gain\":1,\n            \"muted\":false\n        }\n      }\n    }    \n  },\n  created(){\n\n    this.newConfig = this.config;\n\n  },\n\n  beforeDestroy() {\n  \n  },\n  methods:{\n\n    loadedChange(loaded)\n    {\n      this.is_loaded = loaded;\n    },\n\n    setConfig(newVal)\n    {\n      this.newConfig = newVal;\n    },\n\n    // accepts json string\n    // returns pretyyprinted json\n    syntaxHighlight(json) {\n      if (typeof json != 'string') {\n           json = JSON.stringify(json, undefined, 2);\n      }\n      json = json.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');\n      return json.replace(/(\"(\\\\u[a-zA-Z0-9]{4}|\\\\[^u]|[^\\\\\"])*\"(\\s*:)?|\\b(true|false|null)\\b|-?\\d+(?:\\.\\d*)?(?:[eE][+\\-]?\\d+)?)/g, function (match) {\n          var cls = 'number';\n          if (/^\"/.test(match)) {\n              if (/:$/.test(match)) {\n                  cls = 'key';\n              } else {\n                  cls = 'string';\n              }\n          } else if (/true|false/.test(match)) {\n              cls = 'boolean';\n          } else if (/null/.test(match)) {\n              cls = 'null';\n          }\n          return '<span class=\"' + cls + '\">' + match + '</span>';\n      });\n  }\n\n\n\n  },\n\n  computed: {\n\n    \n\n  }\n\n}\n</script>\n\n<style>\n\npre {outline: 1px solid #ccc; padding: 5px; margin: 5px; }\n.string { color: green; }\n.number { color: darkorange; }\n.boolean { color: blue; }\n.null { color: magenta; }\n.key { color: red; }\n\n</style>\n\n\n\n"]}, media: undefined });
+      inject("data-v-bb00b65c_0", { source: "\npre {\n    outline: 1px solid #ccc;\n    padding: 5px;\n    margin: 5px;\n}\n.string {\n    color: green;\n}\n.number {\n    color: darkorange;\n}\n.boolean {\n    color: blue;\n}\n.null {\n    color: magenta;\n}\n.key {\n    color: red;\n}\n", map: {"version":3,"sources":["/home/marcel/Desktop/github/vue-audio-mixer/example/Demo.vue"],"names":[],"mappings":";AAsIA;IACA,uBAAA;IACA,YAAA;IACA,WAAA;AACA;AACA;IACA,YAAA;AACA;AACA;IACA,iBAAA;AACA;AACA;IACA,WAAA;AACA;AACA;IACA,cAAA;AACA;AACA;IACA,UAAA;AACA","file":"Demo.vue","sourcesContent":["<template>\n    <div>\n        <div style=\"text-align: center;\">\n            <div style=\"position:relative; display: inline-block; \">\n                <vue-audio-mixer\n                    :config=\"config\"\n                    size=\"medium\"\n                    theme=\"dark\"\n                    @loaded=\"loadedChange\"\n                    @input=\"setConfig\"\n                    :showPan=\"true\"\n                    :showTotalTime=\"true\"\n                />\n            </div>\n        </div>\n\n        <pre v-html=\"syntaxHighlight(newConfig)\"></pre>\n    </div>\n</template>\n\n<script>\nimport VueAudioMixer from '../src/components/Mixer.vue';\nimport '../src/scss/main.scss';\n\nexport default {\n    name: 'app',\n    components: {\n        VueAudioMixer,\n    },\n    data: function() {\n        return {\n            is_loaded: false,\n            newConfig: null,\n            config: {\n                tracks: [\n                    {\n                        title: 'Bass',\n                        url: 'https://audiomixer.io/stems/bass.mp3',\n                        pan: -30,\n                        gain: 1.2,\n                        muted: false,\n                        hidden: false,\n                    },\n                    {\n                        title: 'Flutes',\n                        url: 'https://audiomixer.io/stems/flutes.mp3',\n                        pan: 73,\n                        gain: 0.9,\n                        muted: false,\n                        hidden: false,\n                    },\n                    {\n                        title: 'Perc',\n                        url: 'https://audiomixer.io/stems/perc.mp3',\n                        pan: 26,\n                        gain: 0.85,\n                        muted: false,\n                        hidden: false,\n                    },\n                    {\n                        title: 'Piano',\n                        url: 'https://audiomixer.io/stems/piano.mp3',\n                        pan: 10,\n                        gain: 1.2,\n                        muted: false,\n                        hidden: false,\n                    },\n                    {\n                        title: 'Strings',\n                        url: 'https://audiomixer.io/stems/strings.mp3',\n                        pan: -49,\n                        gain: 0.9,\n                        muted: false,\n                        hidden: false,\n                    },\n                ],\n                master: {\n                    pan: 0,\n                    gain: 0.3,\n                    muted: false,\n                },\n            },\n        };\n    },\n    created() {\n        this.newConfig = this.config;\n    },\n\n    beforeDestroy() {},\n    methods: {\n        loadedChange(loaded) {\n            this.is_loaded = loaded;\n        },\n\n        setConfig(newVal) {\n            this.newConfig = newVal;\n        },\n\n        // accepts json string\n        // returns pretyyprinted json\n        syntaxHighlight(json) {\n            if (typeof json != 'string') {\n                json = JSON.stringify(json, undefined, 2);\n            }\n            json = json\n                .replace(/&/g, '&amp;')\n                .replace(/</g, '&lt;')\n                .replace(/>/g, '&gt;');\n            return json.replace(\n                /(\"(\\\\u[a-zA-Z0-9]{4}|\\\\[^u]|[^\\\\\"])*\"(\\s*:)?|\\b(true|false|null)\\b|-?\\d+(?:\\.\\d*)?(?:[eE][+\\-]?\\d+)?)/g,\n                function(match) {\n                    var cls = 'number';\n                    if (/^\"/.test(match)) {\n                        if (/:$/.test(match)) {\n                            cls = 'key';\n                        } else {\n                            cls = 'string';\n                        }\n                    } else if (/true|false/.test(match)) {\n                        cls = 'boolean';\n                    } else if (/null/.test(match)) {\n                        cls = 'null';\n                    }\n                    return '<span class=\"' + cls + '\">' + match + '</span>';\n                }\n            );\n        },\n    },\n\n    computed: {},\n};\n</script>\n\n<style>\npre {\n    outline: 1px solid #ccc;\n    padding: 5px;\n    margin: 5px;\n}\n.string {\n    color: green;\n}\n.number {\n    color: darkorange;\n}\n.boolean {\n    color: blue;\n}\n.null {\n    color: magenta;\n}\n.key {\n    color: red;\n}\n</style>\n"]}, media: undefined });
 
     };
     /* scoped */
