@@ -22,13 +22,12 @@ export default {
     vue({
       css: true
     }),
-
-
     scss(),
     postcss(),
     scssVariable(),
 
     replace({
+      preventAssignment: true,
       'process.env.NODE_ENV': JSON.stringify('development')
     }),
     resolve({
