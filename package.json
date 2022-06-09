@@ -73,12 +73,12 @@
     "rollup-plugin-scss": "^2.5.0",
     "rollup-plugin-serve": "^1.1.0",
     "rollup-plugin-vue": "^5.1.9",
-    "sass-loader": "^8.0.2",
+    "sass-loader": "^13.0.0",
     "vue": "^2.6.10",
     "vue-knob-control": "^1.6.0",
-    "vue-template-compiler": "^2.6.10"
+    "vue-template-compiler": "^2.6.10",
+    "rollup-plugin-postcss-export": "^1.0.3"
   },
   "dependencies": {
-    "rollup-plugin-postcss-export": "^1.0.3"
   }
 }
