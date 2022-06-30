@@ -1,13 +1,11 @@
-import commonjs from 'rollup-plugin-commonjs'; // Convert CommonJS modules to ES6
 import vue from 'rollup-plugin-vue'; // Handle .vue SFC files
-import buble from 'rollup-plugin-buble'; // Transpile/polyfill with reasonable browser support
 import resolve from '@rollup/plugin-node-resolve';
 import scss from 'rollup-plugin-scss'
 import replace from 'rollup-plugin-replace'
 import scssVariable from 'rollup-plugin-sass-variables'
 import postcss from 'rollup-plugin-postcss'
-import common from 'rollup-plugin-commonjs'
-import babel from 'rollup-plugin-babel'
+import common from '@rollup/plugin-commonjs'
+import babel from '@rollup/plugin-babel'
 
 export default {
     input: 'src/index.js', // Path relative to package.json
@@ -25,6 +23,7 @@ export default {
         scssVariable(),
 
         replace({
+          preventAssignment: true,
           'process.env.NODE_ENV': JSON.stringify('production')
         }),
         resolve({
