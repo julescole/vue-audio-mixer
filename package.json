@@ -72,7 +72,7 @@
     "rollup-plugin-sass-variables": "^0.1.1",
     "rollup-plugin-scss": "^2.5.0",
     "rollup-plugin-serve": "^1.0.1",
-    "rollup-plugin-vue": "^5.1.6",
+    "rollup-plugin-vue": "^6.0.0",
     "sass-loader": "^8.0.2",
     "vue": "^2.6.10",
     "vue-knob-control": "^1.6.0",
