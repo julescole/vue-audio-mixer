@@ -1,6 +1,6 @@
 {
   "name": "vue-audio-mixer",
-  "version": "2.0.0-beta.0",
+  "version": "2.0.0",
   "description": "An Audio Mixer Component build with Vue 3",
   "author": "Julian Cole <julian@juliancole.co.uk>",
   "main": "dist/vue-audio-mixer.umd.js",
