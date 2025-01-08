@@ -344,7 +344,7 @@ const drawVolumeMonitors = () => {
         </div>
       </div>
     </div>
-    <h3 class="track-label">{{ label }}</h3>
+    <span class="track-label">{{ label }}</span>
   </div>
 </template>
 
@@ -359,6 +359,13 @@ const drawVolumeMonitors = () => {
 }
 body {
   text-align: center;
+}
+
+.track-label{
+  color: #e4e8ea;
+  font-size: 0.8rem;
+  margin-top: 0.5rem;
+  font-family: 'Raleway', 'Helvetica Neue', 'Helvetica', 'Arial', sans-serif;
 }
 
 .channel {
