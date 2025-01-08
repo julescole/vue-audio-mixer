@@ -3,6 +3,7 @@ import { ref, reactive, onMounted, onUnmounted, computed, defineProps } from 'vu
 
 import Transport from './Transport.vue'
 import MixerChannel from './MixerChannel.vue'
+import Loader from './Loader.vue'
 
 const audiocontext = window.AudioContext
 const context = new audiocontext()
@@ -471,7 +472,10 @@ onUnmounted(() => {
 
 <template>
   <div class="mixer-container" :style="mixerContainerWidth">
-    <h1 class="mixer-title">Audio Mixer</h1>
+
+    <Loader :progress="loadingState.progress" v-if="loadingState.isLoading" />
+
+    <h1 class="mixer-title" v-if="!loadingState.isLoading">Audio Mixer</h1>
 
     <!-- Tracks and Master -->
     <div class="tracks" v-if="!loadingState.isLoading">
@@ -544,6 +548,7 @@ onUnmounted(() => {
 }
 
 .mixer-container {
+  height:870px;
   font-family: Arial, sans-serif;
   background-color: #333;
   color: #fff;

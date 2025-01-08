@@ -24,7 +24,7 @@
       "require": "./dist/vue-audio-mixer.umd.js"
     }
   },
-  "private": true,
+  "private": false,
   "type": "module",
   "scripts": {
     "dev": "vite",
