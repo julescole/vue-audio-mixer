@@ -20,6 +20,8 @@ export default defineConfig({
       name: 'VueAudioMixer',
       fileName: (format) => `vue-audio-mixer.${format}.js`,
     },
+      assetsInlineLimit: 0, // Ensure the file is not inlined as a base64 string if it’s large
+
     rollupOptions: {
       external: ['vue'], // Exclude Vue from the bundle
       output: {

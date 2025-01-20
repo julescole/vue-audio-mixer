@@ -79,6 +79,8 @@ const loadingState = reactive({
   progress: 0,
 })
 
+
+
 const trackMix = () => {
   recording.value = []
   isRecording.value = true
@@ -460,7 +462,10 @@ const masterMonitorPeaks = reactive({
 onMounted(() => {
   preloadMP3s().then(() => {
     //drawWaveform() // Initial waveform render
+
+
   })
+
 })
 
 onUnmounted(() => {
@@ -486,6 +491,8 @@ onUnmounted(() => {
       <!-- Individual Tracks -->
       <div v-for="file in mp3Files" :key="file.label">
         <MixerChannel
+        v-if="context"
+          :context="context"
           :masterState="masterState"
           :trackState="trackStates[file.label]"
           :label="file.label"
@@ -494,12 +501,14 @@ onUnmounted(() => {
           @solo="toggleSolo(file.label)"
           @updateTrackPan="updateTrackPan(file.label, $event)"
           @updateTrackVolume="updateTrackVolume(file.label, $event)"
+
         />
       </div>
 
       <!-- Master Controls -->
 
       <MixerChannel
+      :context="context"
         :masterState="masterState"
         :trackState="masterState"
         :master="true"
@@ -582,7 +591,7 @@ button{
 }
 
 .vue-audio-mixer-mixer-container {
-  height:870px;
+  height:890px;
   font-family: Arial, sans-serif;
 
 

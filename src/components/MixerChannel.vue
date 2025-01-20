@@ -4,15 +4,14 @@ import {
   reactive,
   onMounted,
   defineProps,
-  watch,
   defineEmits,
   computed,
-  setBlockTracking,
 } from 'vue'
 
 import Knob from './Knob.vue'
+import ReverbEffect from './ReverbEffect.vue'
 
-const emit = defineEmits(['mute', 'solo', 'updateTrackPan', 'updateTrackVolume'])
+const emit = defineEmits(['mute', 'solo', 'updateTrackPan', 'updateTrackVolume', 'effectEnabled'])
 
 const isDragging = ref(false)
 const faderTrackRef = ref<HTMLElement | null>(null)
@@ -95,6 +94,8 @@ const updateKnobRotation = (rotation: number) => {
   emit('updateTrackPan', rotation) // Emit the updated volume
 }
 
+
+
 ///////
 
 // Clear volume monitors
@@ -114,7 +115,7 @@ const props = withDefaults(
       left: AnalyserNode
       right: AnalyserNode
     }
-    context?: AudioContext
+    context: AudioContext
     playbackState?: {
       isPlaying: boolean
       soloActive: boolean
@@ -286,6 +287,15 @@ const drawVolumeMonitors = () => {
         :style="1"
         @update:rotation="updateKnobRotation($event)"
       />
+
+       <!-- Effects Section -->
+
+       <div class="vue-audio-mixer-effect-pannel"  v-if="!master">
+        <ReverbEffect
+          :context="context"
+          :analyserNodes="analyserNodes"
+        />
+      </div>
       <div class="vue-audio-mixer-bus-control" v-if="!master">
         <!-- Mute and Solo Buttons -->
 
@@ -417,7 +427,7 @@ body {
 }
 
 .vue-audio-mixer-master-spacer {
-  padding: 0.45rem;
+  padding: 1.4rem;
 }
 .vue-audio-mixer-button {
   color: #e4e8ea;
