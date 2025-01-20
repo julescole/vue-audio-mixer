@@ -72,14 +72,14 @@ const onMouseDown = (event: MouseEvent) => {
 </script>
 
 <template>
-  <div :class="['rela-inline', 'knob', `style${style}`]">
-    <div class="rela-block knob-dial" :style="{ color: active ? color : '#888' }">
+  <div :class="['vue-audio-mixer-rela-inline', 'vue-audio-mixer-knob', `style${style}`]">
+    <div class="vue-audio-mixer-rela-block vue-audio-mixer-knob-dial" :style="{ color: active ? color : '#888' }">
       <div
-        class="abs-center dial-grip"
+        class="vue-audio-mixer-abs-center vue-audio-mixer-dial-grip"
         :style="{ transform: `translate(-50%,-50%) rotate(${internalRotation}deg)` }"
         @mousedown="onMouseDown"
       ></div>
-      <svg class="dial-svg" viewBox="0 0 100 100">
+      <svg class="vue-audio-mixer-dial-svg" viewBox="0 0 100 100">
         <!-- Background arc (right-hand path) -->
         <path d="M50,10 A 40 40 0 0 0 20,75" fill="none" stroke="#55595C" />
         <path d="M50,10 A 40 40 0 0 1 80,75" fill="none" stroke="#55595C" />
@@ -134,27 +134,31 @@ $black: #181b1c;
   transition: 0.3s cubic-bezier(0.6, 0, 0.2, 1);
 }
 
-.abs-center {
+p{
+  margin: 0;
+}
+
+button{
+  margin: 0;
+  font-family: 'Raleway', 'Helvetica Neue', 'Helvetica', 'Arial', sans-serif;
+  font-size: 1rem;
+  line-height: 1rem;
+}
+
+.vue-audio-mixer-abs-center {
   @include setup(absolute, 50%, null, null, 50%);
   transform: translate(-50%, -50%);
 }
 
-.vert-center {
-  @include setup(absolute, 50%);
-  transform: translateY(-50%);
-}
 
-.horz-center {
-  @include setup(absolute, null, null, null, 50%);
-  transform: translateX(-50%);
-}
 
-.rela-block {
+
+.vue-audio-mixer-rela-block {
   display: block;
   position: relative;
 }
 
-.rela-inline {
+.vue-audio-mixer-rela-inline {
   display: inline-block;
   position: relative;
 }
@@ -210,13 +214,13 @@ $black: #181b1c;
   padding: 10px 0;
 }
 
-.knob {
+.vue-audio-mixer-knob {
   border-radius: 3px;
   display: flex;
   justify-content: center;
 
   &.style1 {
-    .dial-grip {
+    .vue-audio-mixer-dial-grip {
       cursor: pointer;
       height: 50px;
       width: 50px;
@@ -231,11 +235,11 @@ $black: #181b1c;
   }
 
   &.style2 {
-    .dial-svg {
+    .vue-audio-mixer-dial-svg {
       stroke-width: 2.5;
     }
 
-    .dial-grip {
+    .vue-audio-mixer-dial-grip {
       height: 60px;
       width: 60px;
       background-color: $grey;
@@ -248,11 +252,11 @@ $black: #181b1c;
   }
 
   &.style3 {
-    .dial-svg {
+    .vue-audio-mixer-dial-svg {
       stroke-width: 2.75;
     }
 
-    .dial-grip {
+    .vue-audio-mixer-dial-grip {
       z-index: 5;
       height: 82px;
       width: 82px;
@@ -276,14 +280,14 @@ $black: #181b1c;
   border-radius: 100%;
 }
 
-.knob-dial {
+.vue-audio-mixer-knob-dial {
   height: 80px;
   width: 80px;
   text-align: left !important; // SVG position breaks without this
   transition: 0s;
 }
 
-.dial-grip {
+.vue-audio-mixer-dial-grip {
   border-radius: 100%;
   transition: 0s;
 
@@ -295,7 +299,7 @@ $black: #181b1c;
   }
 }
 
-.dial-svg {
+.vue-audio-mixer-dial-svg {
   pointer-events: none;
   position: absolute;
   stroke-width: 5;
@@ -307,7 +311,5 @@ $black: #181b1c;
   }
 }
 
-.knob-label {
-  user-select: none;
-}
+
 </style>

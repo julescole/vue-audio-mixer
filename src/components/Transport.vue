@@ -222,8 +222,8 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="master-transport" ref="waveformCanvasContainer">
-    <p class="master-time">
+  <div class="vue-audio-mixer-master-transport" ref="waveformCanvasContainer">
+    <p class="vue-audio-mixer-master-time">
       {{ formatTime(masterState.elapsed || 0) }} /
       {{ formatTime(masterState.duration || 0) }}
     </p>
@@ -231,7 +231,7 @@ onMounted(() => {
       ref="waveformCanvas"
       :width="waveformWidth"
       height="80"
-      class="waveform-canvas"
+      class="vue-audio-mixer-waveform-canvas"
       @click="handleSeek"
     ></canvas>
   </div>
@@ -240,36 +240,47 @@ onMounted(() => {
 <style scoped>
 @import url('https://fonts.googleapis.com/css2?family=Anonymous+Pro:ital,wght@0,400;0,700;1,400;1,700&display=swap');
 
-.master-transport {
+p{
+  margin: 0;
+}
+
+button{
+  margin: 0;
+  font-family: 'Raleway', 'Helvetica Neue', 'Helvetica', 'Arial', sans-serif;
+  font-size: 1rem;
+  line-height: 1rem;
+}
+
+.vue-audio-mixer-master-transport {
   width: 100%;
   font-family: 'Anonymous Pro', serif;
   font-weight: 400;
   font-style: normal;
 }
-.master-time {
+.vue-audio-mixer-master-time {
   text-align: center;
   width: 100%;
   margin-bottom: 1rem;
 }
-.anonymous-pro-regular {
+.vue-audio-mixer-anonymous-pro-regular {
   font-family: 'Anonymous Pro', serif;
   font-weight: 400;
   font-style: normal;
 }
 
-.anonymous-pro-bold {
+.vue-audio-mixer-anonymous-pro-bold {
   font-family: 'Anonymous Pro', serif;
   font-weight: 700;
   font-style: normal;
 }
 
-.anonymous-pro-regular-italic {
+.vue-audio-mixer-anonymous-pro-regular-italic {
   font-family: 'Anonymous Pro', serif;
   font-weight: 400;
   font-style: italic;
 }
 
-.anonymous-pro-bold-italic {
+.vue-audio-mixer-anonymous-pro-bold-italic {
   font-family: 'Anonymous Pro', serif;
   font-weight: 700;
   font-style: italic;

@@ -471,14 +471,18 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <div class="mixer-container" :style="mixerContainerWidth">
+
+  <div class="vue-audio-mixer-container-mask">
+
+
+  <div class="vue-audio-mixer-mixer-container" :style="mixerContainerWidth">
 
     <Loader :progress="loadingState.progress" v-if="loadingState.isLoading" />
 
-    <h1 class="mixer-title" v-if="!loadingState.isLoading">Audio Mixer</h1>
+    <h1 class="vue-audio-mixer-mixer-title" v-if="!loadingState.isLoading">Audio Mixer</h1>
 
     <!-- Tracks and Master -->
-    <div class="tracks" v-if="!loadingState.isLoading">
+    <div class="vue-audio-mixer-tracks" v-if="!loadingState.isLoading">
       <!-- Individual Tracks -->
       <div v-for="file in mp3Files" :key="file.label">
         <MixerChannel
@@ -507,7 +511,7 @@ onUnmounted(() => {
     </div>
 
     <!-- Waveform and Transport Controls -->
-    <div class="master-controls" v-if="!loadingState.isLoading">
+    <div class="vue-audio-mixer-master-controls" v-if="!loadingState.isLoading">
       <Transport
         :masterState="masterState"
         :audioBuffers="audioBuffers"
@@ -519,7 +523,7 @@ onUnmounted(() => {
       <!--<div class="recording-controls">
         <button @click="trackMix" :disabled="isRecording">Track Mix</button>
       </div>-->
-      <div class="transport-buttons">
+      <div class="vue-audio-mixer-transport-buttons">
         <button @click="playAll" :disabled="loadingState.isLoading || playbackState.isPlaying">
           Play
         </button>
@@ -529,12 +533,13 @@ onUnmounted(() => {
         <button @click="stopAll" :disabled="loadingState.isLoading">Stop</button>
       </div>
 
-      <div class="recording-status">
-        <span class="recording-indicator" :class="{ hidden: !isRecording }"></span>
+      <div class="vue-audio-mixer-recording-status">
+        <span class="vue-audio-mixer-recording-indicator" :class="{ hidden: !isRecording }"></span>
         {{ isRecording ? 'Recording...' : '' }}
       </div>
     </div>
   </div>
+</div>
 </template>
 
 <style scoped>
@@ -547,32 +552,70 @@ onUnmounted(() => {
   user-select: none; /* Non-prefixed version, currently */
 }
 
-.mixer-container {
-  height:870px;
-  font-family: Arial, sans-serif;
+.vue-audio-mixer-container-mask {
+  overflow-x: auto; /* Enable horizontal scrolling */
+  overflow-y: hidden; /* Prevent vertical scrolling */
+  -webkit-overflow-scrolling: touch; /* Smooth scrolling on mobile */
+  width: 100%; /* Full width for the scrollable container */
+
   background-color: #333;
-  color: #fff;
-  padding: 20px;
   border-radius: 10px;
-  max-width: 1000px;
-  margin: auto;
+  scrollbar-width: none; /* For Firefox */
+  -ms-overflow-style: none; /* For IE/Edge */
 }
 
-.mixer-title {
+
+.vue-audio-mixer-container-mask::-webkit-scrollbar {
+  display: none; /* For Chrome, Safari, and Edge */
+}
+
+
+p{
+  margin: 0;
+}
+
+button{
+  margin: 0;
+  font-family: 'Raleway', 'Helvetica Neue', 'Helvetica', 'Arial', sans-serif;
+  font-size: 1rem;
+  line-height: 1rem;
+}
+
+.vue-audio-mixer-mixer-container {
+  height:870px;
+  font-family: Arial, sans-serif;
+
+
+  color: #fff;
+  padding: 20px;
+  max-width: 1000px;
+  margin: auto;
+
+  display: flex;
+  flex-direction: column; /* Stack elements vertically */
+  width: auto; /* Allow width to grow with content */
+
+
+}
+
+.vue-audio-mixer-mixer-title {
   text-align: center;
   margin-bottom: 20px;
   font-size: 2rem;
   color: #ffcc00;
 }
 
-.tracks {
+.vue-audio-mixer-tracks {
   display: flex;
   gap: 20px;
   justify-content: space-between;
   align-items: flex-end;
+
+  flex-wrap: nowrap; /* Prevent wrapping of track items */
+
 }
 
-.track {
+.vue-audio-mixer-track {
   background-color: #444;
   padding: 15px;
   border-radius: 10px;
@@ -580,14 +623,14 @@ onUnmounted(() => {
   width: 100px;
 }
 
-.track-controls {
+.vue-audio-mixer-track-controls {
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 10px;
 }
 
-.track-buttons button {
+.vue-audio-mixer-track-buttons button {
   background-color: #007bff;
   color: #fff;
   border: none;
@@ -599,11 +642,11 @@ onUnmounted(() => {
   width: 80%;
 }
 
-.track-buttons button:hover {
+.vue-audio-mixer-track-buttons button:hover {
   background-color: #0056b3;
 }
 
-.pan-slider {
+.vue-audio-mixer-pan-slider {
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -611,7 +654,7 @@ onUnmounted(() => {
   color: #ddd;
 }
 
-.volume-slider {
+.vue-audio-mixer-volume-slider {
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -619,32 +662,32 @@ onUnmounted(() => {
   color: #ddd;
 }
 
-.volume-slider input[type='range'],
-.pan-slider input[type='range'] {
+.vue-audio-mixer-volume-slider input[type='range'],
+.vue-audio-mixer-pan-slider input[type='range'] {
   width: 100%;
 }
 
-.volume-slider input[orient='vertical'] {
+.vue-audio-mixer-volume-slider input[orient='vertical'] {
   writing-mode: bt-lr; /* Vertical slider for browsers that support it */
   transform: rotate(-90deg); /* Fallback for browsers without writing-mode */
   height: 150px;
 }
 
-.track-label {
+.vue-audio-mixer-track-label {
   font-size: 1rem;
   color: #ffcc00;
 }
 
-.master-controls {
+.vue-audio-mixer-master-controls {
   margin-top: 30px;
 }
 
-.transport-buttons {
+.vue-audio-mixer-transport-buttons {
   text-align: center;
   margin-top: 20px;
 }
 
-.transport-buttons button {
+.vue-audio-mixer-transport-buttons button {
   background-color: #007bff;
   color: #fff;
   border: none;
@@ -655,11 +698,11 @@ onUnmounted(() => {
   margin-right: 10px;
 }
 
-.transport-buttons button:disabled {
+.vue-audio-mixer-transport-buttons button:disabled {
   background-color: #666;
   cursor: not-allowed;
 }
-.volume-monitor {
+.vue-audio-mixer-volume-monitor {
   background-color: #444;
   border: 1px solid #555;
   border-radius: 5px;
@@ -667,7 +710,7 @@ onUnmounted(() => {
   display: block;
 }
 
-.recording-indicator {
+.vue-audio-mixer-recording-indicator {
   background-color: red;
   border-radius: 50%;
   width: 10px;
@@ -675,7 +718,7 @@ onUnmounted(() => {
   display: inline-block;
   margin-right: 5px;
 }
-.recording-indicator.hidden {
+.vue-audio-mixer-recording-indicator.hidden {
   display: none;
 }
 </style>

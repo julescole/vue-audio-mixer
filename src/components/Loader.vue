@@ -22,7 +22,7 @@ watch(
 
       // Check if close enough to the target and set directly
       if (Math.abs(animatedProgress.value - newVal) <= 1) {
-        animatedProgress.value = newVal;
+        animatedProgress.value = Math.round(newVal);
         clearInterval(interval); // Stop the interval
       }
     }, stepTime);
@@ -32,12 +32,12 @@ watch(
 </script>
 
 <template>
-  <div class="loader">
-    <p class="progress">{{ animatedProgress }}%</p>
+  <div class="vue-audio-mixer-loader">
+    <p class="vue-audio-mixer-progress">{{ animatedProgress }}%</p>
 
-    <div class="ajax-loader">
-      <div class="ajax-loader-circle">
-        <svg class="ajax-loader-circle-svg" viewBox="0 0 500 500">
+    <div class="vue-audio-mixer-ajax-loader">
+      <div class="vue-audio-mixer-ajax-loader-circle">
+        <svg class="vue-audio-mixer-ajax-loader-circle-svg" viewBox="0 0 500 500">
           <circle cx="250" cy="250" r="239" />
         </svg>
       </div>
@@ -49,12 +49,12 @@ watch(
 $loader_duration: 1.4s;
 $loader_offset: 1570; // (2 x pie x r = 250 (from svg))
 
-.loader {
+.vue-audio-mixer-loader {
   width: 100%;
   height: 100%;
 }
 
-.progress {
+.vue-audio-mixer-progress {
   width: 100%;
   text-align: center;
   top: 65px;
@@ -63,7 +63,7 @@ $loader_offset: 1570; // (2 x pie x r = 250 (from svg))
   color: #fff;
 }
 
-.ajax-loader {
+.vue-audio-mixer-ajax-loader {
   position: relative;
   width: 100px;
   height: 100px;
@@ -72,7 +72,7 @@ $loader_offset: 1570; // (2 x pie x r = 250 (from svg))
   margin: 0 auto;
 }
 
-.ajax-loader-circle-svg {
+.vue-audio-mixer-ajax-loader-circle-svg {
   position: absolute;
   left: 0;
   top: 0;
@@ -133,6 +133,20 @@ circle {
   100% {
     stroke-dashoffset: $loader_offset;
   }
+}
+
+p{
+  margin: 0 !important;
+  font-family: 'Anonymous Pro', serif;
+  font-weight: 600;
+
+}
+
+button{
+  margin: 0;
+  font-family: 'Raleway', 'Helvetica Neue', 'Helvetica', 'Arial', sans-serif;
+  font-size: 1rem;
+  line-height: 1rem;
 }
 
 @keyframes ajaxLoaderDashSpin {

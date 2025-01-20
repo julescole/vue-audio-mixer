@@ -261,7 +261,7 @@ const drawVolumeMonitors = () => {
 </script>
 
 <template>
-  <div class="track-controls">
+  <div class="vue-audio-mixer-track-controls">
     <input
       v-show="false"
       type="range"
@@ -277,7 +277,7 @@ const drawVolumeMonitors = () => {
 
     <!-- Track Label -->
 
-    <div class="channel" :class="{ master: master }">
+    <div class="vue-audio-mixer-channel" :class="{ master: master }">
       <Knob
         :key="label"
         :rotation="trackState?.pan"
@@ -286,11 +286,11 @@ const drawVolumeMonitors = () => {
         :style="1"
         @update:rotation="updateKnobRotation($event)"
       />
-      <div class="bus-control" v-if="!master">
+      <div class="vue-audio-mixer-bus-control" v-if="!master">
         <!-- Mute and Solo Buttons -->
 
         <button
-          class="button button--bus"
+          class="vue-audio-mixer-button vue-audio-mixer-button--bus"
           :class="{ muted: trackState.muted }"
           @click="emit('mute')"
           v-if="!master"
@@ -298,7 +298,7 @@ const drawVolumeMonitors = () => {
           M
         </button>
         <button
-          class="button button--bus"
+          class="vue-audio-mixer-button vue-audio-mixer-button--bus"
           :class="{ soloed: trackState.soloed }"
           @click="emit('solo')"
           v-if="!master"
@@ -307,22 +307,22 @@ const drawVolumeMonitors = () => {
         </button>
       </div>
       <div v-else>
-        <div class="bus-control-master"><div class="master-spacer">&nbsp;</div></div>
+        <div class="vue-audio-mixer-bus-control-master"><div class="vue-audio-mixer-master-spacer">&nbsp;</div></div>
       </div>
-      <div class="knob knob--pan"></div>
-      <div class="slider-value">
+      <div class="vue-audio-mixer-knob knob--pan"></div>
+      <div class="vue-audio-mixer-slider-value">
         {{ (typeof trackState?.volume === 'number' ? trackState.volume : 0).toFixed(2) }}
       </div>
-      <div class="slider">
-        <div class="vca">
-          <canvas class="volume-monitor" width="25" height="150" ref="volumeCanvas"></canvas>
+      <div class="vue-audio-mixer-slider">
+        <div class="vue-audio-mixer-vca">
+          <canvas class="vue-audio-mixer-volume-monitor" width="25" height="150" ref="volumeCanvas"></canvas>
 
-          <div class="fader-holder">
-            <div class="fader-track" ref="faderTrackRef" @mousedown="startFaderDrag">
-              <div class="fader" :style="faderStyle"></div>
+          <div class="vue-audio-mixer-fader-holder">
+            <div class="vue-audio-mixer-fader-track" ref="faderTrackRef" @mousedown="startFaderDrag">
+              <div class="vue-audio-mixer-fader" :style="faderStyle"></div>
             </div>
           </div>
-          <div class="vca__markers">
+          <div class="vue-audio-mixer-vca__markers">
             <div>12</div>
             <div>6</div>
             <div>0</div>
@@ -344,7 +344,7 @@ const drawVolumeMonitors = () => {
         </div>
       </div>
     </div>
-    <span class="track-label">{{ label }}</span>
+    <span class="vue-audio-mixer-track-label">{{ label }}</span>
   </div>
 </template>
 
@@ -357,18 +357,30 @@ const drawVolumeMonitors = () => {
 * {
   box-sizing: border-box;
 }
+
+p{
+  margin: 0;
+}
+
+button{
+  margin: 0;
+  font-family: 'Raleway', 'Helvetica Neue', 'Helvetica', 'Arial', sans-serif;
+  font-size: 1rem;
+  line-height: 1rem;
+}
+
 body {
   text-align: center;
 }
 
-.track-label{
+.vue-audio-mixer-track-label{
   color: #e4e8ea;
   font-size: 0.8rem;
   margin-top: 0.5rem;
   font-family: 'Raleway', 'Helvetica Neue', 'Helvetica', 'Arial', sans-serif;
 }
 
-.channel {
+.vue-audio-mixer-channel {
   display: inline-block;
   width: 100%;
   max-width: 100px;
@@ -381,14 +393,14 @@ body {
   }
 }
 
-.bus-control,
-.bus-control-master {
+.vue-audio-mixer-bus-control,
+.vue-audio-mixer-bus-control-master {
   display: flex;
   flex-flow: row nowrap;
   justify-content: center;
   padding: 0.5rem;
 
-  .pan-slider {
+  .vue-audio-mixer-pan-slider {
     display: flex;
     flex-flow: column nowrap;
     justify-content: center;
@@ -397,17 +409,17 @@ body {
     width: 10px;
   }
 
-  .button,
-  .master-spacer {
+  .vue-audio-mixer-button,
+  .vue-audio-mixer-master-spacer {
     flex: 1 1 25px;
     text-align: center;
   }
 }
 
-.master-spacer {
+.vue-audio-mixer-master-spacer {
   padding: 0.45rem;
 }
-.button {
+.vue-audio-mixer-button {
   color: #e4e8ea;
   cursor: pointer;
   &.muted {
@@ -424,17 +436,17 @@ body {
   background: linear-gradient(to bottom, rgba(79, 79, 79, 1) 0%, rgba(14, 14, 14, 1) 100%);
   box-shadow: 0px 0px 1px 1px rgba(0, 0, 0, 0.5);
 }
-.bus-control {
+.vue-audio-mixer-bus-control {
   .button:first-child {
     margin-right: 0.25rem;
   }
 }
-.slider-value {
+.vue-audio-mixer-slider-value {
   display: flex;
   flex-flow: row nowrap;
   justify-content: center;
 }
-.slider-value__wrap {
+.vue-audio-mixer-slider-value__wrap {
   min-width: 24px;
   width: 80%;
   padding: 0.25rem;
@@ -446,7 +458,7 @@ body {
   text-align: center;
   // font-family: 'Cutive Mono', monospace;
 }
-.slider {
+.vue-audio-mixer-slider {
   display: flex;
   flex-flow: row nowrap;
   height: 340px;
@@ -455,7 +467,7 @@ body {
   padding-left: 0.5rem;
   padding-right: 0.5rem;
 }
-.fader-holder {
+.vue-audio-mixer-fader-holder {
   display: flex;
   flex-flow: column nowrap;
   justify-content: center; /* Center vertically */
@@ -466,7 +478,7 @@ body {
   margin-left: 15px;
 }
 
-.fader-track {
+.vue-audio-mixer-fader-track {
   position: relative;
   height: 340px; /* Set a fixed height */
   width: 5px;
@@ -476,7 +488,7 @@ body {
   cursor: pointer; /* Indicate interactivity */
 }
 
-.fader {
+.vue-audio-mixer-fader {
   position: absolute; /* Positioning relative to the track */
   top: 0; /* Start at the top of the track */
   width: 25px;
@@ -501,13 +513,13 @@ body {
   transition: transform 0.1s ease-out;
 }
 
-.vca {
+.vue-audio-mixer-vca {
   display: flex;
   width: 25px;
   height: 100%;
   // position: relative;
 }
-.vca__meter {
+.vue-audio-mixer-vca__meter {
   width: 8px;
   height: 100%;
   margin-right: 0.25rem;
@@ -515,7 +527,7 @@ body {
   // position: absolute;
   // top: 1rem;
 }
-.vca__markers {
+.vue-audio-mixer-vca__markers {
   display: flex;
   flex-flow: column nowrap;
   justify-content: space-between;
