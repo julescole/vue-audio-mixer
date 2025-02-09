@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, reactive, onMounted, defineProps, watch, defineEmits, computed, nextTick } from 'vue'
+import { ref, reactive, onMounted, onUnmounted, defineProps, watch, defineEmits, computed, nextTick } from 'vue'
 
 const props = defineProps<{
   masterState: {
@@ -25,6 +25,26 @@ const props = defineProps<{
   >
 }>()
 
+const waveformWidth = ref(500); // Default width
+const waveformCanvasContainer = ref<HTMLDivElement | null>(null);
+
+let resizeObserver: ResizeObserver | null = null;
+
+const updateWaveformWidth = () => {
+  nextTick(() => {
+    waveformWidth.value = waveformCanvasContainer.value?.clientWidth || 500;
+    preComputedWaveform(); // Update precomputed waveform whenever the width changes
+  });
+};
+
+const updateWindowSize = () => {
+  windowWidth.value = window.innerWidth;
+  windowHeight.value = window.innerHeight;
+};
+
+const windowWidth = ref(window.innerWidth);
+const windowHeight = ref(window.innerHeight);
+
 const emit = defineEmits(['seek'])
 
 watch(
@@ -36,18 +56,10 @@ watch(
 
 const waveformCanvas = ref<HTMLCanvasElement | null>(null)
 
-const waveformCanvasContainer = ref<HTMLDivElement | null>(null)
 
 const waveforms = reactive<Record<string, number[]>>({})
 
-const waveformWidth = computed(() => {
-  // make the full width of the parent div
 
-  if (waveformCanvas.value === null) {
-    return
-  }
-  return waveformCanvas.value?.parentElement?.clientWidth || 500
-})
 
 const drawWaveform = () => {
   const canvas = waveformCanvas.value
@@ -201,15 +213,38 @@ const formatTime = (seconds: number): string => {
   ].join(':')
 }
 
+onUnmounted(() => {
+  if (resizeObserver && waveformCanvasContainer.value) {
+    resizeObserver.unobserve(waveformCanvasContainer.value);
+  }
+});
+
+
 onMounted(() => {
   const maxRetries = 10 // Maximum number of retries
   let attempts = 0
+
+
+
 
   const ensureContainerIsReady = () => {
     attempts++
 
     if (waveformCanvasContainer.value) {
-      preComputedWaveform() // Call the function once the container is ready
+
+
+      if (waveformCanvasContainer.value) {
+        // Initialize the ResizeObserver
+        resizeObserver = new ResizeObserver(() => {
+          updateWaveformWidth();
+        });
+
+        // Observe the container element
+        resizeObserver.observe(waveformCanvasContainer.value);
+      }
+
+
+
     } else if (attempts < maxRetries) {
       setTimeout(ensureContainerIsReady, 500) // Retry after 50ms
     } else {

@@ -43,42 +43,63 @@ let currentY = 0
 let internalRotation = props.rotation * 132
 
 // Methods
-const onMouseDown = (event: MouseEvent) => {
-  currentY = event.pageY
-  const onMouseMove = (e: MouseEvent) => {
-    const delta = e.pageY - currentY
-    currentY = e.pageY
+const onPointerStart = (event: MouseEvent | TouchEvent) => {
+  event.preventDefault(); // Prevent scrolling on mobile
+
+  // Determine the initial touch position
+  if (event instanceof TouchEvent) {
+    currentY = event.touches[0].pageY;
+  } else {
+    currentY = event.pageY;
+  }
+
+  const onPointerMove = (e: MouseEvent | TouchEvent) => {
+    let delta;
+    if (e instanceof TouchEvent) {
+      e.preventDefault(); // Prevent page scrolling
+      delta = e.touches[0].pageY - currentY;
+      currentY = e.touches[0].pageY;
+    } else {
+      delta = e.pageY - currentY;
+      currentY = e.pageY;
+    }
 
     // Convert prop rotation (-1 to 1) to internal rotation (-132 to 132)
-    internalRotation = props.rotation * 132
+    internalRotation = props.rotation * 132;
 
     // Update internal rotation
-    internalRotation -= delta
-    internalRotation = Math.max(-132, Math.min(internalRotation, 132)) // Clamp values
+    internalRotation -= delta;
+    internalRotation = Math.max(-132, Math.min(internalRotation, 132)); // Clamp values
 
     // Convert internal rotation (-132 to 132) back to normalized value (-1 to 1)
-    const newRotation = internalRotation / 132
-    emit('update:rotation', newRotation)
-  }
+    const newRotation = internalRotation / 132;
+    emit('update:rotation', newRotation);
+  };
 
-  const onMouseUp = () => {
-    window.removeEventListener('mousemove', onMouseMove)
-    window.removeEventListener('mouseup', onMouseUp)
-  }
+  const onPointerEnd = () => {
+    window.removeEventListener('mousemove', onPointerMove);
+    window.removeEventListener('mouseup', onPointerEnd);
+    window.removeEventListener('touchmove', onPointerMove);
+    window.removeEventListener('touchend', onPointerEnd);
+  };
 
-  window.addEventListener('mousemove', onMouseMove)
-  window.addEventListener('mouseup', onMouseUp)
-}
+  // Attach both mouse and touch event listeners
+  window.addEventListener('mousemove', onPointerMove);
+  window.addEventListener('mouseup', onPointerEnd);
+  window.addEventListener('touchmove', onPointerMove, { passive: false });
+  window.addEventListener('touchend', onPointerEnd);
+};
 </script>
 
 <template>
   <div :class="['vue-audio-mixer-rela-inline', 'vue-audio-mixer-knob', `style${style}`]">
     <div class="vue-audio-mixer-rela-block vue-audio-mixer-knob-dial" :style="{ color: active ? color : '#888' }">
       <div
-        class="vue-audio-mixer-abs-center vue-audio-mixer-dial-grip"
-        :style="{ transform: `translate(-50%,-50%) rotate(${internalRotation}deg)` }"
-        @mousedown="onMouseDown"
-      ></div>
+  class="vue-audio-mixer-abs-center vue-audio-mixer-dial-grip"
+  :style="{ transform: `translate(-50%,-50%) rotate(${internalRotation}deg)` }"
+  @mousedown="onPointerStart"
+  @touchstart="onPointerStart"
+></div>
       <svg class="vue-audio-mixer-dial-svg" viewBox="0 0 100 100">
         <!-- Background arc (right-hand path) -->
         <path d="M50,10 A 40 40 0 0 0 20,75" fill="none" stroke="#55595C" />
@@ -309,6 +330,36 @@ button{
   path {
     transition: 0s cubic-bezier(0, 0, 0.24, 1);
   }
+}
+
+@media (max-width: 768px) {
+  .vue-audio-mixer-knob-dial{
+    height: 40px;
+    width: 40px;
+    margin-top:5px;
+    margin-bottom: 5px;
+  }
+
+  .vue-audio-mixer-knob{
+
+    &.style1 {
+      .vue-audio-mixer-dial-grip {
+        cursor: pointer;
+        height: 40px;
+        width: 40px;
+        border: 2px solid $black;
+
+        &::after {
+          @include setup(absolute, 5px, null, null, 50%);
+          height: 10px;
+          background-color: #e4e8ea; // or currentColor
+        }
+      }
+    }
+
+  }
+
+
 }
 
 

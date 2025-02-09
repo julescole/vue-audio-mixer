@@ -562,15 +562,30 @@ onUnmounted(() => {
 }
 
 .vue-audio-mixer-container-mask {
-  overflow-x: auto; /* Enable horizontal scrolling */
-  overflow-y: hidden; /* Prevent vertical scrolling */
-  -webkit-overflow-scrolling: touch; /* Smooth scrolling on mobile */
-  width: 100%; /* Full width for the scrollable container */
-
+  overflow-x: auto;
+  overflow-y: hidden;
+  -webkit-overflow-scrolling: touch;
+  width: 100%;
   background-color: #333;
   border-radius: 10px;
-  scrollbar-width: none; /* For Firefox */
-  -ms-overflow-style: none; /* For IE/Edge */
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.vue-audio-mixer-container-mask::-webkit-scrollbar {
+  display: none;
+}
+
+.vue-audio-mixer-mixer-container {
+  height: 890px;
+  font-family: Arial, sans-serif;
+  color: #fff;
+  padding: 20px;
+  max-width: 1000px;
+  margin: auto;
+  display: flex;
+  flex-direction: column;
+  width: auto;
 }
 
 
@@ -590,22 +605,6 @@ button{
   line-height: 1rem;
 }
 
-.vue-audio-mixer-mixer-container {
-  height:890px;
-  font-family: Arial, sans-serif;
-
-
-  color: #fff;
-  padding: 20px;
-  max-width: 1000px;
-  margin: auto;
-
-  display: flex;
-  flex-direction: column; /* Stack elements vertically */
-  width: auto; /* Allow width to grow with content */
-
-
-}
 
 .vue-audio-mixer-mixer-title {
   text-align: center;
@@ -730,4 +729,98 @@ button{
 .vue-audio-mixer-recording-indicator.hidden {
   display: none;
 }
+
+
+
+
+
+
+.vue-audio-mixer-container-mask {
+  overflow-x: auto;
+  overflow-y: hidden;
+  -webkit-overflow-scrolling: touch;
+  width: 100%;
+  background-color: #333;
+  border-radius: 10px;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.vue-audio-mixer-container-mask::-webkit-scrollbar {
+  display: none;
+}
+
+.vue-audio-mixer-mixer-container {
+  height: 890px;
+  font-family: Arial, sans-serif;
+  color: #fff;
+  padding: 20px;
+  max-width: 1000px;
+  margin: auto;
+  display: flex;
+  flex-direction: column;
+  width: auto;
+}
+
+/* Add media query for smaller screens */
+@media (max-width: 768px) {
+  .vue-audio-mixer-mixer-container {
+    padding: 10px;
+    max-width: 90%; /* Reduce max width */
+  }
+
+  .vue-audio-mixer-tracks {
+    gap: 10px; /* Reduce spacing */
+  }
+
+  .vue-audio-mixer-track {
+    width: 80px; /* Decrease track width */
+    padding: 10px;
+  }
+
+  .vue-audio-mixer-track-buttons button {
+    font-size: 0.8rem;
+    padding: 5px;
+  }
+
+  .vue-audio-mixer-volume-slider input[type='range'],
+  .vue-audio-mixer-pan-slider input[type='range'] {
+    height: 120px; /* Adjust slider height */
+  }
+
+  .vue-audio-mixer-transport-buttons button {
+    font-size: 0.9rem;
+    padding: 8px 15px;
+  }
+}
+
+@media (max-width: 480px) {
+  .vue-audio-mixer-mixer-container {
+    padding: 5px;
+    max-width: 100%; /* Full width */
+  }
+
+  .vue-audio-mixer-track {
+    width: 100%; /* Full width for small screens */
+    padding: 5px;
+  }
+
+  .vue-audio-mixer-track-buttons button {
+    font-size: 0.7rem;
+    padding: 4px;
+  }
+
+  .vue-audio-mixer-volume-slider input[type='range'],
+  .vue-audio-mixer-pan-slider input[type='range'] {
+    height: 100px; /* Further adjust slider height */
+  }
+
+  .vue-audio-mixer-transport-buttons button {
+    font-size: 0.8rem;
+    padding: 6px 10px;
+  }
+}
+
+
+
 </style>

@@ -33,29 +33,67 @@ const faderStyle = computed(() => {
   }
 })
 
-// Start dragging
-const startFaderDrag = (event: MouseEvent) => {
-  isDragging.value = true
-  updateVolume(event) // Update the volume immediately on mousedown
+// Start dragging (mouse or touch)
+const startFaderDrag = (event: MouseEvent | TouchEvent) => {
+  isDragging.value = true;
 
-  // Add mouse event listeners
-  window.addEventListener('mousemove', onMouseMove)
-  window.addEventListener('mouseup', stopFaderDrag)
-}
+  if (event instanceof TouchEvent) {
+    updateVolume(event.touches[0]); // Use the first touch point
+  } else {
+    updateVolume(event);
+  }
 
-// Stop dragging
+  // Add both mouse and touch event listeners
+  window.addEventListener("mousemove", onMove);
+  window.addEventListener("mouseup", stopFaderDrag);
+  window.addEventListener("touchmove", onMove, { passive: false });
+  window.addEventListener("touchend", stopFaderDrag);
+};
+
+// Stop dragging (mouse or touch)
 const stopFaderDrag = () => {
-  isDragging.value = false
+  isDragging.value = false;
 
-  // Remove mouse event listeners
-  window.removeEventListener('mousemove', onMouseMove)
-  window.removeEventListener('mouseup', stopFaderDrag)
-}
+  // Remove both mouse and touch event listeners
+  window.removeEventListener("mousemove", onMove);
+  window.removeEventListener("mouseup", stopFaderDrag);
+  window.removeEventListener("touchmove", onMove);
+  window.removeEventListener("touchend", stopFaderDrag);
+};
 
-// Mousemove handler to update volume
-const onMouseMove = (event: MouseEvent) => {
-  updateVolume(event) // Call updateVolume directly
-}
+// Handle movement (mouse or touch)
+const onMove = (event: MouseEvent | TouchEvent) => {
+  if (event instanceof TouchEvent) {
+    event.preventDefault(); // Prevent page scrolling
+    updateVolume(event.touches[0]); // Use the first touch point
+  } else {
+    updateVolume(event);
+  }
+};
+
+
+// Update volume based on mouse or touch position
+const updateVolume = (event: { clientY: number }) => {
+  const faderTrack = faderTrackRef.value;
+  if (!faderTrack) return;
+
+  updateVolumeCanvasHeight();
+
+  const vc = volumeCanvas.value;
+  if (!vc) return;
+  vc.height = faderTrack.clientHeight;
+
+  const trackHeight = faderTrack.clientHeight;
+  const trackTop = faderTrack.getBoundingClientRect().top;
+
+  // Calculate touch/mouse position clamped between 0 and trackHeight
+  const pointerY = Math.min(Math.max(event.clientY - trackTop, 0), trackHeight);
+
+  // Map touch/mouse position to volume (0 to 1)
+  const newVolume = 1 - pointerY / trackHeight;
+
+  emit("updateTrackVolume", newVolume);
+};
 
 const updateVolumeCanvasHeight = () => {
   const faderTrack = faderTrackRef.value
@@ -66,29 +104,6 @@ const updateVolumeCanvasHeight = () => {
   vc.height = faderTrack.clientHeight // Now it's safe to access `height`
 }
 
-// Update volume based on mouse position
-const updateVolume = (event: MouseEvent) => {
-  const faderTrack = faderTrackRef.value // Access the fader track reference
-  if (!faderTrack) return
-
-  updateVolumeCanvasHeight()
-
-  const vc = volumeCanvas.value
-
-  if (!vc) return
-  vc.height = faderTrack.clientHeight
-
-  const trackHeight = faderTrack.clientHeight // Use clientHeight to exclude borders
-  const trackTop = faderTrack.getBoundingClientRect().top
-
-  // Calculate mouse position clamped between 0 and trackHeight
-  const mouseY = Math.min(Math.max(event.clientY - trackTop, 0), trackHeight)
-
-  // Map mouse position to volume (0 to 1)
-  const newVolume = 1 - mouseY / trackHeight
-
-  emit('updateTrackVolume', newVolume) // Emit the updated volume
-}
 
 const updateKnobRotation = (rotation: number) => {
   emit('updateTrackPan', rotation) // Emit the updated volume
@@ -328,7 +343,8 @@ const drawVolumeMonitors = () => {
           <canvas class="vue-audio-mixer-volume-monitor" width="25" height="150" ref="volumeCanvas"></canvas>
 
           <div class="vue-audio-mixer-fader-holder">
-            <div class="vue-audio-mixer-fader-track" ref="faderTrackRef" @mousedown="startFaderDrag">
+            <div class="vue-audio-mixer-fader-track" ref="faderTrackRef"   @touchstart="startFaderDrag"
+            @mousedown="startFaderDrag">
               <div class="vue-audio-mixer-fader" :style="faderStyle"></div>
             </div>
           </div>
@@ -390,18 +406,8 @@ body {
   font-family: 'Raleway', 'Helvetica Neue', 'Helvetica', 'Arial', sans-serif;
 }
 
-.vue-audio-mixer-channel {
-  display: inline-block;
-  width: 100%;
-  max-width: 100px;
-  background: #353434;
-  color: rgba(255, 255, 255, 0.9);
-  box-shadow: inset 0px 0px 4px 0px rgba(0, 0, 0, 0.75);
-  font-family: 'Raleway', 'Helvetica Neue', 'Helvetica', 'Arial', sans-serif;
-  &.master {
-    background: #464646;
-  }
-}
+
+
 
 .vue-audio-mixer-bus-control,
 .vue-audio-mixer-bus-control-master {
@@ -427,18 +433,22 @@ body {
 }
 
 .vue-audio-mixer-master-spacer {
-  padding: 1.4rem;
+  padding: 1.2rem;
 }
 .vue-audio-mixer-button {
   color: #e4e8ea;
   cursor: pointer;
+  border: none; /* Ensure no border */
+  outline: none !important; /* Remove focus outline */
+  box-shadow: none !important; /* Prevent Safari from adding a focus shadow */
+  -webkit-appearance: none; /* Normalize button appearance on WebKit browsers */
+  appearance: none; /* Ensure consistent appearance */
   &.muted {
     color: black;
     background: #ee2122;
   }
   &.soloed {
     color: black;
-
     background: #fefb43;
   }
   padding: 0.55rem;
@@ -484,7 +494,7 @@ body {
   align-items: center; /* Center horizontally */
   width: 100%;
   height: 100%;
-  margin-right: 15px;
+  margin-right: 5px;
   margin-left: 15px;
 }
 
@@ -545,4 +555,99 @@ body {
   font-size: 0.5rem;
   color: #808080;
 }
+
+
+/* General styles */
+
+.vue-audio-mixer-channel {
+  display: inline-block;
+  width: 100%;
+  max-width: 100px; /* Default maximum width */
+  background: #353434;
+  color: rgba(255, 255, 255, 0.9);
+  box-shadow: inset 0px 0px 4px 0px rgba(0, 0, 0, 0.75);
+  font-family: 'Raleway', 'Helvetica Neue', 'Helvetica', 'Arial', sans-serif;
+
+  &.master {
+    background: #464646;
+  }
+}
+
+/* Responsive styles for tablets */
+@media (max-width: 768px) {
+
+  .vue-audio-mixer-master-spacer {
+    flex: 1 1 25px;
+    font-size: 0.45rem;
+    text-align: center;
+    width:60px;
+    height:56px;
+
+  }
+
+  .vue-audio-mixer-channel {
+    max-width: 80px; /* Reduce the maximum width */
+  }
+
+  .vue-audio-mixer-slider {
+    height: 300px; /* Adjust the height of the slider */
+  }
+
+  .vue-audio-mixer-fader-track {
+    height: 300px; /* Adjust the height of the fader track */
+  }
+
+  .vue-audio-mixer-fader-holder{
+    margin-left: 10px;
+  }
+
+  .vue-audio-mixer-fader {
+    width: 20px; /* Reduce the width of the fader */
+    height: 50px; /* Reduce the height of the fader */
+  }
+
+  .vue-audio-mixer-vca__markers {
+    font-size: 0.4rem; /* Reduce font size of markers */
+  }
+
+  .vue-audio-mixer-track-label {
+    font-size: 0.7rem; /* Reduce the font size of the track label */
+  }
+
+
+  .vue-audio-mixer-button{
+    padding: 0.3rem;
+    font-size: 0.8rem
+  }
+}
+
+/* Responsive styles for mobile screens */
+@media (max-width: 500px) {
+  .vue-audio-mixer-channel {
+    max-width: 70px; /* Further reduce the maximum width */
+  }
+
+  .vue-audio-mixer-slider {
+    height: 250px; /* Further adjust the height of the slider */
+  }
+
+  .vue-audio-mixer-fader-track {
+    height: 250px; /* Further adjust the height of the fader track */
+  }
+
+  .vue-audio-mixer-fader {
+    width: 15px; /* Further reduce the width of the fader */
+    height: 40px; /* Further reduce the height of the fader */
+  }
+
+  .vue-audio-mixer-vca__markers {
+    display: none;
+    font-size: 0.35rem; /* Further reduce font size of markers */
+  }
+
+  .vue-audio-mixer-track-label {
+    font-size: 0.6rem; /* Further reduce the font size of the track label */
+  }
+}
+
 </style>
