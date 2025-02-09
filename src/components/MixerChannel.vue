@@ -317,7 +317,7 @@ const drawVolumeMonitors = () => {
         <button
           class="vue-audio-mixer-button vue-audio-mixer-button--bus"
           :class="{ muted: trackState.muted }"
-          @click="emit('mute')"
+          @click="emit('mute', !trackState.muted)"
           v-if="!master"
         >
           M
@@ -325,7 +325,7 @@ const drawVolumeMonitors = () => {
         <button
           class="vue-audio-mixer-button vue-audio-mixer-button--bus"
           :class="{ soloed: trackState.soloed }"
-          @click="emit('solo')"
+          @click="emit('solo', !trackState.soloed)"
           v-if="!master"
         >
           S

@@ -19,6 +19,10 @@ const gainNodes = reactive<Record<string, GainNode>>({})
 const panNodes = reactive<Record<string, StereoPannerNode>>({})
 const analyserNodes = reactive<Record<string, { left: AnalyserNode; right: AnalyserNode }>>({})
 
+
+
+
+
 // Store active buffer source nodes
 const sourceNodes = ref<Record<string, AudioBufferSourceNode | null>>({})
 // Track mute, solo, pan, elapsed time, and duration states
@@ -80,21 +84,101 @@ const loadingState = reactive({
 })
 
 
+const logAutomationEvent = (type: string, track: string, value: any) => {
+  if (isRecording.value) {
+    const currentTime = context.currentTime - startTime;
 
-const trackMix = () => {
-  recording.value = []
-  isRecording.value = true
-  recordingStartTime = masterState.elapsed // Sync with current playback time
-  console.log('Mix tracking started at:', recordingStartTime)
-}
+    // Ensure we're using the correct state keys
+    const correctedType = type === "mute" ? "muted" : type === "solo" ? "soloed" : type;
+
+    // Prevent duplicate events at the same time
+    recording.value = recording.value.filter(
+      (event) => !(event.track === track && event.type === correctedType && Math.abs(event.time - currentTime) < 0.01)
+    );
+
+    // Store the event with corrected key
+    recording.value.push({
+      time: currentTime,
+      type: correctedType,
+      track,
+      value,
+    });
+
+    console.log(`🎬 Recorded ${correctedType} change on ${track}: ${value} at ${currentTime}s`);
+  }
+};
+
+
+
+const applyLatestAutomationState = (currentTime: number) => {
+  console.log(`🎯 Applying automation state at ${currentTime}s`);
+
+  const latestState: Record<string, {
+    volume?: number;
+    pan?: number;
+    muted?: boolean;
+    soloed?: boolean;
+  }> = {};
+
+  // Find the most recent automation states for each track
+  recording.value.forEach(({ time, type, track, value }) => {
+    if (time <= currentTime) {
+      if (!latestState[track]) latestState[track] = {};
+      latestState[track][type] = value; // Store the latest value
+    }
+  });
+
+  // Apply the last known state for each track
+  Object.entries(latestState).forEach(([track, state]) => {
+    if (state.volume !== undefined) {
+      if (track === "master") {
+        masterGainNode.gain.value = state.volume;
+      } else {
+        updateTrackVolume(track, state.volume);
+      }
+    }
+    if (state.pan !== undefined) {
+      if (track === "master") {
+        masterPanNode.pan.value = state.pan;
+      } else {
+        updateTrackPan(track, state.pan);
+      }
+    }
+    if (state.muted !== undefined) {
+      console.log(`🔇 Applying muted state: ${track} -> ${state.muted}`);
+      setMuteState(track, state.muted); // ✅ Use setMuteState
+    }
+    if (state.soloed !== undefined) {
+      console.log(`🎵 Applying soloed state: ${track} -> ${state.soloed}`);
+      setSoloState(track, state.soloed); // ✅ Use setSoloState
+    }
+  });
+
+  console.log(`✅ Automation applied at ${currentTime}s`);
+};
+
+
+
+
+
+
+
+
+let pendingAutomationTimers: number[] = [];
+
+const startRecording = () => {
+  isRecording.value = true;
+};
+
 
 const stopRecording = () => {
   isRecording.value = false
 }
 
+let automationTimers: number[] = [];
+
 const recording = ref<{ time: number; type: string; track: string | 'master'; value: any }[]>([])
 const isRecording = ref(false)
-let recordingStartTime = 0
 const mixerContainerWidth = computed(() => {
   return {
     width: `${(mp3Files.length + 1) * 110}px`,
@@ -187,24 +271,67 @@ const pauseAll = () => {
   stopWaveformUpdates() // Stop updating the waveform
 }
 
-const playAll = () => {
-  if (playbackState.isPlaying) return
+const rescheduleAutomation = (currentTime: number) => {
+  console.log(`🔄 Rescheduling automation from ${currentTime}s onward`);
 
-  playbackState.isPlaying = true
-  playbackState.soloActive = Object.values(trackStates).some((state) => state.soloed)
-  startTime = context.currentTime - masterState.elapsed
+  pendingAutomationTimers.forEach(clearTimeout);
+  pendingAutomationTimers = [];
+
+  recording.value.forEach(({ time, type, track, value }) => {
+    if (time >= currentTime) {
+      const delay = (time - currentTime) * 1000;
+
+      const timerId = setTimeout(() => {
+        if (type === "volume") {
+          if (track === "master") {
+            masterGainNode.gain.value = value;
+          } else {
+            updateTrackVolume(track, value);
+          }
+        } else if (type === "pan") {
+          if (track === "master") {
+            masterPanNode.pan.value = value;
+          } else {
+            updateTrackPan(track, value);
+          }
+        } else if (type === "muted") { // ✅ Correct key
+          console.log(`🔇 Setting mute state at ${time}s -> ${value}`);
+          setMuteState(track, value);
+        } else if (type === "soloed") { // ✅ Correct key
+          console.log(`🎵 Setting solo state at ${time}s -> ${value}`);
+          setSoloState(track, value);
+        }
+      }, delay);
+
+      pendingAutomationTimers.push(timerId);
+    }
+  });
+
+  console.log(`✅ Rescheduled automation from ${currentTime}s onward`);
+};
+
+
+
+
+const playAll = () => {
+  if (playbackState.isPlaying) return;
+
+  playbackState.isPlaying = true;
+  playbackState.soloActive = Object.values(trackStates).some((state) => state.soloed);
+  startTime = context.currentTime - masterState.elapsed;
+
+  applyLatestAutomationState(masterState.elapsed);
 
   // Play all tracks
   for (const [label, buffer] of Object.entries(audioBuffers.value)) {
-    const state = trackStates[label]
-    playTrack(label, state.elapsed)
+    const state = trackStates[label];
+    playTrack(label, state.elapsed);
   }
+  rescheduleAutomation(masterState.elapsed);
 
-  // Start automations
-  scheduleAutomations()
+  startWaveformUpdates();
+};
 
-  startWaveformUpdates()
-}
 let animationFrameId: number | null = null
 
 const startWaveformUpdates = () => {
@@ -229,35 +356,6 @@ const updateProgress = () => {
   masterState.elapsed = Math.min(context.currentTime - startTime, masterState.duration)
 }
 
-const scheduleAutomations = () => {
-  const currentPlaybackTime = masterState.elapsed
-
-  // Filter and schedule events that occur after the current playback time
-  recording.value.forEach(({ time, type, track, value }) => {
-    if (time >= currentPlaybackTime) {
-      const delay = (time - currentPlaybackTime) * 1000 // Convert to milliseconds
-      setTimeout(() => {
-        if (type === 'volume') {
-          if (track === 'master') {
-            masterGainNode.gain.value = value
-          } else {
-            updateTrackVolume(track, value)
-          }
-        } else if (type === 'pan') {
-          if (track === 'master') {
-            masterState.pan = value
-          } else {
-            updateTrackPan(track, value)
-          }
-        } else if (type === 'mute') {
-          toggleMute(track)
-        } else if (type === 'solo') {
-          toggleSolo(track)
-        }
-      }, delay)
-    }
-  })
-}
 
 const stopAll = () => {
   playbackState.isPlaying = false
@@ -269,7 +367,6 @@ const stopAll = () => {
   }
 
   masterState.elapsed = 0
-  recordingStartTime = 0 // Reset recording start time
 
   stopWaveformUpdates()
 }
@@ -298,23 +395,36 @@ const playTrack = (label: string, offset: number) => {
   sourceNodes.value[label] = source
 }
 
-// Seek to a specific position in all tracks
 const seekAll = (percentage: number) => {
-  const newElapsed = percentage * masterState.duration
-  masterState.elapsed = newElapsed
+  const newElapsed = percentage * masterState.duration;
+  masterState.elapsed = newElapsed;
 
+  console.log(`⏩ Seeking to ${newElapsed}s`);
+
+  // Stop all sources and restart playback at new time
   for (const label of Object.keys(trackStates)) {
-    const state = trackStates[label]
-    state.elapsed = newElapsed
-    playTrack(label, newElapsed) // Restart track playback at the new position
+    trackStates[label].elapsed = newElapsed;
+    playTrack(label, newElapsed);
   }
 
-  // Update the start time for recording automation at the new position
-  startTime = context.currentTime - newElapsed
-  recordingStartTime = newElapsed // Sync recording start time with the new position
+  // ✅ Apply automation state at the new seek position
+  applyLatestAutomationState(newElapsed);
 
-  updateProgress()
-}
+  // 🚀 Reschedule future automation events
+  rescheduleAutomation(newElapsed);
+
+  // Update recording time references
+  startTime = context.currentTime - newElapsed;
+
+  updateProgress();
+};
+
+
+
+
+
+
+
 
 const updateMasterTrackVolume = (value: number) => {
   masterState.volume = value
@@ -332,30 +442,11 @@ const updateTrackVolume = (label: string, value: number) => {
   if (state) {
     state.volume = value
     gainNodes[label].gain.value = state.muted ? 0 : value
-    //drawWaveform() // Redraw when volume changes
 
-    // Log the event if tracking is active
-    if (isRecording.value) {
-      const currentTime = context.currentTime - startTime + recordingStartTime
 
-      // Remove existing event at the same time for this track and type
-      recording.value = recording.value.filter(
-        (event) =>
-          !(
-            event.track === label &&
-            event.type === 'volume' &&
-            Math.abs(event.time - currentTime) < 0.01
-          ),
-      )
+    logAutomationEvent("volume", label, value);
 
-      // Add the new event
-      recording.value.push({
-        time: currentTime,
-        type: 'volume',
-        track: label,
-        value,
-      })
-    }
+
   }
 }
 
@@ -364,80 +455,46 @@ const updateTrackPan = (label: string, value: number) => {
   if (state) {
     state.pan = value
     panNodes[label].pan.value = value
-    //drawWaveform() // Redraw when pan changes
+    logAutomationEvent("pan", label, value);
   }
 }
 
-const toggleMute = (label: string) => {
-  const state = trackStates[label]
+
+
+const setMuteState = (label: string, isMuted: boolean) => {
+  const state = trackStates[label];
   if (state) {
-    state.muted = !state.muted
-    gainNodes[label].gain.value = state.muted ? 0 : state.volume
-    //drawWaveform() // Redraw when mute toggles
+    state.muted = isMuted; // ✅ Directly set mute state
+    gainNodes[label].gain.value = isMuted ? 0 : state.volume; // Adjust gain
+
+    logAutomationEvent("muted", label, isMuted); // ✅ Store exact mute state
   }
-}
+};
 
-const playRecording = () => {
-  if (!recording.value.length) {
-    console.warn('No recording to play')
-    return
-  }
 
-  // Determine the current playback position
-  const currentPlaybackTime = masterState.elapsed
-  console.log('Playing recording at:', currentPlaybackTime)
 
-  // Reset the tracks to the appropriate state
-  stopAll()
-
-  // Filter and schedule events that occur after the current playback time
-  recording.value.forEach(({ time, type, track, value }) => {
-    if (time >= currentPlaybackTime) {
-      const delay = (time - currentPlaybackTime) * 1000 // Convert to milliseconds
-      console.log(`Scheduling ${type} for ${track} in ${delay}ms with value:`, value)
-
-      setTimeout(() => {
-        if (type === 'volume') {
-          if (track === 'master') {
-            masterGainNode.gain.value = value
-          } else {
-            updateTrackVolume(track, value)
-          }
-        } else if (type === 'pan') {
-          if (track === 'master') {
-            masterState.pan = value
-          } else {
-            updateTrackPan(track, value)
-          }
-        } else if (type === 'mute') {
-          toggleMute(track)
-        } else if (type === 'solo') {
-          toggleSolo(track)
-        }
-      }, delay)
-    }
-  })
-}
-
-const toggleSolo = (label: string) => {
-  const state = trackStates[label]
+const setSoloState = (label: string, isSoloed: boolean) => {
+  const state = trackStates[label];
   if (state) {
-    state.soloed = !state.soloed
-    playbackState.soloActive = Object.values(trackStates).some((s) => s.soloed)
+    state.soloed = isSoloed; // ✅ Explicitly set solo state
+    playbackState.soloActive = Object.values(trackStates).some((s) => s.soloed);
 
-    for (const [otherLabel, otherState] of Object.entries(trackStates)) {
+    // Update all track gains based on solo state
+    Object.entries(trackStates).forEach(([otherLabel, otherState]) => {
       gainNodes[otherLabel].gain.value = playbackState.soloActive
         ? otherState.soloed
           ? otherState.volume
           : 0
         : otherState.muted
           ? 0
-          : otherState.volume
-    }
+          : otherState.volume;
+    });
 
-    //drawWaveform() // Redraw when solo toggles
+    // Log automation event for solo (only if recording is active)
+    logAutomationEvent("soloed", label, isSoloed);
   }
-}
+};
+
 
 const masterVolumeCanvas = ref<HTMLCanvasElement | null>(null)
 
@@ -478,6 +535,13 @@ onUnmounted(() => {
 <template>
 
   <div class="vue-audio-mixer-container-mask">
+    {{ recording }}
+
+
+    <div class="vue-audio-mixer-transport-buttons">
+  <button @click="startRecording" :disabled="isRecording">Start Recording</button>
+  <button @click="stopRecording" :disabled="!isRecording">Stop Recording</button>
+</div>
 
 
   <div class="vue-audio-mixer-mixer-container" :style="mixerContainerWidth">
@@ -497,12 +561,13 @@ onUnmounted(() => {
           :trackState="trackStates[file.label]"
           :label="file.label"
           :analyserNodes="analyserNodes[file.label]"
-          @mute="toggleMute(file.label)"
-          @solo="toggleSolo(file.label)"
+          @mute="setMuteState(file.label, $event)"
+          @solo="setSoloState(file.label, $event)"
           @updateTrackPan="updateTrackPan(file.label, $event)"
           @updateTrackVolume="updateTrackVolume(file.label, $event)"
 
         />
+
       </div>
 
       <!-- Master Controls -->
