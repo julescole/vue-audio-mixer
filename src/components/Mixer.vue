@@ -21,8 +21,6 @@ const analyserNodes = reactive<Record<string, { left: AnalyserNode; right: Analy
 
 
 
-
-
 // Store active buffer source nodes
 const sourceNodes = ref<Record<string, AudioBufferSourceNode | null>>({})
 // Track mute, solo, pan, elapsed time, and duration states
@@ -358,6 +356,7 @@ const updateProgress = () => {
 
 
 const stopAll = () => {
+  stopRecording();
   playbackState.isPlaying = false
 
   for (const label of Object.keys(sourceNodes.value)) {
@@ -443,9 +442,7 @@ const updateTrackVolume = (label: string, value: number) => {
     state.volume = value
     gainNodes[label].gain.value = state.muted ? 0 : value
 
-
     logAutomationEvent("volume", label, value);
-
 
   }
 }
@@ -538,10 +535,7 @@ onUnmounted(() => {
     {{ recording }}
 
 
-    <div class="vue-audio-mixer-transport-buttons">
-  <button @click="startRecording" :disabled="isRecording">Start Recording</button>
-  <button @click="stopRecording" :disabled="!isRecording">Stop Recording</button>
-</div>
+
 
 
   <div class="vue-audio-mixer-mixer-container" :style="mixerContainerWidth">
@@ -592,19 +586,21 @@ onUnmounted(() => {
         :trackStates="trackStates"
         :playbackState="playbackState"
         :context="context"
+        :recording="recording"
         @seek="seekAll"
       />
       <!--<div class="recording-controls">
         <button @click="trackMix" :disabled="isRecording">Track Mix</button>
       </div>-->
       <div class="vue-audio-mixer-transport-buttons">
-        <button @click="playAll" :disabled="loadingState.isLoading || playbackState.isPlaying">
+        <button @click="playAll" class="button" :disabled="loadingState.isLoading || playbackState.isPlaying">
           Play
         </button>
-        <button @click="pauseAll" :disabled="loadingState.isLoading || !playbackState.isPlaying">
+        <button @click="pauseAll" class="button" :disabled="loadingState.isLoading || !playbackState.isPlaying">
           Pause
         </button>
-        <button @click="stopAll" :disabled="loadingState.isLoading">Stop</button>
+        <button @click="startRecording" class="recording_button" :class="{active: isRecording}" :disabled="isRecording">Record mix</button>
+        <button @click="stopAll" class="button" :disabled="loadingState.isLoading">Stop</button>
       </div>
 
       <div class="vue-audio-mixer-recording-status">
@@ -677,6 +673,16 @@ button{
   font-size: 2rem;
   color: #ffcc00;
 }
+
+@keyframes fadeRed {
+  0% {
+    background-color: rgba(255, 0, 0, 0.3);
+  }
+  100% {
+    background-color: rgba(255, 0, 0, 1);
+  }
+}
+
 
 .vue-audio-mixer-tracks {
   display: flex;
@@ -769,6 +775,25 @@ button{
   font-size: 1rem;
   cursor: pointer;
   margin-right: 10px;
+
+  &.recording_button{
+    &:disabled{
+      background-color: #000;
+      cursor: not-allowed;
+      animation: fadeRed 2s infinite alternate ease-in-out;
+
+    }
+    background-color: #d01f1f;
+    color: #fff;
+    border: none;
+    border-radius: 5px;
+    padding: 10px 20px;
+    font-size: 1rem;
+    cursor: pointer;
+    margin-right: 10px;
+    transition: background-color 0.3s ease-in-out;
+  }
+
 }
 
 .vue-audio-mixer-transport-buttons button:disabled {

@@ -2,6 +2,7 @@
 import { ref, reactive, onMounted, onUnmounted, defineProps, watch, defineEmits, computed, nextTick } from 'vue'
 
 const props = defineProps<{
+  recording: { time: number; type: string; track: string | 'master'; value: any }[],
   masterState: {
     duration: number
     elapsed: number
@@ -59,7 +60,18 @@ const waveformCanvas = ref<HTMLCanvasElement | null>(null)
 
 const waveforms = reactive<Record<string, number[]>>({})
 
-
+const drawAutomationMarkers = (ctx: CanvasRenderingContext2D, width: number, height: number) => {
+  ctx.fillStyle = 'red';
+  props.recording.forEach(({ time }) => {
+    const x = (time / props.masterState.duration) * width;
+    ctx.beginPath();
+    ctx.moveTo(x, height - 30);
+    ctx.lineTo(x, height);
+    ctx.strokeStyle = 'red';
+    ctx.lineWidth = 2;
+    ctx.stroke();
+  });
+};
 
 const drawWaveform = () => {
   const canvas = waveformCanvas.value
@@ -73,6 +85,8 @@ const drawWaveform = () => {
   if (canvas === null) return
 
   canvas.width = waveformWidth.value ?? 0
+  const width = canvas.width;
+  const height = canvas.height;
 
   const canvasWidth = waveformCanvasContainer.value?.clientWidth || 0
   const canvasHeight = canvas.height
@@ -147,7 +161,11 @@ const drawWaveform = () => {
 
     ctx.fillRect(x, y, 1, height)
   })
+
+  drawAutomationMarkers(ctx, width, height);
+
 }
+
 
 const preComputedWaveform = () => {
   const width = waveformCanvasContainer.value?.clientWidth
@@ -258,6 +276,8 @@ onMounted(() => {
 
 <template>
   <div class="vue-audio-mixer-master-transport" ref="waveformCanvasContainer">
+
+
     <p class="vue-audio-mixer-master-time">
       {{ formatTime(masterState.elapsed || 0) }} /
       {{ formatTime(masterState.duration || 0) }}
