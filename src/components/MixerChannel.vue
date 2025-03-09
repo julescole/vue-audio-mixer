@@ -11,7 +11,7 @@ import {
 import Knob from './Knob.vue'
 import ReverbEffect from './ReverbEffect.vue'
 
-const emit = defineEmits(['mute', 'solo', 'updateTrackPan', 'updateTrackVolume','logInitialState', 'effectEnabled'])
+const emit = defineEmits(['mute', 'solo', 'updateTrackPan', 'updateTrackVolume', 'effectEnabled'])
 
 const isDragging = ref(false)
 const faderTrackRef = ref<HTMLElement | null>(null)
@@ -60,7 +60,6 @@ const stopFaderDrag = () => {
   window.removeEventListener("touchmove", onMove);
   window.removeEventListener("touchend", stopFaderDrag);
 
-  emit("logInitialState", "volume");
 
 };
 
@@ -110,8 +109,6 @@ const updateVolumeCanvasHeight = () => {
 
 const updateKnobRotation = (rotation: number) => {
   emit('updateTrackPan', rotation) // Emit the updated volume
-
-  emit("logInitialState", "pan");
 
 }
 
@@ -327,7 +324,6 @@ const drawVolumeMonitors = () => {
           :class="{ muted: trackState.muted }"
           @click="
           emit('mute', !trackState.muted);
-          emit('logInitialState', 'muted');
           "
           v-if="!master"
         >
@@ -338,7 +334,6 @@ const drawVolumeMonitors = () => {
           :class="{ soloed: trackState.soloed }"
           @click="
           emit('solo', !trackState.soloed);
-          emit('logInitialState', 'soloed');
 
           "
           v-if="!master"
@@ -530,6 +525,7 @@ body {
   height: 60px;
   left: 50%; /* Align relative to the track */
   transform: translateX(-50%); /* Center horizontally */
+
   background: linear-gradient(
     to bottom,
     rgba(14, 14, 14, 1) 0%,

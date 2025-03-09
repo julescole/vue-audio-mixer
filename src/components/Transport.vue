@@ -63,9 +63,12 @@ const waveforms = reactive<Record<string, number[]>>({})
 const drawAutomationMarkers = (ctx: CanvasRenderingContext2D, width: number, height: number) => {
   ctx.fillStyle = 'red';
   props.recording.forEach(({ time }) => {
+    if(time === 0) return;
+
+
     const x = (time / props.masterState.duration) * width;
     ctx.beginPath();
-    ctx.moveTo(x, height - 30);
+    ctx.moveTo(x, height - 2);
     ctx.lineTo(x, height);
     ctx.strokeStyle = 'red';
     ctx.lineWidth = 2;

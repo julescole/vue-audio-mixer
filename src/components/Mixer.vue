@@ -83,6 +83,8 @@ const loadingState = reactive({
 
 
 const logAutomationEvent = (type: string, track: string, value: any) => {
+
+  logInitialState(track, type);
   if (isRecording.value) {
     const currentTime = context.currentTime - startTime;
 
@@ -236,6 +238,11 @@ const preloadMP3s = async () => {
         elapsed: 0,
         duration: audioBuffer.duration,
       }
+
+      logInitialState(label, "volume")
+      logInitialState(label, "pan")
+      logInitialState(label, "muted")
+      logInitialState(label, "soloed")
 
       // Update master duration
       masterState.duration = Math.max(masterState.duration, audioBuffer.duration)
@@ -565,7 +572,6 @@ onUnmounted(() => {
 <template>
 
   <div class="vue-audio-mixer-container-mask">
-    {{ recording }}
 
 
 
@@ -592,7 +598,6 @@ onUnmounted(() => {
           @solo="setSoloState(file.label, $event)"
           @updateTrackPan="updateTrackPan(file.label, $event)"
           @updateTrackVolume="updateTrackVolume(file.label, $event)"
-          @logInitialState="logInitialState(file.label, $event)"
 
         />
 
@@ -634,7 +639,7 @@ onUnmounted(() => {
           Pause
         </button>
         <button @click="startRecording" class="recording_button" :class="{active: isRecording}" :disabled="isRecording">Record mix</button>
-        <button @click="clearRecording" class="" >Clear recording</button>
+        <button @click="clearRecording" class="" >Clear mix</button>
         <button @click="stopAll" class="button" :disabled="loadingState.isLoading">Stop</button>
       </div>
 
