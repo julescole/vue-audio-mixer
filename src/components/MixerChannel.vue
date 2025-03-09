@@ -11,7 +11,7 @@ import {
 import Knob from './Knob.vue'
 import ReverbEffect from './ReverbEffect.vue'
 
-const emit = defineEmits(['mute', 'solo', 'updateTrackPan', 'updateTrackVolume', 'effectEnabled'])
+const emit = defineEmits(['mute', 'solo', 'updateTrackPan', 'updateTrackVolume','logInitialState', 'effectEnabled'])
 
 const isDragging = ref(false)
 const faderTrackRef = ref<HTMLElement | null>(null)
@@ -59,6 +59,9 @@ const stopFaderDrag = () => {
   window.removeEventListener("mouseup", stopFaderDrag);
   window.removeEventListener("touchmove", onMove);
   window.removeEventListener("touchend", stopFaderDrag);
+
+  emit("logInitialState", "volume");
+
 };
 
 // Handle movement (mouse or touch)
@@ -107,6 +110,9 @@ const updateVolumeCanvasHeight = () => {
 
 const updateKnobRotation = (rotation: number) => {
   emit('updateTrackPan', rotation) // Emit the updated volume
+
+  emit("logInitialState", "pan");
+
 }
 
 
@@ -288,6 +294,8 @@ const drawVolumeMonitors = () => {
       @input="
         (event) => emit('updateTrackVolume', parseFloat((event.target as HTMLInputElement).value))
       "
+
+
       :value="trackState?.volume || 1"
     />
 
@@ -317,7 +325,10 @@ const drawVolumeMonitors = () => {
         <button
           class="vue-audio-mixer-button vue-audio-mixer-button--bus"
           :class="{ muted: trackState.muted }"
-          @click="emit('mute', !trackState.muted)"
+          @click="
+          emit('mute', !trackState.muted);
+          emit('logInitialState', 'muted');
+          "
           v-if="!master"
         >
           M
@@ -325,7 +336,11 @@ const drawVolumeMonitors = () => {
         <button
           class="vue-audio-mixer-button vue-audio-mixer-button--bus"
           :class="{ soloed: trackState.soloed }"
-          @click="emit('solo', !trackState.soloed)"
+          @click="
+          emit('solo', !trackState.soloed);
+          emit('logInitialState', 'soloed');
+
+          "
           v-if="!master"
         >
           S

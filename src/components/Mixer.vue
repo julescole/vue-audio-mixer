@@ -168,6 +168,11 @@ const startRecording = () => {
   isRecording.value = true;
 };
 
+const clearRecording = () => {
+  recording.value = [];
+
+};
+
 
 const stopRecording = () => {
   isRecording.value = false
@@ -243,6 +248,34 @@ const preloadMP3s = async () => {
 
   loadingState.isLoading = false
 }
+
+const logInitialState = (track: string, type: string) => {
+
+  if(isRecording.value){
+    return;
+  }
+
+  const correctedType = type === "mute" ? "muted" : type === "solo" ? "soloed" : type;
+
+  // Check if there's already an initial log entry
+  const hasInitialState = recording.value.some(
+    (event) => event.track === track && event.type === correctedType && event.time !== 0
+  );
+
+  const value = trackStates[track][correctedType];
+
+  if (!hasInitialState) {
+    recording.value.push({
+      time: 0,
+      type: correctedType,
+      track,
+      value,
+    });
+
+    console.log(`📌 Logged initial ${correctedType} for ${track} at 0s: ${value}`);
+  }
+};
+
 
 const pauseAll = () => {
   if (!playbackState.isPlaying) return
@@ -559,6 +592,7 @@ onUnmounted(() => {
           @solo="setSoloState(file.label, $event)"
           @updateTrackPan="updateTrackPan(file.label, $event)"
           @updateTrackVolume="updateTrackVolume(file.label, $event)"
+          @logInitialState="logInitialState(file.label, $event)"
 
         />
 
@@ -600,6 +634,7 @@ onUnmounted(() => {
           Pause
         </button>
         <button @click="startRecording" class="recording_button" :class="{active: isRecording}" :disabled="isRecording">Record mix</button>
+        <button @click="clearRecording" class="" >Clear recording</button>
         <button @click="stopAll" class="button" :disabled="loadingState.isLoading">Stop</button>
       </div>
 

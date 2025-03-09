@@ -74,97 +74,98 @@ const drawAutomationMarkers = (ctx: CanvasRenderingContext2D, width: number, hei
 };
 
 const drawWaveform = () => {
-  const canvas = waveformCanvas.value
+  const canvas = waveformCanvas.value;
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  if (!ctx) return;
 
-  if (!canvas) return
-
-  const ctx = canvas.getContext('2d')
-
-  if (!ctx) return
-
-  if (canvas === null) return
-
-  canvas.width = waveformWidth.value ?? 0
+  canvas.width = waveformWidth.value ?? 0;
   const width = canvas.width;
   const height = canvas.height;
+  const midY = height / 2;
 
-  const canvasWidth = waveformCanvasContainer.value?.clientWidth || 0
-  const canvasHeight = canvas.height
-  const midY = canvasHeight / 2
+  ctx.clearRect(0, 0, width, height);
 
-  const combinedData: number[] = new Array(canvasWidth).fill(0)
-  let totalWeight = 0
+  const combinedData: number[] = new Array(width).fill(0);
+  let totalWeight = 0;
 
-  // Combine precomputed waveform data with real-time adjustments
-  Object.entries(waveforms).forEach(([label, waveform]) => {
-    const state = props.trackStates[label]
-    if (!state || state.muted || (props.playbackState.soloActive && !state.soloed)) return
+  const trackAutomationStates: Record<string, { volume: number; pan: number }> = {};
 
-    for (let i = 0; i < waveform.length; i++) {
-      const adjustedAmplitude =
-        waveform[i] * state.volume * (state.pan === 0 ? 1 : 1 - Math.abs(state.pan))
-      combinedData[i] += adjustedAmplitude
+  // Function to get automation-adjusted volume/pan at a given time
+  const getAutomationStateAtTime = (track: string, time: number) => {
+    let lastVolume = 1;
+    let lastPan = 0;
+
+    for (const event of props.recording) {
+      if (event.track === track && event.time <= time) {
+        if (event.type === 'volume') lastVolume = event.value;
+        if (event.type === 'pan') lastPan = event.value;
+      }
     }
 
-    totalWeight++
-  })
+    return { volume: lastVolume, pan: lastPan };
+  };
 
-  // Normalize the combined waveform
+  // Iterate through each track and apply automation
+  Object.entries(waveforms).forEach(([label, waveform]) => {
+    if (!props.trackStates[label]) return;
+
+    for (let i = 0; i < waveform.length; i++) {
+      const time = (i / width) * props.masterState.duration; // Calculate time for this pixel
+      const { volume, pan } = getAutomationStateAtTime(label, time);
+
+      trackAutomationStates[label] = { volume, pan };
+
+      const adjustedAmplitude = waveform[i] * volume * (pan === 0 ? 1 : 1 - Math.abs(pan));
+      combinedData[i] += adjustedAmplitude;
+    }
+
+    totalWeight++;
+  });
+
+  // Normalize combined waveform
   if (totalWeight > 0) {
     for (let i = 0; i < combinedData.length; i++) {
-      combinedData[i] /= totalWeight
+      combinedData[i] /= totalWeight;
     }
   }
 
-  // Find the maximum amplitude
-  const maxAmplitude = Math.max(...combinedData)
+  // Find max amplitude
+  const maxAmplitude = Math.max(...combinedData);
+  const normalizedData = combinedData.map((value) => (value / maxAmplitude) * height);
 
-  // Scale the waveform to take up the full height of the canvas
-  const normalizedData = combinedData.map((value) => (value / maxAmplitude) * canvasHeight)
+  // Create gradient
+  const gradient = ctx.createLinearGradient(0, 0, width, 0);
+  gradient.addColorStop(0, '#2275E8');
+  gradient.addColorStop(0.5, '#00D6FD');
+  gradient.addColorStop(1, '#0995FF');
 
-  // Clear the canvas
-  ctx.clearRect(0, 0, canvasWidth, canvasHeight)
 
-  // Create a gradient
-  const gradient = ctx.createLinearGradient(0, 0, canvasWidth, 0)
-
-  gradient.addColorStop(0, '#2275E8') // Start color
-
-  gradient.addColorStop(0.5, '#00D6FD') // Start color
-  //  gradient.addColorStop(0.5, '#00FF7F') // Middle color
-  gradient.addColorStop(1, '#0995FF') // End color
-
-  ctx.fillStyle = gradient
-
-  // Draw the normalized waveform
-  normalizedData.forEach((value, index) => {
-    const x = index
-    const y = midY - value / 2 // Center the waveform vertically
-    const height = value
-
-    const progressX = (props.masterState.elapsed / props.masterState.duration) * canvasWidth
-
-    // Highlight progress with a different gradient
-    if (x < progressX) {
-      const progressGradient = ctx.createLinearGradient(0, 0, canvasWidth, 0)
+  const progressGradient = ctx.createLinearGradient(0, 0, width, 0)
       progressGradient.addColorStop(0, '#193CF0') // Start color
       progressGradient.addColorStop(0.5, '#0077FD') // Start color
       progressGradient.addColorStop(1, '#0332FF') // End color
 
-      // progressGradient.addColorStop(0, '#0044CC') // Start color for progress
-      //progressGradient.addColorStop(0.5, '#00CC88') // Middle color for progress
-      //progressGradient.addColorStop(1, '#00CC88') // End color for progress
-      ctx.fillStyle = progressGradient
-    } else {
-      ctx.fillStyle = gradient
-    }
 
-    ctx.fillRect(x, y, 1, height)
-  })
+
+
+  ctx.fillStyle = gradient;
+
+  // Draw waveform with automation effects
+  for (let i = 0; i < normalizedData.length; i++) {
+    const x = i;
+    const y = midY - normalizedData[i] / 2;
+    const barHeight = normalizedData[i];
+
+    const progressX = (props.masterState.elapsed / props.masterState.duration) * width;
+    ctx.fillStyle = x < progressX ? progressGradient : gradient;
+
+    ctx.fillRect(x, y, 1, barHeight);
+  }
 
   drawAutomationMarkers(ctx, width, height);
+};
 
-}
 
 
 const preComputedWaveform = () => {
