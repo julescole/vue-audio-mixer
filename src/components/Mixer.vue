@@ -81,81 +81,95 @@ const loadingState = reactive({
   progress: 0,
 })
 
+const automationSampleRate = 0.10; // Minimum time between recorded automation events (in seconds)
+const lastRecordedTime: Record<string, number> = {}; // Store last event times
 
 const logAutomationEvent = (type: string, track: string, value: any) => {
-
   logInitialState(track, type);
+
+
+
   if (isRecording.value) {
-    const currentTime = context.currentTime - startTime;
+    let currentTime = context.currentTime - startTime;
+    currentTime = Math.round(currentTime * 1000) / 1000; // Keeps 3 decimal places
 
     // Ensure we're using the correct state keys
     const correctedType = type === "mute" ? "muted" : type === "solo" ? "soloed" : type;
 
-    // Prevent duplicate events at the same time
-    recording.value = recording.value.filter(
-      (event) => !(event.track === track && event.type === correctedType && Math.abs(event.time - currentTime) < 0.01)
-    );
+    // Check if enough time has passed since the last recorded event
+    if (!lastRecordedTime[track]) lastRecordedTime[track] = -Infinity;
 
-    // Store the event with corrected key
-    recording.value.push({
-      time: currentTime,
-      type: correctedType,
-      track,
-      value,
-    });
+    if (currentTime - lastRecordedTime[track] >= automationSampleRate) {
+      lastRecordedTime[track] = currentTime; // Update last recorded time
 
-    console.log(`🎬 Recorded ${correctedType} change on ${track}: ${value} at ${currentTime}s`);
+      recording.value.push({
+        time: currentTime,
+        type: correctedType,
+        track,
+        value: Math.round(value * 1000) / 1000, // Reduce precision to 3 decimal places
+      });
+
+      console.log(`🎬 Recorded ${correctedType} change on ${track}: ${value} at ${currentTime}s`);
+    }
   }
 };
 
 
+// Store last applied values to prevent redundant updates
+const lastAppliedVolume: Record<string, number> = {};
 
 const applyLatestAutomationState = (currentTime: number) => {
   console.log(`🎯 Applying automation state at ${currentTime}s`);
 
-  const latestState: Record<string, {
-    volume?: number;
-    pan?: number;
-    muted?: boolean;
-    soloed?: boolean;
-  }> = {};
+  const latestState: Record<string, { volume?: number; pan?: number; muted?: boolean; soloed?: boolean }> = {};
 
-  // Find the most recent automation states for each track
+  // Find the most recent automation states for each track up to the current time
   recording.value.forEach(({ time, type, track, value }) => {
     if (time <= currentTime) {
       if (!latestState[track]) latestState[track] = {};
-      latestState[track][type] = value; // Store the latest value
+      latestState[track][type] = value;
     }
   });
 
-  // Apply the last known state for each track
+  // Apply the last known state for each track, filtering out insignificant changes
   Object.entries(latestState).forEach(([track, state]) => {
     if (state.volume !== undefined) {
-      if (track === "master") {
-        masterGainNode.gain.value = state.volume;
-      } else {
-        updateTrackVolume(track, state.volume);
+      const previousVolume = lastAppliedVolume[track] ?? -1;
+
+      // Only apply volume change if it is significant (difference > 0.01)
+      if (Math.abs(state.volume - previousVolume) > 0.01) {
+        lastAppliedVolume[track] = state.volume;
+
+        if (track === "master") {
+          masterGainNode.gain.setTargetAtTime(state.volume, context.currentTime, 0.05);
+        } else {
+          gainNodes[track].gain.setTargetAtTime(state.volume, context.currentTime, 0.05);
+        }
       }
     }
+
     if (state.pan !== undefined) {
       if (track === "master") {
-        masterPanNode.pan.value = state.pan;
+        masterPanNode.pan.setTargetAtTime(state.pan, context.currentTime, 0.05);
       } else {
-        updateTrackPan(track, state.pan);
+        panNodes[track].pan.setTargetAtTime(state.pan, context.currentTime, 0.05);
       }
     }
+
     if (state.muted !== undefined) {
       console.log(`🔇 Applying muted state: ${track} -> ${state.muted}`);
-      setMuteState(track, state.muted); // ✅ Use setMuteState
+      setMuteState(track, state.muted);
     }
+
     if (state.soloed !== undefined) {
       console.log(`🎵 Applying soloed state: ${track} -> ${state.soloed}`);
-      setSoloState(track, state.soloed); // ✅ Use setSoloState
+      setSoloState(track, state.soloed);
     }
   });
 
   console.log(`✅ Automation applied at ${currentTime}s`);
 };
+
 
 
 
@@ -306,6 +320,10 @@ const pauseAll = () => {
   }
 
   masterState.elapsed = Math.min(context.currentTime - startTime, masterState.duration)
+  // Stop all pending automation events
+  pendingAutomationTimers.forEach(clearTimeout);
+  pendingAutomationTimers = [];
+
   stopWaveformUpdates() // Stop updating the waveform
 }
 
@@ -407,32 +425,48 @@ const stopAll = () => {
 
   masterState.elapsed = 0
 
+  // Stop all pending automation events
+  pendingAutomationTimers.forEach(clearTimeout);
+  pendingAutomationTimers = [];
+
   stopWaveformUpdates()
 }
 
 // Play a single track from a specific position
 const playTrack = (label: string, offset: number) => {
-  const buffer = audioBuffers.value[label]
-  const state = trackStates[label]
+  const buffer = audioBuffers.value[label];
+  const state = trackStates[label];
 
+  // 🚨 Ensure we properly stop & disconnect any previous source
   if (sourceNodes.value[label]) {
-    sourceNodes.value[label]?.stop()
-    sourceNodes.value[label] = null
+    sourceNodes.value[label]?.stop();
+    sourceNodes.value[label]?.disconnect();
+    sourceNodes.value[label] = null; // Clear reference
   }
 
-  const source = context.createBufferSource()
-  source.buffer = buffer
+  // 🎯 Create a fresh AudioBufferSourceNode for each play
+  const source = context.createBufferSource();
+  source.buffer = buffer;
 
-  // Connect source to the gain node
-  source.connect(gainNodes[label])
+  // Connect the source to the gain node
+  source.connect(gainNodes[label]);
 
   // Set gain and pan values
-  gainNodes[label].gain.value = state.muted ? 0 : state.volume
-  panNodes[label].pan.value = state.pan
+  gainNodes[label].gain.value = state.muted ? 0 : state.volume;
+  panNodes[label].pan.value = state.pan;
 
-  source.start(0, offset)
-  sourceNodes.value[label] = source
-}
+  // ✅ Ensure the node gets garbage collected when finished
+  source.onended = () => {
+    console.log(`🎵 AudioBufferSourceNode for ${label} has ended`);
+    source.disconnect();
+    sourceNodes.value[label] = null;
+  };
+
+  source.start(0, offset);
+  sourceNodes.value[label] = source;
+};
+
+
 
 const seekAll = (percentage: number) => {
   const newElapsed = percentage * masterState.duration;
@@ -480,7 +514,12 @@ const updateTrackVolume = (label: string, value: number) => {
   const state = trackStates[label]
   if (state) {
     state.volume = value
-    gainNodes[label].gain.value = state.muted ? 0 : value
+
+    if(state.muted){
+      gainNodes[label].gain.value = 0;
+    }else{
+      gainNodes[label].gain.setTargetAtTime(value, context.currentTime, 0.05);
+    }
 
     logAutomationEvent("volume", label, value);
 
@@ -573,6 +612,7 @@ onUnmounted(() => {
 
   <div class="vue-audio-mixer-container-mask">
 
+    {{ recording }}
 
 
 
@@ -581,7 +621,8 @@ onUnmounted(() => {
 
     <Loader :progress="loadingState.progress" v-if="loadingState.isLoading" />
 
-    <h1 class="vue-audio-mixer-mixer-title" v-if="!loadingState.isLoading">Audio Mixer</h1>
+    <h1 class="vue-audio-mixer-mixer-title" v-if="!loadingState.isLoading">Simple Joy</h1>
+    <h3 class="vue-audio-mixer-mixer-sub-header">Julian Cole</h3>
 
     <!-- Tracks and Master -->
     <div class="vue-audio-mixer-tracks" v-if="!loadingState.isLoading">
@@ -709,9 +750,16 @@ button{
 
 .vue-audio-mixer-mixer-title {
   text-align: center;
-  margin-bottom: 20px;
+  margin-bottom: 5px;
   font-size: 2rem;
-  color: #ffcc00;
+  color: #85b4e7;
+}
+
+.vue-audio-mixer-mixer-sub-header{
+  text-align: center;
+  margin-bottom: 20px;
+  font-size: 1rem;
+  color: #FFF;
 }
 
 @keyframes fadeRed {
@@ -881,7 +929,7 @@ button{
 }
 
 .vue-audio-mixer-mixer-container {
-  height: 890px;
+  height: 940px;
   font-family: Arial, sans-serif;
   color: #fff;
   padding: 20px;

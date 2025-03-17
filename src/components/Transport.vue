@@ -55,28 +55,92 @@ watch(
   },
 )
 
+watch(() => props.recording, () => {
+  precomputeAutomationStates();
+}, { deep: true });
+
+watch(waveformWidth, () => {
+  precomputeAutomationStates();
+});
+
 const waveformCanvas = ref<HTMLCanvasElement | null>(null)
 
 
 const waveforms = reactive<Record<string, number[]>>({})
 
 const drawAutomationMarkers = (ctx: CanvasRenderingContext2D, width: number, height: number) => {
-  ctx.fillStyle = 'red';
-  props.recording.forEach(({ time }) => {
-    if(time === 0) return;
+  ctx.strokeStyle = 'red';
+  ctx.lineWidth = 2;
 
-
-    const x = (time / props.masterState.duration) * width;
+  automationMarkers.forEach((x) => {
     ctx.beginPath();
-    ctx.moveTo(x, height - 2);
+    ctx.moveTo(x, height - 8);
     ctx.lineTo(x, height);
-    ctx.strokeStyle = 'red';
-    ctx.lineWidth = 2;
     ctx.stroke();
   });
 };
 
+
+// Precomputed automation states for fast lookup
+const automationStates = reactive<Record<string, { volume: number[]; pan: number[] }>>({});
+  const automationMarkers = reactive<number[]>([]); // Store x-positions of markers
+
+  const precomputeAutomationStates = () => {
+  console.time("Precomputing Automation");
+
+  const numSamples = waveformWidth.value; // Number of pixels in the waveform
+  const duration = props.masterState.duration;
+  if (!duration || numSamples <= 0) return;
+
+  automationMarkers.length = 0; // Clear previous markers
+
+  // Initialize empty automation state arrays
+  Object.keys(props.trackStates).forEach((track) => {
+    automationStates[track] = {
+      volume: new Array(numSamples).fill(1),
+      pan: new Array(numSamples).fill(0),
+    };
+  });
+
+  // Process automation events into precomputed time slices
+  props.recording.forEach(({ time, type, track, value }) => {
+    if (!automationStates[track]) return;
+    const index = Math.floor((time / duration) * numSamples);
+    if (index < 0 || index >= numSamples) return;
+
+    if (type === "volume") {
+      automationStates[track].volume[index] = value;
+    } else if (type === "pan") {
+      automationStates[track].pan[index] = value;
+    }
+
+    // Store marker positions for drawing later
+    const markerX = Math.floor((time / duration) * waveformWidth.value);
+    if (!automationMarkers.includes(markerX)) {
+      automationMarkers.push(markerX);
+    }
+  });
+
+  // Fill in gaps by propagating last known values
+  Object.keys(automationStates).forEach((track) => {
+    let lastVolume = 1;
+    let lastPan = 0;
+    for (let i = 0; i < numSamples; i++) {
+      if (automationStates[track].volume[i] !== 1) lastVolume = automationStates[track].volume[i];
+      automationStates[track].volume[i] = lastVolume;
+
+      if (automationStates[track].pan[i] !== 0) lastPan = automationStates[track].pan[i];
+      automationStates[track].pan[i] = lastPan;
+    }
+  });
+
+  console.timeEnd("Precomputing Automation");
+};
+
+
 const drawWaveform = () => {
+  console.time("Draw Waveform");
+
   const canvas = waveformCanvas.value;
   if (!canvas) return;
   const ctx = canvas.getContext('2d');
@@ -92,32 +156,16 @@ const drawWaveform = () => {
   const combinedData: number[] = new Array(width).fill(0);
   let totalWeight = 0;
 
-  const trackAutomationStates: Record<string, { volume: number; pan: number }> = {};
-
-  // Function to get automation-adjusted volume/pan at a given time
-  const getAutomationStateAtTime = (track: string, time: number) => {
-    let lastVolume = 1;
-    let lastPan = 0;
-
-    for (const event of props.recording) {
-      if (event.track === track && event.time <= time) {
-        if (event.type === 'volume') lastVolume = event.value;
-        if (event.type === 'pan') lastPan = event.value;
-      }
-    }
-
-    return { volume: lastVolume, pan: lastPan };
-  };
-
-  // Iterate through each track and apply automation
+  // Iterate through each track and apply precomputed automation
   Object.entries(waveforms).forEach(([label, waveform]) => {
     if (!props.trackStates[label]) return;
 
     for (let i = 0; i < waveform.length; i++) {
       const time = (i / width) * props.masterState.duration; // Calculate time for this pixel
-      const { volume, pan } = getAutomationStateAtTime(label, time);
+      const index = Math.floor((time / props.masterState.duration) * width);
 
-      trackAutomationStates[label] = { volume, pan };
+      const volume = automationStates[label]?.volume[index] ?? 1;
+      const pan = automationStates[label]?.pan[index] ?? 0;
 
       const adjustedAmplitude = waveform[i] * volume * (pan === 0 ? 1 : 1 - Math.abs(pan));
       combinedData[i] += adjustedAmplitude;
@@ -162,16 +210,18 @@ const drawWaveform = () => {
 
     const progressX = (props.masterState.elapsed / props.masterState.duration) * width;
     ctx.fillStyle = x < progressX ? progressGradient : gradient;
-
     ctx.fillRect(x, y, 1, barHeight);
   }
-
   drawAutomationMarkers(ctx, width, height);
+
+  console.timeEnd("Draw Waveform");
 };
 
 
 
+
 const preComputedWaveform = () => {
+
   const width = waveformCanvasContainer.value?.clientWidth
 
   if (width === undefined) return
