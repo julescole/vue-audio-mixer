@@ -69,6 +69,7 @@ const waveformCanvas = ref<HTMLCanvasElement | null>(null)
 const waveforms = reactive<Record<string, number[]>>({})
 
 const drawAutomationMarkers = (ctx: CanvasRenderingContext2D, width: number, height: number) => {
+ console.log(automationMarkers);
   ctx.strokeStyle = 'red';
   ctx.lineWidth = 2;
 
@@ -139,7 +140,6 @@ const automationStates = reactive<Record<string, { volume: number[]; pan: number
 
 
 const drawWaveform = () => {
-  console.time("Draw Waveform");
 
   const canvas = waveformCanvas.value;
   if (!canvas) return;
@@ -214,7 +214,6 @@ const drawWaveform = () => {
   }
   drawAutomationMarkers(ctx, width, height);
 
-  console.timeEnd("Draw Waveform");
 };
 
 

@@ -85,10 +85,8 @@ const automationSampleRate = 0.10; // Minimum time between recorded automation e
 const lastRecordedTime: Record<string, number> = {}; // Store last event times
 
 const logAutomationEvent = (type: string, track: string, value: any) => {
+
   logInitialState(track, type);
-
-
-
   if (isRecording.value) {
     let currentTime = context.currentTime - startTime;
     currentTime = Math.round(currentTime * 1000) / 1000; // Keeps 3 decimal places
@@ -178,7 +176,6 @@ const applyLatestAutomationState = (currentTime: number) => {
 
 
 
-let pendingAutomationTimers: number[] = [];
 
 const startRecording = () => {
   isRecording.value = true;
@@ -272,6 +269,7 @@ const preloadMP3s = async () => {
 
 const logInitialState = (track: string, type: string) => {
 
+console.log(track, type);
   if(isRecording.value){
     return;
   }
@@ -280,7 +278,7 @@ const logInitialState = (track: string, type: string) => {
 
   // Check if there's already an initial log entry
   const hasInitialState = recording.value.some(
-    (event) => event.track === track && event.type === correctedType && event.time !== 0
+    (event) => event.track === track && event.type === correctedType && event.time === 0
   );
 
   const value = trackStates[track][correctedType];
@@ -320,24 +318,33 @@ const pauseAll = () => {
   }
 
   masterState.elapsed = Math.min(context.currentTime - startTime, masterState.duration)
-  // Stop all pending automation events
-  pendingAutomationTimers.forEach(clearTimeout);
-  pendingAutomationTimers = [];
+  stopAutomation(); // 🚀 Clears automation interval when stopping
+
 
   stopWaveformUpdates() // Stop updating the waveform
 }
 
+let automationInterval: number | null = null; // Store interval ID
+
 const rescheduleAutomation = (currentTime: number) => {
   console.log(`🔄 Rescheduling automation from ${currentTime}s onward`);
 
-  pendingAutomationTimers.forEach(clearTimeout);
-  pendingAutomationTimers = [];
+  if (automationInterval !== null) {
+    clearInterval(automationInterval);
+    automationInterval = null;
+  }
 
-  recording.value.forEach(({ time, type, track, value }) => {
-    if (time >= currentTime) {
-      const delay = (time - currentTime) * 1000;
+  // 🚀 Use setInterval instead of multiple setTimeout calls
+  automationInterval = setInterval(() => {
+    if (!playbackState.isPlaying) {
+      clearInterval(automationInterval!);
+      automationInterval = null;
+      return;
+    }
 
-      const timerId = setTimeout(() => {
+    const now = context.currentTime - startTime;
+    recording.value.forEach(({ time, type, track, value }) => {
+      if (time <= now + 0.1 && time >= now - 0.1) { // Only execute close to actual playback time
         if (type === "volume") {
           if (track === "master") {
             masterGainNode.gain.value = value;
@@ -350,20 +357,23 @@ const rescheduleAutomation = (currentTime: number) => {
           } else {
             updateTrackPan(track, value);
           }
-        } else if (type === "muted") { // ✅ Correct key
-          console.log(`🔇 Setting mute state at ${time}s -> ${value}`);
+        } else if (type === "muted") {
           setMuteState(track, value);
-        } else if (type === "soloed") { // ✅ Correct key
-          console.log(`🎵 Setting solo state at ${time}s -> ${value}`);
+        } else if (type === "soloed") {
           setSoloState(track, value);
         }
-      }, delay);
+      }
+    });
+  }, 50); // 🚀 Run automation updates every 50ms instead of scheduling thousands of timers
 
-      pendingAutomationTimers.push(timerId);
-    }
-  });
+  console.log(`✅ Automation rescheduled with interval`);
+};
 
-  console.log(`✅ Rescheduled automation from ${currentTime}s onward`);
+const stopAutomation = () => {
+  if (automationInterval !== null) {
+    clearInterval(automationInterval);
+    automationInterval = null;
+  }
 };
 
 
@@ -426,45 +436,50 @@ const stopAll = () => {
   masterState.elapsed = 0
 
   // Stop all pending automation events
-  pendingAutomationTimers.forEach(clearTimeout);
-  pendingAutomationTimers = [];
+  stopAutomation(); // 🚀 Clears automation interval when stopping
 
   stopWaveformUpdates()
 }
 
 // Play a single track from a specific position
+// Play a single track from a specific position
 const playTrack = (label: string, offset: number) => {
   const buffer = audioBuffers.value[label];
   const state = trackStates[label];
 
+  console.log(sourceNodes);
+
   // 🚨 Ensure we properly stop & disconnect any previous source
   if (sourceNodes.value[label]) {
-    sourceNodes.value[label]?.stop();
-    sourceNodes.value[label]?.disconnect();
-    sourceNodes.value[label] = null; // Clear reference
+    try {
+      sourceNodes.value[label].stop(0);
+      sourceNodes.value[label].disconnect();
+    } catch (err) {
+      console.warn(`⚠️ Error stopping old source for ${label}:`, err);
+    }
+    sourceNodes.value[label] = null; // Ensure reference is cleared
   }
 
-  // 🎯 Create a fresh AudioBufferSourceNode for each play
+  // 🎯 Create a new AudioBufferSourceNode
   const source = context.createBufferSource();
   source.buffer = buffer;
 
   // Connect the source to the gain node
-  source.connect(gainNodes[label]);
+  sourceNodes.value[label] = source;
+  sourceNodes.value[label].connect(gainNodes[label]);
 
   // Set gain and pan values
   gainNodes[label].gain.value = state.muted ? 0 : state.volume;
   panNodes[label].pan.value = state.pan;
 
-  // ✅ Ensure the node gets garbage collected when finished
-  source.onended = () => {
-    console.log(`🎵 AudioBufferSourceNode for ${label} has ended`);
-    source.disconnect();
-    sourceNodes.value[label] = null;
-  };
 
-  source.start(0, offset);
-  sourceNodes.value[label] = source;
+
+
+  sourceNodes.value[label].start(0, offset);
 };
+
+
+
 
 
 
@@ -472,13 +487,12 @@ const seekAll = (percentage: number) => {
   const newElapsed = percentage * masterState.duration;
   masterState.elapsed = newElapsed;
 
-  console.log(`⏩ Seeking to ${newElapsed}s`);
 
-  // Stop all sources and restart playback at new time
-  for (const label of Object.keys(trackStates)) {
+  // 🚀 Start playback at new seek position
+  Object.keys(trackStates).forEach((label) => {
     trackStates[label].elapsed = newElapsed;
     playTrack(label, newElapsed);
-  }
+  });
 
   // ✅ Apply automation state at the new seek position
   applyLatestAutomationState(newElapsed);
@@ -491,6 +505,9 @@ const seekAll = (percentage: number) => {
 
   updateProgress();
 };
+
+
+
 
 
 
