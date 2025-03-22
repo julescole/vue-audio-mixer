@@ -1,11 +1,16 @@
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted, defineProps, watch } from 'vue'
+import { ref, onMounted, onUnmounted, defineProps, watch, defineEmits } from 'vue'
 import hallWavPath from '../assets/audio/Hall.wav';
+import { trackStates } from '../stateManager'  // ✅ Import global trackStates
 
 const props = defineProps<{
+  label: string
   context: AudioContext
   analyserNodes: { left: AnalyserNode; right: AnalyserNode }
 }>()
+
+const emit = defineEmits(['reverbChange'])
+
 
 const reverbLevel = ref(0) // Default reverb level (50% wet, 50% dry)
 const convolverNode = ref<ConvolverNode | null>(null)
@@ -19,7 +24,17 @@ watch(updating, (newVal) => {
   setTimeout(() => {
     updating.value = false
   }, 2000)
-})
+});
+
+watch(
+  () => trackStates[props.label].reverbLevel,
+  (newReverbLevel) => {
+    if (newReverbLevel !== undefined && !updating.value) {
+      reverbLevel.value = newReverbLevel;  // Update slider value
+    }
+  }
+);
+
 
 const isConnected = ref(false) // Track connection state
 
@@ -32,14 +47,18 @@ const loadImpulseResponse = async () => {
       convolverNode.value = props.context.createConvolver();
     }
 
-    // ✅ Safari fix for Web Audio API decoding
     props.context.decodeAudioData(
       arrayBuffer,
       (buffer) => {
         convolverNode.value!.buffer = buffer;
         wetGainNode.value = props.context.createGain();
         dryGainNode.value = props.context.createGain();
+
         connectNodes();
+
+        // ✅ Store the nodes directly in the global trackStates
+        trackStates[props.label].wetGainNode = wetGainNode.value;
+        trackStates[props.label].dryGainNode = dryGainNode.value;
       },
       (error) => console.error("Error decoding audio:", error)
     );
@@ -68,7 +87,11 @@ const updateReverbLevel = (level: number) => {
   if (wetGainNode.value && dryGainNode.value) {
     wetGainNode.value.gain.value = level
     dryGainNode.value.gain.value = 1 - level
+
+    emit('reverbChange', level)
+
   }
+
 }
 
 const disconnectNodes = () => {

@@ -69,14 +69,13 @@ const waveformCanvas = ref<HTMLCanvasElement | null>(null)
 const waveforms = reactive<Record<string, number[]>>({})
 
 const drawAutomationMarkers = (ctx: CanvasRenderingContext2D, width: number, height: number) => {
- console.log(automationMarkers);
-  ctx.strokeStyle = 'red';
+  ctx.strokeStyle = '#7679cf';
   ctx.lineWidth = 2;
 
   automationMarkers.forEach((x) => {
     ctx.beginPath();
-    ctx.moveTo(x, height - 8);
-    ctx.lineTo(x, height);
+    ctx.moveTo(x, height - (height/2)-4);
+    ctx.lineTo(x, height - (height/2)+4);
     ctx.stroke();
   });
 };

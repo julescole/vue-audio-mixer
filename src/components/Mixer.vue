@@ -24,19 +24,8 @@ const analyserNodes = reactive<Record<string, { left: AnalyserNode; right: Analy
 // Store active buffer source nodes
 const sourceNodes = ref<Record<string, AudioBufferSourceNode | null>>({})
 // Track mute, solo, pan, elapsed time, and duration states
-const trackStates = reactive<
-  Record<
-    string,
-    {
-      muted: boolean
-      soloed: boolean
-      pan: number
-      volume: number
-      elapsed: number
-      duration: number
-    }
-  >
->({})
+import { trackStates } from '../stateManager';
+
 // Playback state
 const playbackState = reactive({
   isPlaying: false,
@@ -107,6 +96,7 @@ const logAutomationEvent = (type: string, track: string, value: any) => {
         value: Math.round(value * 1000) / 1000, // Reduce precision to 3 decimal places
       });
 
+
       console.log(`🎬 Recorded ${correctedType} change on ${track}: ${value} at ${currentTime}s`);
     }
   }
@@ -119,7 +109,7 @@ const lastAppliedVolume: Record<string, number> = {};
 const applyLatestAutomationState = (currentTime: number) => {
   console.log(`🎯 Applying automation state at ${currentTime}s`);
 
-  const latestState: Record<string, { volume?: number; pan?: number; muted?: boolean; soloed?: boolean }> = {};
+  const latestState: Record<string, { volume?: number; pan?: number; muted?: boolean; soloed?: boolean; reverb?: number }> = {};  // ✅ Added 'reverb'
 
   // Find the most recent automation states for each track up to the current time
   recording.value.forEach(({ time, type, track, value }) => {
@@ -128,6 +118,8 @@ const applyLatestAutomationState = (currentTime: number) => {
       latestState[track][type] = value;
     }
   });
+
+
 
   // Apply the last known state for each track, filtering out insignificant changes
   Object.entries(latestState).forEach(([track, state]) => {
@@ -163,6 +155,21 @@ const applyLatestAutomationState = (currentTime: number) => {
       console.log(`🎵 Applying soloed state: ${track} -> ${state.soloed}`);
       setSoloState(track, state.soloed);
     }
+
+    if (state.reverb !== undefined) {
+      console.log(`🔊 Applying reverb state: ${track} -> ${state.reverb}`);
+      const currentTrack = trackStates[track];
+
+      if (currentTrack.wetGainNode && currentTrack.dryGainNode) {
+        currentTrack.wetGainNode.gain.setTargetAtTime(state.reverb, context.currentTime, 0.05);
+        currentTrack.dryGainNode.gain.setTargetAtTime(1 - state.reverb, context.currentTime, 0.05);
+
+        // ✅ Update the global trackStates to notify Vue of changes
+        currentTrack.reverbLevel = state.reverb;  // Manually store the reverb level
+      }
+    }
+
+
   });
 
   console.log(`✅ Automation applied at ${currentTime}s`);
@@ -183,7 +190,6 @@ const startRecording = () => {
 
 const clearRecording = () => {
   recording.value = [];
-
 };
 
 
@@ -248,6 +254,8 @@ const preloadMP3s = async () => {
         volume: 0.8,
         elapsed: 0,
         duration: audioBuffer.duration,
+        wetGainNode: undefined, // ✅ Added for reverb
+        dryGainNode: undefined // ✅ Added for reverb
       }
 
       logInitialState(label, "volume")
@@ -269,7 +277,6 @@ const preloadMP3s = async () => {
 
 const logInitialState = (track: string, type: string) => {
 
-console.log(track, type);
   if(isRecording.value){
     return;
   }
@@ -361,6 +368,15 @@ const rescheduleAutomation = (currentTime: number) => {
           setMuteState(track, value);
         } else if (type === "soloed") {
           setSoloState(track, value);
+        } else if (type === "reverb") {
+          const currentTrack = trackStates[track];
+          if (currentTrack.wetGainNode && currentTrack.dryGainNode) {
+            currentTrack.wetGainNode.gain.value = value;
+            currentTrack.dryGainNode.gain.value = 1 - value;
+
+            // ✅ Update the state for Vue's reactivity
+            currentTrack.reverbLevel = value;
+          }
         }
       }
     });
@@ -629,13 +645,9 @@ onUnmounted(() => {
 
   <div class="vue-audio-mixer-container-mask">
 
-    {{ recording }}
-
-
 
 
   <div class="vue-audio-mixer-mixer-container" :style="mixerContainerWidth">
-
     <Loader :progress="loadingState.progress" v-if="loadingState.isLoading" />
 
     <h1 class="vue-audio-mixer-mixer-title" v-if="!loadingState.isLoading">Simple Joy</h1>
@@ -656,6 +668,7 @@ onUnmounted(() => {
           @solo="setSoloState(file.label, $event)"
           @updateTrackPan="updateTrackPan(file.label, $event)"
           @updateTrackVolume="updateTrackVolume(file.label, $event)"
+          @effectChange="(data) => logAutomationEvent(data.type, file.label, data.value)"
 
         />
 

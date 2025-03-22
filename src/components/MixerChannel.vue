@@ -11,7 +11,7 @@ import {
 import Knob from './Knob.vue'
 import ReverbEffect from './ReverbEffect.vue'
 
-const emit = defineEmits(['mute', 'solo', 'updateTrackPan', 'updateTrackVolume', 'effectEnabled'])
+const emit = defineEmits(['mute', 'solo', 'updateTrackPan', 'updateTrackVolume', 'effectEnabled', 'effectChange'])
 
 const isDragging = ref(false)
 const faderTrackRef = ref<HTMLElement | null>(null)
@@ -314,6 +314,9 @@ const drawVolumeMonitors = () => {
         <ReverbEffect
           :context="context"
           :analyserNodes="analyserNodes"
+          :label="label"
+          @reverbChange="(value) => emit('effectChange', { type: 'reverb', value })"
+
         />
       </div>
       <div class="vue-audio-mixer-bus-control" v-if="!master">
