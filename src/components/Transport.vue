@@ -1,322 +1,233 @@
 <script setup lang="ts">
-import { ref, reactive, onMounted, onUnmounted, defineProps, watch, defineEmits, computed, nextTick } from 'vue'
+import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
 
-const props = defineProps<{
-  masterState: {
-    duration: number
-    elapsed: number
-  }
-  context: AudioContext
-  audioBuffers: Record<string, AudioBuffer>
-  trackStates: Record<
-    string,
-    {
-      audible: boolean
-      gain: number
-      pan: number
+const props = withDefaults(
+  defineProps<{
+    masterState: {
+      duration: number
+      elapsed: number
     }
-  >
-}>()
-
-const waveformWidth = ref(500); // Default width
-const waveformCanvasContainer = ref<HTMLDivElement | null>(null);
-
-let resizeObserver: ResizeObserver | null = null;
-
-const updateWaveformWidth = () => {
-  nextTick(() => {
-    waveformWidth.value = waveformCanvasContainer.value?.clientWidth || 500;
-    preComputedWaveform(); // Update precomputed waveform whenever the width changes
-  });
-};
-
-const updateWindowSize = () => {
-  windowWidth.value = window.innerWidth;
-  windowHeight.value = window.innerHeight;
-};
-
-const windowWidth = ref(window.innerWidth);
-const windowHeight = ref(window.innerHeight);
-
-const emit = defineEmits(['seek'])
-
-watch(
-  () => props.masterState.elapsed,
-  () => {
-    drawWaveform()
-  },
+    audioBuffers: Record<string, AudioBuffer>
+    trackStates: Record<string, { audible: boolean; gain: number }>
+    showTotalTime?: boolean
+    /** Only used to redraw when the theme's colours change. */
+    theme?: string
+  }>(),
+  { showTotalTime: true },
 )
 
-// Redraw when mix levels change while paused
-watch(() => props.trackStates, () => drawWaveform())
+const emit = defineEmits<{
+  seek: [fraction: number]
+}>()
 
-// Recompute when tracks are added, removed or reloaded
-watch(() => props.audioBuffers, () => updateWaveformWidth())
+const HEIGHT = 56 // CSS pixels
+const KEY_SEEK_SECONDS = 5
 
-const waveformCanvas = ref<HTMLCanvasElement | null>(null)
+const container = ref<HTMLDivElement | null>(null)
+const canvas = ref<HTMLCanvasElement | null>(null)
+const cssWidth = ref(0)
 
+// While scrubbing, the playhead follows the pointer and playback only jumps on
+// release, so audio isn't restarted on every pointer move
+const scrubFraction = ref<number | null>(null)
 
-const waveforms = reactive<Record<string, number[]>>({})
+const displayElapsed = computed(() =>
+  scrubFraction.value === null ? props.masterState.elapsed : scrubFraction.value * props.masterState.duration,
+)
 
+// Average level per device pixel column for each track, computed once per size or track change
+let peaks: Record<string, Float32Array> = {}
 
-
-const drawWaveform = () => {
-  const canvas = waveformCanvas.value
-
-  if (!canvas) return
-
-  const ctx = canvas.getContext('2d')
-
-  if (!ctx) return
-
-  if (canvas === null) return
-
-  canvas.width = waveformWidth.value ?? 0
-
-  const canvasWidth = waveformCanvasContainer.value?.clientWidth || 0
-  const canvasHeight = canvas.height
-  const midY = canvasHeight / 2
-
-  const combinedData: number[] = new Array(canvasWidth).fill(0)
-  let totalWeight = 0
-
-  // Combine precomputed waveform data with real-time adjustments
-  Object.entries(waveforms).forEach(([label, waveform]) => {
-    const state = props.trackStates[label]
-    if (!state || !state.audible) return
-
-    for (let i = 0; i < waveform.length; i++) {
-      const adjustedAmplitude =
-        waveform[i] * state.gain * (state.pan === 0 ? 1 : 1 - Math.abs(state.pan))
-      combinedData[i] += adjustedAmplitude
-    }
-
-    totalWeight++
-  })
-
-  // Normalize the combined waveform
-  if (totalWeight > 0) {
-    for (let i = 0; i < combinedData.length; i++) {
-      combinedData[i] /= totalWeight
+const computePeaks = () => {
+  const columns = Math.round(cssWidth.value * devicePixelRatio)
+  const next: Record<string, Float32Array> = {}
+  if (columns > 0) {
+    for (const [id, buffer] of Object.entries(props.audioBuffers)) {
+      // Columns cover the longest track, so shorter tracks end early rather than stretch
+      const samplesPerColumn = (props.masterState.duration * buffer.sampleRate) / columns
+      const channels = Array.from({ length: buffer.numberOfChannels }, (_, i) => buffer.getChannelData(i))
+      const levels = new Float32Array(columns)
+      for (let column = 0; column < columns; column++) {
+        const start = Math.floor(column * samplesPerColumn)
+        const end = Math.min(Math.floor((column + 1) * samplesPerColumn), buffer.length)
+        if (start >= end) break
+        let sum = 0
+        for (const data of channels) for (let i = start; i < end; i++) sum += Math.abs(data[i])
+        levels[column] = sum / ((end - start) * channels.length)
+      }
+      next[id] = levels
     }
   }
-
-  // Find the maximum amplitude
-  const maxAmplitude = Math.max(...combinedData)
-
-  // Scale the waveform to take up the full height of the canvas
-  const normalizedData = combinedData.map((value) => (value / maxAmplitude) * canvasHeight)
-
-  // Clear the canvas
-  ctx.clearRect(0, 0, canvasWidth, canvasHeight)
-
-  // Create a gradient
-  const gradient = ctx.createLinearGradient(0, 0, canvasWidth, 0)
-
-  gradient.addColorStop(0, '#2275E8') // Start color
-
-  gradient.addColorStop(0.5, '#00D6FD') // Start color
-  //  gradient.addColorStop(0.5, '#00FF7F') // Middle color
-  gradient.addColorStop(1, '#0995FF') // End color
-
-  ctx.fillStyle = gradient
-
-  // Draw the normalized waveform
-  normalizedData.forEach((value, index) => {
-    const x = index
-    const y = midY - value / 2 // Center the waveform vertically
-    const height = value
-
-    const progressX = (props.masterState.elapsed / props.masterState.duration) * canvasWidth
-
-    // Highlight progress with a different gradient
-    if (x < progressX) {
-      const progressGradient = ctx.createLinearGradient(0, 0, canvasWidth, 0)
-      progressGradient.addColorStop(0, '#193CF0') // Start color
-      progressGradient.addColorStop(0.5, '#0077FD') // Start color
-      progressGradient.addColorStop(1, '#0332FF') // End color
-
-      // progressGradient.addColorStop(0, '#0044CC') // Start color for progress
-      //progressGradient.addColorStop(0.5, '#00CC88') // Middle color for progress
-      //progressGradient.addColorStop(1, '#00CC88') // End color for progress
-      ctx.fillStyle = progressGradient
-    } else {
-      ctx.fillStyle = gradient
-    }
-
-    ctx.fillRect(x, y, 1, height)
-  })
+  peaks = next
+  draw()
 }
 
-const preComputedWaveform = () => {
-  const width = waveformCanvasContainer.value?.clientWidth
+const draw = () => {
+  const el = canvas.value
+  const ctx = el?.getContext('2d')
+  if (!el || !ctx) return
 
-  if (width === undefined) return
+  const ratio = devicePixelRatio
+  const width = Math.round(cssWidth.value * ratio)
+  const height = Math.round(HEIGHT * ratio)
+  if (el.width !== width) el.width = width
+  if (el.height !== height) el.height = height
+  ctx.clearRect(0, 0, width, height)
 
-  if (waveformCanvas.value === null) return
-
-  waveformCanvas.value.width = width
-
-  for (const [label, audioBuffer] of Object.entries(props.audioBuffers)) {
-    // Precompute waveform
-    const leftChannel = audioBuffer.getChannelData(0)
-    const rightChannel = audioBuffer.getChannelData(1) || new Float32Array(leftChannel.length)
-    const samplesPerPixel = Math.floor(leftChannel.length / (waveformCanvas.value?.width || 1))
-
-    const waveform = Array.from({ length: waveformCanvas.value?.width || 0 }, (_, i) => {
-      const start = i * samplesPerPixel
-      const end = start + samplesPerPixel
-
-      const leftSegment = leftChannel.slice(start, end)
-      const rightSegment = rightChannel.slice(start, end)
-
-      const avgLeft =
-        leftSegment.reduce((sum, value) => sum + Math.abs(value), 0) / leftSegment.length
-      const avgRight =
-        rightSegment.reduce((sum, value) => sum + Math.abs(value), 0) / rightSegment.length
-
-      return (avgLeft + avgRight) / 2 // Average the two channels
-    })
-
-    waveforms[label] = waveform
+  // Only audible tracks shape the waveform, weighted by their current gain
+  const combined = new Float32Array(width)
+  for (const [id, levels] of Object.entries(peaks)) {
+    const state = props.trackStates[id]
+    if (!state?.audible) continue
+    for (let x = 0; x < width && x < levels.length; x++) combined[x] += levels[x] * state.gain
   }
-  nextTick(() => {
-    drawWaveform()
+  const loudest = combined.reduce((max, value) => Math.max(max, value), 0)
+  if (loudest === 0) return
+
+  // Canvas can't use CSS variables directly, so read the theme's colours
+  const style = getComputedStyle(el)
+  const unplayed = style.getPropertyValue('--vam-waveform').trim() || '#3a3a3e'
+  const played = style.getPropertyValue('--vam-waveform-played').trim() || '#e8c547'
+
+  const playheadX = props.masterState.duration ? (displayElapsed.value / props.masterState.duration) * width : 0
+  const middle = height / 2
+  for (let x = 0; x < width; x++) {
+    const barHeight = Math.max((combined[x] / loudest) * height * 0.9, ratio)
+    ctx.fillStyle = x < playheadX ? played : unplayed
+    ctx.fillRect(x, middle - barHeight / 2, 1, barHeight)
+  }
+}
+
+// Draw after the DOM updates, so colours from a theme change in the same tick are picked up
+watch([displayElapsed, () => props.trackStates, () => props.theme], draw, { flush: 'post' })
+watch(() => props.audioBuffers, computePeaks, { flush: 'post' })
+
+let resizeObserver: ResizeObserver | null = null
+
+onMounted(() => {
+  resizeObserver = new ResizeObserver(([entry]) => {
+    const width = entry.contentRect.width
+    if (width === cssWidth.value) return
+    cssWidth.value = width
+    computePeaks()
   })
+  if (container.value) resizeObserver.observe(container.value)
+})
+
+onUnmounted(() => resizeObserver?.disconnect())
+
+// Scrubbing. Pointer events cover mouse, touch and pen; capture keeps the drag
+// going when the pointer leaves the waveform.
+
+const fractionAt = (event: PointerEvent) => {
+  const rect = canvas.value!.getBoundingClientRect()
+  return Math.min(Math.max((event.clientX - rect.left) / rect.width, 0), 1)
 }
 
-const handleSeek = (event: MouseEvent) => {
-  const canvas = waveformCanvas.value
-  if (!canvas) return
-
-  const rect = canvas.getBoundingClientRect()
-  const clickX = event.clientX - rect.left
-  const cssWidth = rect.width
-  const logicalWidth = canvas.width
-
-  const logicalClickX = (clickX / cssWidth) * logicalWidth
-
-  const percentage = logicalClickX / logicalWidth
-  emit('seek', percentage)
+const onScrubStart = (event: PointerEvent) => {
+  if (event.button !== 0) return
+  canvas.value?.setPointerCapture(event.pointerId)
+  scrubFraction.value = fractionAt(event)
 }
 
-// Format time as MM:SS:ms
-const formatTime = (seconds: number): string => {
+const onScrubMove = (event: PointerEvent) => {
+  if (scrubFraction.value !== null) scrubFraction.value = fractionAt(event)
+}
+
+const onScrubEnd = (event: PointerEvent) => {
+  if (scrubFraction.value === null) return
+  emit('seek', fractionAt(event))
+  scrubFraction.value = null
+}
+
+const onScrubCancel = () => {
+  scrubFraction.value = null
+}
+
+const onKeyDown = (event: KeyboardEvent) => {
+  const { duration, elapsed } = props.masterState
+  if (!duration) return
+  const steps: Record<string, number> = { ArrowRight: 1, ArrowUp: 1, ArrowLeft: -1, ArrowDown: -1 }
+  if (event.key === 'Home') emit('seek', 0)
+  else if (event.key in steps) emit('seek', (elapsed + steps[event.key] * KEY_SEEK_SECONDS) / duration)
+  else return
+  event.preventDefault()
+}
+
+// mm:ss.mmm
+const formatTime = (seconds: number) => {
   const mins = Math.floor(seconds / 60)
   const secs = Math.floor(seconds % 60)
   const ms = Math.floor((seconds % 1) * 1000)
-  return [
-    mins.toString().padStart(2, '0'),
-    secs.toString().padStart(2, '0'),
-    ms.toString().padStart(3, '0'),
-  ].join(':')
+  return `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}.${String(ms).padStart(3, '0')}`
 }
-
-onUnmounted(() => {
-  if (resizeObserver && waveformCanvasContainer.value) {
-    resizeObserver.unobserve(waveformCanvasContainer.value);
-  }
-});
-
-
-onMounted(() => {
-  const maxRetries = 10 // Maximum number of retries
-  let attempts = 0
-
-
-
-
-  const ensureContainerIsReady = () => {
-    attempts++
-
-    if (waveformCanvasContainer.value) {
-
-
-      if (waveformCanvasContainer.value) {
-        // Initialize the ResizeObserver
-        resizeObserver = new ResizeObserver(() => {
-          updateWaveformWidth();
-        });
-
-        // Observe the container element
-        resizeObserver.observe(waveformCanvasContainer.value);
-      }
-
-
-
-    } else if (attempts < maxRetries) {
-      setTimeout(ensureContainerIsReady, 500) // Retry after 50ms
-    } else {
-      console.warn('waveformCanvasContainer is not ready after max retries.')
-    }
-  }
-
-  ensureContainerIsReady()
-})
 </script>
 
 <template>
-  <div class="vue-audio-mixer-master-transport" ref="waveformCanvasContainer">
-    <p class="vue-audio-mixer-master-time">
-      {{ formatTime(masterState.elapsed || 0) }} /
-      {{ formatTime(masterState.duration || 0) }}
-    </p>
-    <canvas
-      ref="waveformCanvas"
-      :width="waveformWidth"
-      height="80"
-      class="vue-audio-mixer-waveform-canvas"
-      @click="handleSeek"
-    ></canvas>
+  <div class="vue-audio-mixer-timeline">
+    <div class="vue-audio-mixer-time">
+      <span class="vue-audio-mixer-time-now">{{ formatTime(displayElapsed || 0) }}</span>
+      <span v-if="showTotalTime" class="vue-audio-mixer-time-total"> / {{ formatTime(masterState.duration || 0) }}</span>
+    </div>
+    <div ref="container" class="vue-audio-mixer-waveform">
+      <canvas
+        ref="canvas"
+        role="slider"
+        tabindex="0"
+        aria-label="Playback position"
+        aria-valuemin="0"
+        :aria-valuemax="Math.round(masterState.duration)"
+        :aria-valuenow="Math.round(displayElapsed)"
+        :aria-valuetext="formatTime(displayElapsed || 0)"
+        @pointerdown="onScrubStart"
+        @pointermove="onScrubMove"
+        @pointerup="onScrubEnd"
+        @pointercancel="onScrubCancel"
+        @keydown="onKeyDown"
+      ></canvas>
+    </div>
   </div>
 </template>
 
-<style scoped>
-@import url('https://fonts.googleapis.com/css2?family=Anonymous+Pro:ital,wght@0,400;0,700;1,400;1,700&display=swap');
-
-p{
-  margin: 0;
-}
-
-button{
-  margin: 0;
-  font-family: 'Raleway', 'Helvetica Neue', 'Helvetica', 'Arial', sans-serif;
-  font-size: 1rem;
-  line-height: 1rem;
-}
-
-.vue-audio-mixer-master-transport {
+<style lang="scss" scoped>
+.vue-audio-mixer-timeline {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
   width: 100%;
-  font-family: 'Anonymous Pro', serif;
-  font-weight: 400;
-  font-style: normal;
 }
-.vue-audio-mixer-master-time {
-  text-align: center;
+
+.vue-audio-mixer-time {
+  font-family: var(--vam-font-mono);
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+}
+
+.vue-audio-mixer-time-now {
+  color: var(--vam-text-strong);
+}
+
+.vue-audio-mixer-time-total {
+  color: var(--vam-text-muted);
+}
+
+.vue-audio-mixer-waveform {
   width: 100%;
-  margin-bottom: 1rem;
-}
-.vue-audio-mixer-anonymous-pro-regular {
-  font-family: 'Anonymous Pro', serif;
-  font-weight: 400;
-  font-style: normal;
-}
+  // The canvas's pixel size mustn't set the mixer's width; the channel strips do
+  contain: inline-size;
 
-.vue-audio-mixer-anonymous-pro-bold {
-  font-family: 'Anonymous Pro', serif;
-  font-weight: 700;
-  font-style: normal;
-}
+  canvas {
+    display: block;
+    width: 100%;
+    height: 56px;
+    border-radius: 4px;
+    cursor: pointer;
+    touch-action: none; // let touch drags scrub instead of scrolling the page
 
-.vue-audio-mixer-anonymous-pro-regular-italic {
-  font-family: 'Anonymous Pro', serif;
-  font-weight: 400;
-  font-style: italic;
-}
-
-.vue-audio-mixer-anonymous-pro-bold-italic {
-  font-family: 'Anonymous Pro', serif;
-  font-weight: 700;
-  font-style: italic;
+    &:focus-visible {
+      outline: 2px solid var(--vam-accent);
+      outline-offset: 2px;
+    }
+  }
 }
 </style>

@@ -8,6 +8,7 @@ pnpm-debug.log*
 lerna-debug.log*
 
 /tracks
+/public/tracks
 
 node_modules
 .DS_Store

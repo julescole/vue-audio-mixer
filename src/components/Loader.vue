@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import { defineProps, ref, watch } from 'vue';
+import { defineProps, onUnmounted, ref, watch } from 'vue';
 
 const props = defineProps<{
   progress: number;
@@ -7,13 +7,15 @@ const props = defineProps<{
 
 // Create a reactive property for the animated progress
 const animatedProgress = ref(0);
+let interval: ReturnType<typeof setInterval> | undefined;
 
 // Watch the `progress` prop for changes
 watch(
   () => props.progress,
-  (newVal, oldVal) => {
+  (newVal) => {
     const stepTime = 15; // Time in ms for each increment
-    const interval = setInterval(() => {
+    clearInterval(interval); // Only one animation at a time
+    interval = setInterval(() => {
       if (animatedProgress.value < newVal) {
         animatedProgress.value++; // Increment up
       } else if (animatedProgress.value > newVal) {
@@ -29,6 +31,8 @@ watch(
   },
   { immediate: true } // Start watching immediately
 );
+
+onUnmounted(() => clearInterval(interval));
 </script>
 
 <template>
@@ -59,8 +63,9 @@ $loader_offset: 1570; // (2 x pie x r = 250 (from svg))
   text-align: center;
   top: 65px;
   position: relative;
-  font-size: 1rem;
-  color: #fff;
+  font-family: var(--vam-font-mono);
+  font-size: 13px;
+  color: var(--vam-text-muted);
 }
 
 .vue-audio-mixer-ajax-loader {
@@ -88,8 +93,8 @@ circle {
   top: 0;
   width: 100%;
   height: 100%;
-  animation: ajaxLoaderColors ($loader_duration * 4) ease-in-out infinite,
-    ajaxLoaderDash $loader_duration ease-in-out infinite;
+  animation: ajaxLoaderDash $loader_duration ease-in-out infinite;
+  stroke: var(--vam-accent);
   stroke-dasharray: $loader_offset;
   stroke-width: 19;
   fill: none;
@@ -105,24 +110,6 @@ circle {
   }
 }
 
-@keyframes ajaxLoaderColors {
-  0% {
-    stroke: #2275e8;
-  }
-  25% {
-    stroke: #00d6fd;
-  }
-  50% {
-    stroke: #0995ff;
-  }
-  75% {
-    stroke: #2275e8;
-  }
-  100% {
-    stroke: #00d6fd;
-  }
-}
-
 @keyframes ajaxLoaderDash {
   0% {
     stroke-dashoffset: $loader_offset;
@@ -135,19 +122,7 @@ circle {
   }
 }
 
-p{
-  margin: 0 !important;
-  font-family: 'Anonymous Pro', serif;
-  font-weight: 600;
 
-}
-
-button{
-  margin: 0;
-  font-family: 'Raleway', 'Helvetica Neue', 'Helvetica', 'Arial', sans-serif;
-  font-size: 1rem;
-  line-height: 1rem;
-}
 
 @keyframes ajaxLoaderDashSpin {
   0% {

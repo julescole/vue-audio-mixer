@@ -1,5 +1,5 @@
-/** Highest gain a fader can reach (+6 dB). 1 is unity. */
-export const GAIN_MAX = 2
+/** Highest gain a fader can reach (+12 dB, about 3.98). 1 is unity. */
+export const GAIN_MAX = 10 ** (12 / 20)
 
 export type AudioSource = string | Blob | AudioBuffer
 
@@ -24,7 +24,7 @@ export interface TrackConfig {
   src: AudioSource
   /** Display label. Defaults to `id`. */
   name?: string
-  /** Linear gain, 0 to GAIN_MAX. 1 is unity. Default 1. */
+  /** Linear gain, 0 to GAIN_MAX (+12 dB). 1 is unity. Default 1. */
   gain?: number
   /** -1 (left) to 1 (right). Default 0. */
   pan?: number
@@ -97,6 +97,10 @@ const isFiniteNumber = (value: unknown): value is number =>
 
 const clamp = (value: number, [min, max]: Range) => Math.min(max, Math.max(min, value))
 
+// Keeps messages readable when a range limit is irrational, e.g. GAIN_MAX
+const formatLimit = (value: number) => String(Number(value.toFixed(2)))
+const formatRange = ([min, max]: Range) => `${formatLimit(min)} to ${formatLimit(max)}`
+
 const readNumber = (
   value: unknown,
   fallback: number,
@@ -110,7 +114,7 @@ const readNumber = (
     return fallback
   }
   const clamped = clamp(value, range)
-  if (clamped !== value) issues.push(`${path} is outside ${range[0]} to ${range[1]}; clamped to ${clamped}`)
+  if (clamped !== value) issues.push(`${path} is outside ${formatRange(range)}; clamped to ${formatLimit(clamped)}`)
   return clamped
 }
 
@@ -167,7 +171,7 @@ const readLane = (
       issues.push(`${pointPath} value must be a number; point dropped`)
     } else {
       const clamped = clamp(point[1], kind)
-      if (clamped !== point[1]) issues.push(`${pointPath} value is outside ${kind[0]} to ${kind[1]}; clamped`)
+      if (clamped !== point[1]) issues.push(`${pointPath} value is outside ${formatRange(kind)}; clamped`)
       points.push([point[0], clamped])
     }
   })

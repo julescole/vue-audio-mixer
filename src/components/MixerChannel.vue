@@ -1,133 +1,12 @@
 <script setup lang="ts">
-import {
-  ref,
-  reactive,
-  onMounted,
-  defineProps,
-  defineEmits,
-  computed,
-} from 'vue'
+import { computed, onMounted, onUnmounted, ref } from 'vue'
 
 import Knob from './Knob.vue'
 import ReverbEffect from './ReverbEffect.vue'
-import { faderToGain, gainToFader } from '../fader'
-
-const emit = defineEmits(['mute', 'solo', 'updateTrackPan', 'updateTrackGain', 'updateTrackReverb'])
-
-const isDragging = ref(false)
-const faderTrackRef = ref<HTMLElement | null>(null)
-const volumeCanvas = ref<HTMLCanvasElement | null>(null)
-
-// Calculate the fader's position based on volume
-const faderStyle = computed(() => {
-  if (!faderTrackRef.value) return {} // If the track is not yet mounted, return an empty style
-
-  const trackHeight = faderTrackRef.value.clientHeight // Get the height of the fader track
-  const faderHeight = 60 // Height of the fader itself (in px, matching the CSS)
-
-  // Calculate the position in pixels based on gain
-  const position = (1 - gainToFader(props.trackState.gain)) * (trackHeight - faderHeight) // Scale position within the track
-
-  return {
-    transform: `translate( -50%,${position}px)`,
-  }
-})
-
-// Start dragging (mouse or touch)
-const startFaderDrag = (event: MouseEvent | TouchEvent) => {
-  isDragging.value = true;
-
-  if (event instanceof TouchEvent) {
-    updateVolume(event.touches[0]); // Use the first touch point
-  } else {
-    updateVolume(event);
-  }
-
-  // Add both mouse and touch event listeners
-  window.addEventListener("mousemove", onMove);
-  window.addEventListener("mouseup", stopFaderDrag);
-  window.addEventListener("touchmove", onMove, { passive: false });
-  window.addEventListener("touchend", stopFaderDrag);
-};
-
-// Stop dragging (mouse or touch)
-const stopFaderDrag = () => {
-  isDragging.value = false;
-
-  // Remove both mouse and touch event listeners
-  window.removeEventListener("mousemove", onMove);
-  window.removeEventListener("mouseup", stopFaderDrag);
-  window.removeEventListener("touchmove", onMove);
-  window.removeEventListener("touchend", stopFaderDrag);
-};
-
-// Handle movement (mouse or touch)
-const onMove = (event: MouseEvent | TouchEvent) => {
-  if (event instanceof TouchEvent) {
-    event.preventDefault(); // Prevent page scrolling
-    updateVolume(event.touches[0]); // Use the first touch point
-  } else {
-    updateVolume(event);
-  }
-};
-
-
-// Update volume based on mouse or touch position
-const updateVolume = (event: { clientY: number }) => {
-  const faderTrack = faderTrackRef.value;
-  if (!faderTrack) return;
-
-  updateVolumeCanvasHeight();
-
-  const vc = volumeCanvas.value;
-  if (!vc) return;
-  vc.height = faderTrack.clientHeight;
-
-  const trackHeight = faderTrack.clientHeight;
-  const trackTop = faderTrack.getBoundingClientRect().top;
-
-  // Calculate touch/mouse position clamped between 0 and trackHeight
-  const pointerY = Math.min(Math.max(event.clientY - trackTop, 0), trackHeight);
-
-  // Map touch/mouse position to fader travel (0 to 1), then to gain
-  emit("updateTrackGain", faderToGain(1 - pointerY / trackHeight));
-};
-
-const updateVolumeCanvasHeight = () => {
-  const faderTrack = faderTrackRef.value
-  const vc = volumeCanvas.value
-
-  if (!faderTrack || !vc) return // Ensure both references exist
-
-  vc.height = faderTrack.clientHeight // Now it's safe to access `height`
-}
-
-
-const updateKnobRotation = (rotation: number) => {
-  emit('updateTrackPan', rotation) // Emit the updated volume
-}
-
-
-
-///////
-
-// Clear volume monitors
-if (volumeCanvas.value) {
-  const ctx = volumeCanvas.value.getContext('2d')
-  if (ctx) ctx.clearRect(0, 0, volumeCanvas.value.width, volumeCanvas.value.height)
-}
+import { FADER_SCALE, dbToPosition, formatDb, gainToDb, gainToPosition, positionToGain, dbToGain } from '../fader'
 
 const props = withDefaults(
   defineProps<{
-    master?: boolean // Mark as optional
-    analyserNodes: {
-      left: AnalyserNode
-      right: AnalyserNode
-    }
-    playbackState?: {
-      isPlaying: boolean
-      soloActive: boolean
-    }
     label: string
     trackState: {
       gain: number
@@ -136,497 +15,423 @@ const props = withDefaults(
       soloed?: boolean
       reverb?: number
     }
+    analyserNodes: {
+      left: AnalyserNode
+      right: AnalyserNode
+    }
+    master?: boolean
+    showPan?: boolean
   }>(),
   {
-    master: false, // Provide default value
+    master: false,
+    showPan: true,
   },
 )
 
-onMounted(() => {
-  drawVolumeMonitors()
-  updateVolumeCanvasHeight()
-})
+const emit = defineEmits<{
+  mute: [muted: boolean]
+  solo: [soloed: boolean]
+  updateTrackPan: [pan: number]
+  updateTrackGain: [gain: number]
+  updateTrackReverb: [level: number]
+}>()
 
-const volumeMonitorPeak = reactive({
-  left: 0,
-  right: 0,
-  leftColor: 'green',
-  rightColor: 'green',
-})
+// Fader
 
-const drawVolumeMonitors = () => {
-  const decayRate = 0.005 // Controls the rate at which peaks fall
+const faderRef = ref<HTMLElement | null>(null)
+const capPosition = computed(() => gainToPosition(props.trackState.gain))
+const db = computed(() => gainToDb(props.trackState.gain))
 
-  const getGradientColor = (
-    ctx: CanvasRenderingContext2D,
-    gradient: CanvasGradient,
-    y: number,
-    height: number,
-  ) => {
-    const tempCanvas = document.createElement('canvas')
-    tempCanvas.width = 1
-    tempCanvas.height = height
+let draggingFader = false
 
-    const tempCtx = tempCanvas.getContext('2d')
-    if (!tempCtx) return 'white'
-
-    tempCtx.fillStyle = gradient
-    tempCtx.fillRect(0, 0, 1, height)
-
-    const pixelData = tempCtx.getImageData(0, y, 1, 1).data
-    return `rgb(${pixelData[0]}, ${pixelData[1]}, ${pixelData[2]})`
-  }
-
-  // Draw individual track volume monitors
-
-  const left = props.analyserNodes.left
-  const right = props.analyserNodes.right
-  const canvas = volumeCanvas.value
-
-  if (!canvas) return
-
-  const ctx = canvas.getContext('2d')
-  if (!ctx) return
-
-  const leftData = new Uint8Array(left.fftSize)
-  const rightData = new Uint8Array(right.fftSize)
-  left.getByteFrequencyData(leftData)
-  right.getByteFrequencyData(rightData)
-
-  const calculateRMS = (data: Uint8Array) =>
-    Math.sqrt(data.reduce((sum, value) => sum + value * value, 0) / data.length)
-
-  const normalizedLeft = Math.min(Math.max(calculateRMS(leftData) / 128, 0), 1)
-  const normalizedRight = Math.min(Math.max(calculateRMS(rightData) / 128, 0), 1)
-
-  ctx.clearRect(0, 0, canvas.width, canvas.height)
-
-  const gradient = ctx.createLinearGradient(0, canvas.height, 0, 0)
-  gradient.addColorStop(0, 'green')
-  gradient.addColorStop(0.5, 'yellow')
-  gradient.addColorStop(1, 'red')
-
-  const barWidth = canvas.width / 2 - 5
-
-  // Update peaks and colors
-  if (normalizedLeft > volumeMonitorPeak.left) {
-    volumeMonitorPeak.left = normalizedLeft
-    const peakY = canvas.height * (1 - normalizedLeft) - 1
-    volumeMonitorPeak.leftColor = getGradientColor(ctx, gradient, peakY, canvas.height)
-  } else {
-    volumeMonitorPeak.left = Math.max(0, volumeMonitorPeak.left - decayRate)
-  }
-
-  if (normalizedRight > volumeMonitorPeak.right) {
-    volumeMonitorPeak.right = normalizedRight
-    const peakY = canvas.height * (1 - normalizedRight) - 1
-    volumeMonitorPeak.rightColor = getGradientColor(ctx, gradient, peakY, canvas.height)
-  } else {
-    volumeMonitorPeak.right = Math.max(0, volumeMonitorPeak.right - decayRate)
-  }
-
-  // Draw left channel bar
-
-  // fill the ctx black to start
-  ctx.fillStyle = 'black'
-  ctx.fillRect(0, 0, barWidth, canvas.height)
-
-  ctx.fillStyle = gradient
-  ctx.fillRect(0, canvas.height * (1 - normalizedLeft), barWidth, canvas.height * normalizedLeft)
-  const barMargin = 5
-  // Draw right channel bar
-
-  // fill the ctx black to start
-  ctx.fillStyle = 'black'
-  ctx.fillRect(barWidth + barMargin, 0, barWidth, canvas.height)
-
-  ctx.fillStyle = gradient
-  ctx.fillRect(
-    barWidth + barMargin,
-    canvas.height * (1 - normalizedRight),
-    barWidth,
-    canvas.height * normalizedRight,
-  )
-
-  // Draw peak indicators with stored colors
-  if (normalizedLeft > 0) {
-    ctx.fillStyle = volumeMonitorPeak.leftColor
-    ctx.fillRect(0, canvas.height * (1 - volumeMonitorPeak.left) - 1, barWidth, 1)
-  }
-
-  if (normalizedRight > 0) {
-    ctx.fillStyle = volumeMonitorPeak.rightColor
-    ctx.fillRect(
-      barWidth + barMargin,
-      canvas.height * (1 - volumeMonitorPeak.right) - 1,
-      barWidth,
-      1,
-    )
-  }
-
-  requestAnimationFrame(drawVolumeMonitors) // Continuously update
+const setFromPointer = (event: PointerEvent) => {
+  const rect = faderRef.value!.getBoundingClientRect()
+  const position = Math.min(Math.max((event.clientY - rect.top) / rect.height, 0), 1)
+  emit('updateTrackGain', positionToGain(position))
 }
+
+const onFaderDown = (event: PointerEvent) => {
+  if (event.button !== 0) return
+  faderRef.value?.setPointerCapture(event.pointerId)
+  draggingFader = true
+  setFromPointer(event)
+}
+
+const onFaderMove = (event: PointerEvent) => {
+  if (draggingFader) setFromPointer(event)
+}
+
+const onFaderUp = () => {
+  draggingFader = false
+}
+
+// Arrow keys move 1 dB; the step below the scale's last mark is silence
+const onFaderKeyDown = (event: KeyboardEvent) => {
+  const lowest = FADER_SCALE[FADER_SCALE.length - 1]
+  const current = db.value === -Infinity ? lowest - 1 : db.value
+  let next: number
+  if (event.key === 'ArrowUp' || event.key === 'ArrowRight') next = Math.max(current + 1, lowest)
+  else if (event.key === 'ArrowDown' || event.key === 'ArrowLeft') next = current - 1
+  else if (event.key === 'Home') next = 0
+  else return
+  event.preventDefault()
+  emit('updateTrackGain', next < lowest ? 0 : Math.min(dbToGain(next), positionToGain(0)))
+}
+
+const scaleLabel = (mark: number, index: number) =>
+  index === FADER_SCALE.length - 1 ? '∞' : String(Math.abs(mark))
+
+// Peak meters: a full-height gradient clipped down to the current level. Levels use
+// the fader's dB scale and fall back slowly, like a hardware meter.
+
+const leftLit = ref<HTMLElement | null>(null)
+const rightLit = ref<HTMLElement | null>(null)
+const METER_FALL_PER_FRAME = 0.012
+
+const buffers = {
+  left: new Float32Array(props.analyserNodes.left.fftSize),
+  right: new Float32Array(props.analyserNodes.right.fftSize),
+}
+const shown = { left: 0, right: 0 }
+
+const peakLevel = (analyser: AnalyserNode, buffer: Float32Array) => {
+  analyser.getFloatTimeDomainData(buffer)
+  let peak = 0
+  for (let i = 0; i < buffer.length; i++) peak = Math.max(peak, Math.abs(buffer[i]))
+  return 1 - dbToPosition(gainToDb(peak))
+}
+
+let meterFrameId: number | null = null
+
+const updateMeters = () => {
+  for (const side of ['left', 'right'] as const) {
+    const level = peakLevel(props.analyserNodes[side], buffers[side])
+    shown[side] = Math.max(level, shown[side] - METER_FALL_PER_FRAME)
+  }
+  if (leftLit.value) leftLit.value.style.clipPath = `inset(${(1 - shown.left) * 100}% 0 0 0)`
+  if (rightLit.value) rightLit.value.style.clipPath = `inset(${(1 - shown.right) * 100}% 0 0 0)`
+  meterFrameId = requestAnimationFrame(updateMeters)
+}
+
+onMounted(updateMeters)
+
+onUnmounted(() => {
+  if (meterFrameId !== null) cancelAnimationFrame(meterFrameId)
+})
 </script>
 
 <template>
-  <div class="vue-audio-mixer-track-controls">
-    <!-- Track Label -->
+  <div class="vue-audio-mixer-strip" :class="{ 'is-master': master }">
+    <div class="vue-audio-mixer-strip-name">{{ label }}</div>
 
-    <div class="vue-audio-mixer-channel" :class="{ master: master }">
-      <Knob
-        :key="label"
-        :rotation="trackState?.pan"
-        :color="'#20CC1E'"
-        :active="true"
-        :style="1"
-        @update:rotation="updateKnobRotation($event)"
-      />
+    <Knob v-if="showPan" :value="trackState.pan" @change="emit('updateTrackPan', $event)" />
 
-       <!-- Effects Section -->
+    <template v-if="!master">
+      <ReverbEffect :modelValue="trackState.reverb ?? 0" @update:modelValue="emit('updateTrackReverb', $event)" />
 
-       <div class="vue-audio-mixer-effect-pannel"  v-if="!master">
-        <ReverbEffect
-          :modelValue="trackState.reverb ?? 0"
-          @update:modelValue="emit('updateTrackReverb', $event)"
-        />
-      </div>
-      <div class="vue-audio-mixer-bus-control" v-if="!master">
-        <!-- Mute and Solo Buttons -->
-
+      <div class="vue-audio-mixer-toggles">
         <button
-          class="vue-audio-mixer-button vue-audio-mixer-button--bus"
-          :class="{ muted: trackState.muted }"
+          type="button"
+          class="vue-audio-mixer-toggle is-mute"
+          :class="{ 'is-on': trackState.muted }"
+          :aria-pressed="trackState.muted"
+          :aria-label="`Mute ${label}`"
           @click="emit('mute', !trackState.muted)"
-          v-if="!master"
         >
           M
         </button>
         <button
-          class="vue-audio-mixer-button vue-audio-mixer-button--bus"
-          :class="{ soloed: trackState.soloed }"
+          type="button"
+          class="vue-audio-mixer-toggle is-solo"
+          :class="{ 'is-on': trackState.soloed }"
+          :aria-pressed="!!trackState.soloed"
+          :aria-label="`Solo ${label}`"
           @click="emit('solo', !trackState.soloed)"
-          v-if="!master"
         >
           S
         </button>
       </div>
-      <div v-else>
-        <div class="vue-audio-mixer-bus-control-master"><div class="vue-audio-mixer-master-spacer">&nbsp;</div></div>
-      </div>
-      <div class="vue-audio-mixer-knob knob--pan"></div>
-      <div class="vue-audio-mixer-slider-value">
-        {{ trackState.gain.toFixed(2) }}
-      </div>
-      <div class="vue-audio-mixer-slider">
-        <div class="vue-audio-mixer-vca">
-          <canvas class="vue-audio-mixer-volume-monitor" width="25" height="150" ref="volumeCanvas"></canvas>
+    </template>
 
-          <div class="vue-audio-mixer-fader-holder">
-            <div class="vue-audio-mixer-fader-track" ref="faderTrackRef"   @touchstart="startFaderDrag"
-            @mousedown="startFaderDrag">
-              <div class="vue-audio-mixer-fader" :style="faderStyle"></div>
-            </div>
-          </div>
-          <div class="vue-audio-mixer-vca__markers">
-            <div>12</div>
-            <div>6</div>
-            <div>0</div>
-            <div>3</div>
-            <div>6</div>
-            <div>9</div>
-            <div>12</div>
-            <div>15</div>
-            <div>18</div>
-            <div>21</div>
-            <div>24</div>
-            <div>30</div>
-            <div>35</div>
-            <div>40</div>
-            <div>45</div>
-            <div>50</div>
-            <div>60</div>
-          </div>
+    <div class="vue-audio-mixer-fader-section">
+      <div class="vue-audio-mixer-meters" aria-hidden="true">
+        <div class="vue-audio-mixer-meter"><div ref="leftLit" class="vue-audio-mixer-meter-lit"></div></div>
+        <div class="vue-audio-mixer-meter"><div ref="rightLit" class="vue-audio-mixer-meter-lit"></div></div>
+      </div>
+
+      <div
+        ref="faderRef"
+        class="vue-audio-mixer-fader"
+        role="slider"
+        tabindex="0"
+        :aria-label="`${label} level`"
+        :aria-valuenow="db === -Infinity ? -100 : Number(db.toFixed(1))"
+        :aria-valuetext="`${formatDb(db)} dB`"
+        @pointerdown="onFaderDown"
+        @pointermove="onFaderMove"
+        @pointerup="onFaderUp"
+        @pointercancel="onFaderUp"
+        @dblclick="emit('updateTrackGain', 1)"
+        @keydown="onFaderKeyDown"
+      >
+        <div class="vue-audio-mixer-fader-track"></div>
+        <div class="vue-audio-mixer-fader-cap" :style="{ top: `${capPosition * 100}%` }">
+          <div class="vue-audio-mixer-fader-cap-line"></div>
         </div>
       </div>
+
+      <div class="vue-audio-mixer-scale" aria-hidden="true">
+        <span v-for="(mark, i) in FADER_SCALE" :key="mark" :class="{ 'is-unity': mark === 0 }">
+          {{ scaleLabel(mark, i) }}
+        </span>
+      </div>
     </div>
-    <span class="vue-audio-mixer-track-label">{{ label }}</span>
+
+    <div class="vue-audio-mixer-db">
+      {{ formatDb(db) }}<span class="vue-audio-mixer-db-unit">dB</span>
+    </div>
   </div>
 </template>
 
 <style lang="scss" scoped>
-////////////////////////////////////
-////////////////////////////////////
-/// VOLUME MONITOR
-///
-///
-* {
-  box-sizing: border-box;
-}
-
-p{
-  margin: 0;
-}
-
-button{
-  margin: 0;
-  font-family: 'Raleway', 'Helvetica Neue', 'Helvetica', 'Arial', sans-serif;
-  font-size: 1rem;
-  line-height: 1rem;
-}
-
-body {
-  text-align: center;
-}
-
-.vue-audio-mixer-track-label{
-  color: #e4e8ea;
-  font-size: 0.8rem;
-  margin-top: 0.5rem;
-  font-family: 'Raleway', 'Helvetica Neue', 'Helvetica', 'Arial', sans-serif;
-}
-
-
-
-
-.vue-audio-mixer-bus-control,
-.vue-audio-mixer-bus-control-master {
+.vue-audio-mixer-strip {
+  width: 100px;
   display: flex;
-  flex-flow: row nowrap;
-  justify-content: center;
-  padding: 0.5rem;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+  padding: 16px 10px 14px;
+  background: var(--vam-strip-bg);
+  border: 1px solid var(--vam-strip-border);
+  border-radius: 12px;
 
-  .vue-audio-mixer-pan-slider {
-    display: flex;
-    flex-flow: column nowrap;
-    justify-content: center;
-    align-items: center;
-    margin-right: 0.5rem;
-    width: 10px;
-  }
-
-  .vue-audio-mixer-button,
-  .vue-audio-mixer-master-spacer {
-    flex: 1 1 25px;
-    text-align: center;
+  &.is-master {
+    width: 112px;
+    margin-left: 8px;
+    background: var(--vam-master-bg);
+    border-color: var(--vam-master-border);
   }
 }
 
-.vue-audio-mixer-master-spacer {
-  padding: 1.2rem;
-}
-.vue-audio-mixer-button {
-  color: #e4e8ea;
-  cursor: pointer;
-  border: none; /* Ensure no border */
-  outline: none !important; /* Remove focus outline */
-  box-shadow: none !important; /* Prevent Safari from adding a focus shadow */
-  -webkit-appearance: none; /* Normalize button appearance on WebKit browsers */
-  appearance: none; /* Ensure consistent appearance */
-  &.muted {
-    color: black;
-    background: #ee2122;
-  }
-  &.soloed {
-    color: black;
-    background: #fefb43;
-  }
-  padding: 0.55rem;
-  border-radius: 2px;
-  background: linear-gradient(to bottom, rgba(79, 79, 79, 1) 0%, rgba(14, 14, 14, 1) 100%);
-  box-shadow: 0px 0px 1px 1px rgba(0, 0, 0, 0.5);
-}
-.vue-audio-mixer-bus-control {
-  .button:first-child {
-    margin-right: 0.25rem;
+.vue-audio-mixer-strip-name {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--vam-strip-name);
+  text-transform: capitalize;
+
+  .is-master & {
+    font-weight: 600;
+    color: var(--vam-text-strong);
   }
 }
-.vue-audio-mixer-slider-value {
-  display: flex;
-  flex-flow: row nowrap;
-  justify-content: center;
-}
-.vue-audio-mixer-slider-value__wrap {
-  min-width: 24px;
-  width: 80%;
-  padding: 0.25rem;
-  border-radius: 2px;
-  color: #1fcc1f;
-  background: #333;
-  box-shadow: inset 0 0 3px 3px rgba(0, 0, 0, 0.5);
-  font-family: 'VT323', monospace;
-  text-align: center;
-  // font-family: 'Cutive Mono', monospace;
-}
-.vue-audio-mixer-slider {
-  display: flex;
-  flex-flow: row nowrap;
-  height: 340px;
-  padding-top: 1rem;
-  padding-bottom: 1rem;
-  padding-left: 0.5rem;
-  padding-right: 0.5rem;
-}
-.vue-audio-mixer-fader-holder {
-  display: flex;
-  flex-flow: column nowrap;
-  justify-content: center; /* Center vertically */
-  align-items: center; /* Center horizontally */
+
+.vue-audio-mixer-toggles {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
   width: 100%;
-  height: 100%;
-  margin-right: 5px;
-  margin-left: 15px;
 }
 
-.vue-audio-mixer-fader-track {
+.vue-audio-mixer-toggle {
+  height: 30px;
+  padding: 0;
+  border: none;
+  border-radius: 6px;
+  background: var(--vam-control-bg);
+  color: var(--vam-control-text);
+  font-family: var(--vam-font-sans);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+
+  &.is-mute.is-on {
+    background: var(--vam-mute);
+    color: var(--vam-on-mute);
+  }
+
+  &.is-solo.is-on {
+    background: var(--vam-accent);
+    color: var(--vam-on-accent);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--vam-accent);
+    outline-offset: 2px;
+  }
+}
+
+.vue-audio-mixer-fader-section {
+  margin-top: auto; // keeps faders aligned across strips with and without controls
+  display: grid;
+  grid-template-columns: 10px 28px 18px;
+  gap: 6px;
+  height: 300px;
+  padding: 10px 0;
+
+  .is-master & {
+    grid-template-columns: 14px 28px 18px;
+  }
+}
+
+.vue-audio-mixer-meters {
+  display: flex;
+  gap: 2px;
+}
+
+.vue-audio-mixer-meter {
   position: relative;
-  height: 340px; /* Set a fixed height */
-  width: 5px;
-  margin: 0 auto; /* Center horizontally */
-  background: #222; /* Optional: add a visible background for testing */
-  border-radius: 5px; /* Optional styling */
-  cursor: pointer; /* Indicate interactivity */
+  flex: 1;
+  overflow: hidden;
+  border-radius: 2px;
+  background: var(--vam-meter-off);
+}
+
+.vue-audio-mixer-meter-lit {
+  position: absolute;
+  inset: 0;
+  background: var(--vam-meter-gradient);
+  clip-path: inset(100% 0 0 0);
 }
 
 .vue-audio-mixer-fader {
-  position: absolute; /* Positioning relative to the track */
-  top: 0; /* Start at the top of the track */
-  width: 25px;
-  height: 60px;
-  left: 50%; /* Align relative to the track */
-  transform: translateX(-50%); /* Center horizontally */
-  background: linear-gradient(
-    to bottom,
-    rgba(14, 14, 14, 1) 0%,
-    rgba(79, 79, 79, 1) 5%,
-    rgba(79, 79, 79, 1) 5%,
-    rgba(79, 79, 79, 1) 10%,
-    rgba(14, 14, 14, 1) 25%,
-    rgba(22, 22, 22, 1) 34%,
-    rgba(22, 22, 22, 1) 34%,
-    rgba(79, 79, 79, 1) 73%,
-    rgba(79, 79, 79, 1) 75%,
-    rgba(14, 14, 14, 1) 100%
-  );
-  box-shadow: 0 0 3px 0 rgba(0, 0, 0, 0.5);
-  z-index: 10;
-  transition: transform 0.1s ease-out;
+  position: relative;
+  cursor: ns-resize;
+  touch-action: none;
+
+  &:focus-visible {
+    outline: 2px solid var(--vam-accent);
+    outline-offset: 4px;
+    border-radius: 4px;
+  }
 }
 
-.vue-audio-mixer-vca {
-  display: flex;
-  width: 25px;
-  height: 100%;
-  // position: relative;
+.vue-audio-mixer-fader-track {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 50%;
+  width: 2px;
+  margin-left: -1px;
+  border-radius: 1px;
+  background: var(--vam-fader-track);
 }
-.vue-audio-mixer-vca__meter {
-  width: 8px;
-  height: 100%;
-  margin-right: 0.25rem;
-  background: black;
-  // position: absolute;
-  // top: 1rem;
+
+.vue-audio-mixer-fader-cap {
+  position: absolute;
+  left: 0;
+  width: 28px;
+  height: 36px;
+  margin-top: -18px;
+  background: var(--vam-fader-cap);
+  border: 1px solid var(--vam-fader-cap-border);
+  border-radius: 6px;
+  box-shadow: 0 2px 6px var(--vam-shadow);
 }
-.vue-audio-mixer-vca__markers {
+
+.vue-audio-mixer-fader-cap-line {
+  position: absolute;
+  top: 50%;
+  left: 5px;
+  right: 5px;
+  height: 2px;
+  margin-top: -1px;
+  border-radius: 1px;
+  background: var(--vam-fader-cap-line);
+
+  .is-master & {
+    background: var(--vam-accent);
+  }
+}
+
+.vue-audio-mixer-scale {
   display: flex;
-  flex-flow: column nowrap;
+  flex-direction: column;
   justify-content: space-between;
-  height: 100%;
-  font-size: 0.5rem;
-  color: #808080;
-}
+  font-family: var(--vam-font-mono);
+  font-size: 9px;
+  color: var(--vam-scale);
 
+  span {
+    display: flex;
+    align-items: center;
+    height: 0;
+  }
 
-/* General styles */
-
-.vue-audio-mixer-channel {
-  display: inline-block;
-  width: 100%;
-  max-width: 100px; /* Default maximum width */
-  background: #353434;
-  color: rgba(255, 255, 255, 0.9);
-  box-shadow: inset 0px 0px 4px 0px rgba(0, 0, 0, 0.75);
-  font-family: 'Raleway', 'Helvetica Neue', 'Helvetica', 'Arial', sans-serif;
-
-  &.master {
-    background: #464646;
+  .is-unity {
+    color: var(--vam-scale-unity);
   }
 }
 
-/* Responsive styles for tablets */
+.vue-audio-mixer-db {
+  display: flex;
+  align-items: baseline;
+  gap: 3px;
+  font-family: var(--vam-font-mono);
+  font-size: 13px;
+  color: var(--vam-text);
+
+  .is-master & {
+    color: var(--vam-text-strong);
+  }
+}
+
+.vue-audio-mixer-db-unit {
+  font-size: 10px;
+  color: var(--vam-text-muted);
+}
+
+// Compact layout: used on narrow screens, and always when size="small"
+@mixin compact {
+  .vue-audio-mixer-strip {
+    width: 80px;
+    gap: 10px;
+    padding: 12px 8px 10px;
+
+    &.is-master {
+      width: 90px;
+      margin-left: 4px;
+    }
+  }
+
+  .vue-audio-mixer-strip-name {
+    font-size: 12px;
+  }
+
+  .vue-audio-mixer-toggle {
+    height: 26px;
+    font-size: 12px;
+  }
+
+  .vue-audio-mixer-fader-section {
+    grid-template-columns: 8px 24px 16px;
+    gap: 4px;
+    height: 220px;
+
+    .is-master & {
+      grid-template-columns: 10px 24px 16px;
+    }
+  }
+
+  .vue-audio-mixer-fader-cap {
+    width: 24px;
+    height: 30px;
+    margin-top: -15px;
+  }
+
+  .vue-audio-mixer-db {
+    font-size: 12px;
+  }
+}
+
 @media (max-width: 768px) {
-
-  .vue-audio-mixer-master-spacer {
-    flex: 1 1 25px;
-    font-size: 0.45rem;
-    text-align: center;
-    width:60px;
-    height:56px;
-
-  }
-
-  .vue-audio-mixer-channel {
-    max-width: 80px; /* Reduce the maximum width */
-  }
-
-  .vue-audio-mixer-slider {
-    height: 300px; /* Adjust the height of the slider */
-  }
-
-  .vue-audio-mixer-fader-track {
-    height: 300px; /* Adjust the height of the fader track */
-  }
-
-  .vue-audio-mixer-fader-holder{
-    margin-left: 10px;
-  }
-
-  .vue-audio-mixer-fader {
-    width: 20px; /* Reduce the width of the fader */
-    height: 50px; /* Reduce the height of the fader */
-  }
-
-  .vue-audio-mixer-vca__markers {
-    font-size: 0.4rem; /* Reduce font size of markers */
-  }
-
-  .vue-audio-mixer-track-label {
-    font-size: 0.7rem; /* Reduce the font size of the track label */
-  }
-
-
-  .vue-audio-mixer-button{
-    padding: 0.3rem;
-    font-size: 0.8rem
-  }
+  @include compact;
 }
 
-/* Responsive styles for mobile screens */
-@media (max-width: 500px) {
-  .vue-audio-mixer-channel {
-    max-width: 70px; /* Further reduce the maximum width */
-  }
-
-  .vue-audio-mixer-slider {
-    height: 250px; /* Further adjust the height of the slider */
-  }
-
-  .vue-audio-mixer-fader-track {
-    height: 250px; /* Further adjust the height of the fader track */
-  }
-
-  .vue-audio-mixer-fader {
-    width: 15px; /* Further reduce the width of the fader */
-    height: 40px; /* Further reduce the height of the fader */
-  }
-
-  .vue-audio-mixer-vca__markers {
-    display: none;
-    font-size: 0.35rem; /* Further reduce font size of markers */
-  }
-
-  .vue-audio-mixer-track-label {
-    font-size: 0.6rem; /* Further reduce the font size of the track label */
-  }
+.vue-audio-mixer--small {
+  @include compact;
 }
-
 </style>

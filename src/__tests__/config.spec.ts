@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { normalizeConfig, type MixerConfig, type NumberLane } from '../config'
+import { GAIN_MAX, normalizeConfig, type MixerConfig, type NumberLane } from '../config'
 
 describe('normalizeConfig', () => {
   it('fills in every default for a minimal config', () => {
@@ -71,9 +71,10 @@ describe('normalizeConfig', () => {
       master: { gain: -1 },
     })
 
-    expect(config.tracks[0]).toMatchObject({ gain: 2, pan: -1, reverb: 1 })
+    expect(config.tracks[0]).toMatchObject({ gain: GAIN_MAX, pan: -1, reverb: 1 })
     expect(config.master.gain).toBe(0)
     expect(issues).toHaveLength(4)
+    expect(issues[0]).toBe('tracks[0].gain is outside 0 to 3.98; clamped to 3.98')
   })
 
   it('replaces wrongly typed values with defaults', () => {
