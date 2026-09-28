@@ -1,619 +1,557 @@
 <script setup lang="ts">
-import { ref, reactive, onMounted, onUnmounted, computed, defineProps } from 'vue'
+import { ref, shallowRef, reactive, computed, watch, watchEffect, onUnmounted, toRaw } from 'vue'
 
 import Transport from './Transport.vue'
 import MixerChannel from './MixerChannel.vue'
 import Loader from './Loader.vue'
+import hallWavPath from '../assets/audio/Hall.wav'
+import {
+  normalizeConfig,
+  type AudioSource,
+  type MasterAutomation,
+  type MixerConfig,
+  type ResolvedMixerConfig,
+  type ResolvedTrack,
+  type TrackAutomation,
+} from '../config'
+import { overwriteLane, sampleBooleanLane, sampleNumberLane } from '../automation'
 
-const audiocontext = window.AudioContext
-const context = new audiocontext()
 const props = defineProps<{
-  tracks: { path: string; label: string }[]
+  config: MixerConfig
 }>()
 
-const mp3Files = props.tracks
+const emit = defineEmits<{
+  'update:config': [config: ResolvedMixerConfig]
+  loaded: []
+}>()
 
-// Store preloaded audio buffers, gain nodes, and pan nodes
-const audioBuffers = ref<Record<string, AudioBuffer>>({})
-const gainNodes = reactive<Record<string, GainNode>>({})
-const panNodes = reactive<Record<string, StereoPannerNode>>({})
-const analyserNodes = reactive<Record<string, { left: AnalyserNode; right: AnalyserNode }>>({})
+type TrackParam = keyof TrackAutomation
+type MasterParam = keyof MasterAutomation
+type ParamValue<P extends TrackParam> = P extends 'muted' | 'soloed' ? boolean : number
 
+interface ChannelParams {
+  gain: number
+  pan: number
+  reverb: number
+  muted: boolean
+  soloed: boolean
+  /** Whether the track is heard, once mute and solo are taken into account. */
+  audible: boolean
+}
 
+interface MasterParams {
+  gain: number
+  pan: number
+  muted: boolean
+}
 
+// Master bus: gain -> pan -> speakers, with a stereo split feeding the meters
 
+const context = new AudioContext()
 
-// Store active buffer source nodes
-const sourceNodes = ref<Record<string, AudioBufferSourceNode | null>>({})
-// Track mute, solo, pan, elapsed time, and duration states
-const trackStates = reactive<
-  Record<
-    string,
-    {
-      muted: boolean
-      soloed: boolean
-      pan: number
-      volume: number
-      elapsed: number
-      duration: number
-    }
-  >
->({})
-// Playback state
-const playbackState = reactive({
-  isPlaying: false,
-  soloActive: false, // Tracks if any track is soloed
-})
-const intervalId: number | null = null // Timer for updating progress
-let startTime = 0 // Store the playback start time
+const masterGain = context.createGain()
+const masterPan = context.createStereoPanner()
+const masterSplitter = context.createChannelSplitter(2)
+const masterAnalysers = { left: context.createAnalyser(), right: context.createAnalyser() }
 
-// Master track controls
-const masterGainNode = context.createGain()
-const masterPanNode = context.createStereoPanner()
+masterAnalysers.left.fftSize = 256
+masterAnalysers.right.fftSize = 256
 
-const masterSplitterNode = context.createChannelSplitter(2)
+masterGain.connect(masterPan)
+masterPan.connect(masterSplitter)
+masterSplitter.connect(masterAnalysers.left, 0)
+masterSplitter.connect(masterAnalysers.right, 1)
+masterPan.connect(context.destination)
 
-const masterAnalyserNodes = { left: context.createAnalyser(), right: context.createAnalyser() }
+// One reverb shared by every track. Each track feeds it through its own send gain.
+const reverbBus = context.createConvolver()
+reverbBus.connect(masterGain)
 
-masterAnalyserNodes.left.fftSize = 256 // Adjust for smoother visuals
-masterAnalyserNodes.right.fftSize = 256
+const loadAudio = async (src: AudioSource): Promise<AudioBuffer> => {
+  if (src instanceof AudioBuffer) return src
 
-// Connect the master signal chain
-// Connect the master signal chain
-masterGainNode.connect(masterPanNode) // Pan first
-masterPanNode.connect(masterSplitterNode) // Then split for analysis
-masterSplitterNode.connect(masterAnalyserNodes.left, 0) // Left channel
-masterSplitterNode.connect(masterAnalyserNodes.right, 1) // Right channel
-masterPanNode.connect(context.destination) // Ensure output to speakers
-
-const masterState = reactive({
-  volume: 0.8, // Default volume (1 = full)
-  pan: 0, // Default pan (centered)
-  elapsed: 0, // Overall elapsed time
-  duration: 0, // Duration of the longest track
-  muted: false,
-  soloed: false,
-})
-
-// Loading state
-const loadingState = reactive({
-  totalTracks: mp3Files.length,
-  loadedTracks: 0,
-  isLoading: true,
-  progress: 0,
-})
-
-
-const logAutomationEvent = (type: string, track: string, value: any) => {
-  if (isRecording.value) {
-    const currentTime = context.currentTime - startTime;
-
-    // Ensure we're using the correct state keys
-    const correctedType = type === "mute" ? "muted" : type === "solo" ? "soloed" : type;
-
-    // Prevent duplicate events at the same time
-    recording.value = recording.value.filter(
-      (event) => !(event.track === track && event.type === correctedType && Math.abs(event.time - currentTime) < 0.01)
-    );
-
-    // Store the event with corrected key
-    recording.value.push({
-      time: currentTime,
-      type: correctedType,
-      track,
-      value,
-    });
-
-    console.log(`🎬 Recorded ${correctedType} change on ${track}: ${value} at ${currentTime}s`);
+  let data: ArrayBuffer
+  if (typeof src === 'string') {
+    const response = await fetch(src)
+    if (!response.ok) throw new Error(`${response.status} ${response.statusText}`)
+    data = await response.arrayBuffer()
+  } else {
+    data = await src.arrayBuffer()
   }
-};
+  return context.decodeAudioData(data)
+}
 
+loadAudio(hallWavPath)
+  .then((buffer) => {
+    reverbBus.buffer = buffer
+  })
+  .catch((error) => console.error('[vue-audio-mixer] Failed to load reverb impulse response:', error))
 
+// Channels: source -> gain -> pan -> master, with pan also feeding the reverb send and the meters
 
-const applyLatestAutomationState = (currentTime: number) => {
-  console.log(`🎯 Applying automation state at ${currentTime}s`);
+interface Channel {
+  src: AudioSource
+  buffer: AudioBuffer | null
+  source: AudioBufferSourceNode | null
+  gain: GainNode
+  pan: StereoPannerNode
+  send: GainNode
+  splitter: ChannelSplitterNode
+  analysers: { left: AnalyserNode; right: AnalyserNode }
+}
 
-  const latestState: Record<string, {
-    volume?: number;
-    pan?: number;
-    muted?: boolean;
-    soloed?: boolean;
-  }> = {};
+const channels = new Map<string, Channel>()
 
-  // Find the most recent automation states for each track
-  recording.value.forEach(({ time, type, track, value }) => {
-    if (time <= currentTime) {
-      if (!latestState[track]) latestState[track] = {};
-      latestState[track][type] = value; // Store the latest value
+// Reactive mirrors of what the template and waveform need from `channels`
+const channelStatus = reactive<Record<string, 'loading' | 'ready' | 'error'>>({})
+const buffers = shallowRef<Record<string, AudioBuffer>>({})
+const channelsVersion = ref(0)
+
+const setBuffer = (id: string, buffer: AudioBuffer | null) => {
+  const next = { ...buffers.value }
+  if (buffer) next[id] = buffer
+  else delete next[id]
+  buffers.value = next
+}
+
+const loadChannel = async (id: string, channel: Channel) => {
+  const src = channel.src
+  const isCurrent = () => channels.get(id) === channel && channel.src === src
+
+  channelStatus[id] = 'loading'
+  try {
+    const buffer = await loadAudio(src)
+    if (!isCurrent()) return
+    channel.buffer = buffer
+    setBuffer(id, buffer)
+    channelStatus[id] = 'ready'
+    if (transport.isPlaying) startSource(channel, currentTime())
+  } catch (error) {
+    if (!isCurrent()) return
+    channelStatus[id] = 'error'
+    console.error(`[vue-audio-mixer] Failed to load track "${id}":`, error)
+  }
+}
+
+const createChannel = (track: ResolvedTrack) => {
+  const gain = context.createGain()
+  const pan = context.createStereoPanner()
+  const send = context.createGain()
+  const splitter = context.createChannelSplitter(2)
+  const analysers = { left: context.createAnalyser(), right: context.createAnalyser() }
+
+  analysers.left.fftSize = 256
+  analysers.right.fftSize = 256
+  send.gain.value = 0
+
+  gain.connect(pan)
+  pan.connect(masterGain)
+  pan.connect(send)
+  send.connect(reverbBus)
+  pan.connect(splitter)
+  splitter.connect(analysers.left, 0)
+  splitter.connect(analysers.right, 1)
+
+  const channel: Channel = { src: track.src, buffer: null, source: null, gain, pan, send, splitter, analysers }
+  channels.set(track.id, channel)
+  channelsVersion.value++
+  loadChannel(track.id, channel)
+}
+
+const reloadChannel = (id: string, channel: Channel, src: AudioSource) => {
+  stopSource(channel)
+  channel.src = src
+  channel.buffer = null
+  setBuffer(id, null)
+  loadChannel(id, channel)
+}
+
+const destroyChannel = (id: string) => {
+  const channel = channels.get(id)
+  if (!channel) return
+  stopSource(channel)
+  for (const node of [channel.gain, channel.pan, channel.send, channel.splitter]) node.disconnect()
+  channels.delete(id)
+  delete channelStatus[id]
+  setBuffer(id, null)
+  channelsVersion.value++
+}
+
+// Config: `mix` holds the static values and automation; the parent gets a new copy on every change
+
+const mix = shallowRef<ResolvedMixerConfig>(normalizeConfig({ tracks: [] }).config)
+let lastEmitted: ResolvedMixerConfig | null = null
+
+const applyConfig = (input: MixerConfig) => {
+  const raw = toRaw(input)
+  if (raw === lastEmitted) return // our own update coming back through v-model
+
+  const { config, issues } = normalizeConfig(raw)
+  for (const issue of issues) console.warn(`[vue-audio-mixer] ${issue}`)
+  mix.value = config
+
+  const ids = new Set(config.tracks.map((track) => track.id))
+  for (const id of [...channels.keys()]) {
+    if (!ids.has(id)) destroyChannel(id)
+  }
+  for (const track of config.tracks) {
+    const channel = channels.get(track.id)
+    if (!channel) createChannel(track)
+    else if (channel.src !== track.src) reloadChannel(track.id, channel, track.src)
+  }
+}
+
+const commit = (next: ResolvedMixerConfig) => {
+  mix.value = next
+  lastEmitted = next
+  emit('update:config', next)
+}
+
+watch(() => props.config, applyConfig, { immediate: true })
+
+// Transport
+
+const transport = reactive({ isPlaying: false, elapsed: 0 })
+const duration = computed(() =>
+  Object.values(buffers.value).reduce((longest, buffer) => Math.max(longest, buffer.duration), 0),
+)
+
+let startedAt = 0 // context time corresponding to position 0
+
+// A timer rather than requestAnimationFrame: animation frames stop in background
+// tabs, which would freeze automation and end-of-track detection while audio plays on
+const TICK_MS = 16
+let tickTimer: ReturnType<typeof setInterval> | undefined
+
+const currentTime = () =>
+  transport.isPlaying ? Math.min(context.currentTime - startedAt, duration.value) : transport.elapsed
+
+const stopSource = (channel: Channel) => {
+  channel.source?.stop()
+  channel.source?.disconnect()
+  channel.source = null
+}
+
+const startSource = (channel: Channel, offset: number) => {
+  stopSource(channel)
+  if (!channel.buffer || offset >= channel.buffer.duration) return
+  const source = context.createBufferSource()
+  source.buffer = channel.buffer
+  source.connect(channel.gain)
+  source.start(0, offset)
+  channel.source = source
+}
+
+const tick = () => {
+  transport.elapsed = currentTime()
+  if (transport.elapsed >= duration.value) pause()
+}
+
+const play = () => {
+  if (transport.isPlaying || duration.value === 0) return
+  commitTouches()
+  if (transport.elapsed >= duration.value) transport.elapsed = 0
+
+  void context.resume()
+  startedAt = context.currentTime - transport.elapsed
+  for (const channel of channels.values()) startSource(channel, transport.elapsed)
+  transport.isPlaying = true
+  tickTimer = setInterval(tick, TICK_MS)
+}
+
+const pause = () => {
+  if (!transport.isPlaying) return
+  transport.elapsed = currentTime()
+  transport.isPlaying = false
+  for (const channel of channels.values()) stopSource(channel)
+  clearInterval(tickTimer)
+  commitTouches()
+}
+
+const stop = () => {
+  pause()
+  commitTouches()
+  transport.elapsed = 0
+}
+
+const seek = (fraction: number) => {
+  commitTouches()
+  const time = Math.min(Math.max(fraction, 0), 1) * duration.value
+  transport.elapsed = time
+  if (transport.isPlaying) {
+    startedAt = context.currentTime - time
+    for (const channel of channels.values()) startSource(channel, time)
+  }
+}
+
+// Automation recording. While recording, each control the user moves becomes a
+// "touch": it overrides playback of that lane and collects points. Touches are
+// written into the config at the end of the pass (pause, stop, seek, or stop recording).
+
+interface Touch {
+  target: string | null // track id, or null for master
+  param: TrackParam
+  value: number | boolean
+  points: [number, number | boolean][]
+}
+
+const isRecording = ref(false)
+const touches = new Map<string, Touch>()
+const touchesVersion = ref(0)
+
+const touchKey = (target: string | null, param: TrackParam) =>
+  `${target === null ? 'master' : `track:${target}`}|${param}`
+
+const record = (target: string | null, param: TrackParam, value: number | boolean) => {
+  const key = touchKey(target, param)
+  const time = currentTime()
+  const touch = touches.get(key) ?? { target, param, value, points: [] }
+  touches.set(key, touch)
+
+  const last = touch.points[touch.points.length - 1]
+  if (last && time - last[0] < 0.001) last[1] = value
+  else touch.points.push([time, value])
+
+  touch.value = value
+  touchesVersion.value++
+}
+
+const withLane = <A extends TrackAutomation>(automation: A, param: TrackParam, points: Touch['points']): A =>
+  ({ ...automation, [param]: overwriteLane(automation[param], points) }) as A
+
+const commitTouches = () => {
+  if (touches.size === 0) return
+  let { tracks, master } = mix.value
+
+  for (const { target, param, points } of touches.values()) {
+    if (target === null) {
+      master = { ...master, automation: withLane(master.automation, param, points) }
+    } else {
+      tracks = tracks.map((track) =>
+        track.id === target ? { ...track, automation: withLane(track.automation, param, points) } : track,
+      )
     }
-  });
+  }
 
-  // Apply the last known state for each track
-  Object.entries(latestState).forEach(([track, state]) => {
-    if (state.volume !== undefined) {
-      if (track === "master") {
-        masterGainNode.gain.value = state.volume;
-      } else {
-        updateTrackVolume(track, state.volume);
-      }
-    }
-    if (state.pan !== undefined) {
-      if (track === "master") {
-        masterPanNode.pan.value = state.pan;
-      } else {
-        updateTrackPan(track, state.pan);
-      }
-    }
-    if (state.muted !== undefined) {
-      console.log(`🔇 Applying muted state: ${track} -> ${state.muted}`);
-      setMuteState(track, state.muted); // ✅ Use setMuteState
-    }
-    if (state.soloed !== undefined) {
-      console.log(`🎵 Applying soloed state: ${track} -> ${state.soloed}`);
-      setSoloState(track, state.soloed); // ✅ Use setSoloState
-    }
-  });
-
-  console.log(`✅ Automation applied at ${currentTime}s`);
-};
-
-
-
-
-
-
-
-
-let pendingAutomationTimers: number[] = [];
+  touches.clear()
+  touchesVersion.value++
+  commit({ ...mix.value, tracks, master })
+}
 
 const startRecording = () => {
-  isRecording.value = true;
-};
-
+  isRecording.value = true
+}
 
 const stopRecording = () => {
+  commitTouches()
   isRecording.value = false
 }
 
-let automationTimers: number[] = [];
+// Live values: a touch wins, then automation at the current position, then the static value
 
-const recording = ref<{ time: number; type: string; track: string | 'master'; value: any }[]>([])
-const isRecording = ref(false)
-const mixerContainerWidth = computed(() => {
-  return {
-    width: `${(mp3Files.length + 1) * 110}px`,
+const resolveNumber = (
+  target: string | null,
+  param: TrackParam,
+  lane: [number, number][] | undefined,
+  fallback: number,
+  time: number,
+): number => {
+  const touch = touches.get(touchKey(target, param))
+  if (touch) return touch.value as number
+  return (lane && sampleNumberLane(lane, time)) ?? fallback
+}
+
+const resolveBoolean = (
+  target: string | null,
+  param: TrackParam,
+  lane: [number, boolean][] | undefined,
+  fallback: boolean,
+  time: number,
+): boolean => {
+  const touch = touches.get(touchKey(target, param))
+  if (touch) return touch.value as boolean
+  return (lane && sampleBooleanLane(lane, time)) ?? fallback
+}
+
+const liveParams = computed(() => {
+  void touchesVersion.value
+  const time = transport.elapsed
+  const { tracks, master } = mix.value
+
+  const trackParams: Record<string, ChannelParams> = {}
+  for (const { id, automation, ...track } of tracks) {
+    trackParams[id] = {
+      gain: resolveNumber(id, 'gain', automation.gain, track.gain, time),
+      pan: resolveNumber(id, 'pan', automation.pan, track.pan, time),
+      reverb: resolveNumber(id, 'reverb', automation.reverb, track.reverb, time),
+      muted: resolveBoolean(id, 'muted', automation.muted, track.muted, time),
+      soloed: resolveBoolean(id, 'soloed', automation.soloed, track.soloed, time),
+      audible: false,
+    }
   }
+
+  const soloActive = tracks.some((track) => !track.hidden && trackParams[track.id].soloed)
+  for (const track of tracks) {
+    const params = trackParams[track.id]
+    params.audible = !params.muted && (track.hidden || !soloActive || params.soloed)
+  }
+
+  const masterParams: MasterParams = {
+    gain: resolveNumber(null, 'gain', master.automation.gain, master.gain, time),
+    pan: resolveNumber(null, 'pan', master.automation.pan, master.pan, time),
+    muted: resolveBoolean(null, 'muted', master.automation.muted, master.muted, time),
+  }
+
+  return { tracks: trackParams, master: masterParams }
 })
-// Preload all MP3 files and initialize gain nodes, pan nodes, and track states
 
-const preloadMP3s = async () => {
-  for (const { path, label } of mp3Files) {
-    try {
-      const response = await fetch(path)
-      if (!response.ok) {
-        throw new Error(`Failed to load audio file: ${response.statusText}`)
-      }
-      const arrayBuffer = await response.arrayBuffer()
-      const audioBuffer = await context.decodeAudioData(arrayBuffer)
+// Push live values into the audio graph, smoothing changes to avoid clicks
 
-      // Store the audio buffer
-      audioBuffers.value[label] = audioBuffer
+const lastApplied = new WeakMap<AudioParam, number>()
 
-      // Initialize audio nodes
-      const gainNode = context.createGain()
-      const panNode = context.createStereoPanner()
-      const splitter = context.createChannelSplitter(2) // Split into left and right channels
-      const leftAnalyserNode = context.createAnalyser()
-      const rightAnalyserNode = context.createAnalyser()
-      const merger = context.createChannelMerger(2) // Recombine left and right channels
-
-      // Configure analyser nodes
-      leftAnalyserNode.fftSize = 256 // Adjust for smoother visuals
-      rightAnalyserNode.fftSize = 256
-
-      // Connect nodes
-      gainNode.connect(panNode).connect(splitter)
-      splitter.connect(leftAnalyserNode, 0) // Left channel to analyser
-      splitter.connect(rightAnalyserNode, 1) // Right channel to analyser
-      splitter.connect(merger, 0, 0) // Left channel to merger
-      splitter.connect(merger, 1, 1) // Right channel to merger
-      merger.connect(masterGainNode) // Send merged signal to master
-
-      // Store nodes
-      gainNodes[label] = gainNode
-      panNodes[label] = panNode
-      analyserNodes[label] = { left: leftAnalyserNode, right: rightAnalyserNode }
-
-      // Initialize track state
-      trackStates[label] = {
-        muted: false,
-        soloed: false,
-        pan: 0,
-        volume: 0.8,
-        elapsed: 0,
-        duration: audioBuffer.duration,
-      }
-
-      // Update master duration
-      masterState.duration = Math.max(masterState.duration, audioBuffer.duration)
-      loadingState.loadedTracks++
-      loadingState.progress = (loadingState.loadedTracks / loadingState.totalTracks) * 100
-    } catch (error) {
-      console.error(`Error loading ${label}:`, error)
-    }
-  }
-
-  loadingState.isLoading = false
-}
-
-const pauseAll = () => {
-  if (!playbackState.isPlaying) return
-
-  playbackState.isPlaying = false
-
-  // Stop all sources and preserve the current elapsed times
-  for (const label of Object.keys(sourceNodes.value)) {
-    const source = sourceNodes.value[label]
-    if (source) {
-      source.stop()
-      sourceNodes.value[label] = null
-
-      const state = trackStates[label]
-      if (state) {
-        // Calculate the elapsed time since the last play start
-        state.elapsed = context.currentTime - startTime
-        state.elapsed = Math.min(state.elapsed, state.duration) // Ensure it doesn't exceed duration
-      }
-    }
-  }
-
-  masterState.elapsed = Math.min(context.currentTime - startTime, masterState.duration)
-  stopWaveformUpdates() // Stop updating the waveform
-}
-
-const rescheduleAutomation = (currentTime: number) => {
-  console.log(`🔄 Rescheduling automation from ${currentTime}s onward`);
-
-  pendingAutomationTimers.forEach(clearTimeout);
-  pendingAutomationTimers = [];
-
-  recording.value.forEach(({ time, type, track, value }) => {
-    if (time >= currentTime) {
-      const delay = (time - currentTime) * 1000;
-
-      const timerId = setTimeout(() => {
-        if (type === "volume") {
-          if (track === "master") {
-            masterGainNode.gain.value = value;
-          } else {
-            updateTrackVolume(track, value);
-          }
-        } else if (type === "pan") {
-          if (track === "master") {
-            masterPanNode.pan.value = value;
-          } else {
-            updateTrackPan(track, value);
-          }
-        } else if (type === "muted") { // ✅ Correct key
-          console.log(`🔇 Setting mute state at ${time}s -> ${value}`);
-          setMuteState(track, value);
-        } else if (type === "soloed") { // ✅ Correct key
-          console.log(`🎵 Setting solo state at ${time}s -> ${value}`);
-          setSoloState(track, value);
-        }
-      }, delay);
-
-      pendingAutomationTimers.push(timerId);
-    }
-  });
-
-  console.log(`✅ Rescheduled automation from ${currentTime}s onward`);
-};
-
-
-
-
-const playAll = () => {
-  if (playbackState.isPlaying) return;
-
-  playbackState.isPlaying = true;
-  playbackState.soloActive = Object.values(trackStates).some((state) => state.soloed);
-  startTime = context.currentTime - masterState.elapsed;
-
-  applyLatestAutomationState(masterState.elapsed);
-
-  // Play all tracks
-  for (const [label, buffer] of Object.entries(audioBuffers.value)) {
-    const state = trackStates[label];
-    playTrack(label, state.elapsed);
-  }
-  rescheduleAutomation(masterState.elapsed);
-
-  startWaveformUpdates();
-};
-
-let animationFrameId: number | null = null
-
-const startWaveformUpdates = () => {
-  const update = () => {
-    if (playbackState.isPlaying) {
-      updateProgress()
-      animationFrameId = requestAnimationFrame(update)
-    }
-  }
-  animationFrameId = requestAnimationFrame(update)
-}
-
-const stopWaveformUpdates = () => {
-  if (animationFrameId !== null) {
-    cancelAnimationFrame(animationFrameId)
-    animationFrameId = null
+const setAudioParam = (param: AudioParam, value: number) => {
+  if (lastApplied.get(param) === value) return
+  lastApplied.set(param, value)
+  if (context.state === 'running') {
+    param.setTargetAtTime(value, context.currentTime, 0.01)
+  } else {
+    param.cancelScheduledValues(0)
+    param.value = value
   }
 }
 
-// Update the master track's elapsed time
-const updateProgress = () => {
-  masterState.elapsed = Math.min(context.currentTime - startTime, masterState.duration)
+watchEffect(() => {
+  void channelsVersion.value
+  const { tracks, master } = liveParams.value
+  for (const [id, params] of Object.entries(tracks)) {
+    const channel = channels.get(id)
+    if (!channel) continue
+    setAudioParam(channel.gain.gain, params.audible ? params.gain : 0)
+    setAudioParam(channel.pan.pan, params.pan)
+    setAudioParam(channel.send.gain, params.reverb)
+  }
+  setAudioParam(masterGain.gain, master.muted ? 0 : master.gain)
+  setAudioParam(masterPan.pan, master.pan)
+})
+
+// User input: recorded as automation while recording, otherwise written to the config
+
+const setTrackParam = <P extends TrackParam>(id: string, param: P, value: ParamValue<P>) => {
+  if (isRecording.value) {
+    record(id, param, value)
+    return
+  }
+  commit({
+    ...mix.value,
+    tracks: mix.value.tracks.map((track) => (track.id === id ? { ...track, [param]: value } : track)),
+  })
 }
 
-
-const stopAll = () => {
-  playbackState.isPlaying = false
-
-  for (const label of Object.keys(sourceNodes.value)) {
-    sourceNodes.value[label]?.stop()
-    sourceNodes.value[label] = null
-    trackStates[label].elapsed = 0
+const setMasterParam = <P extends MasterParam>(param: P, value: ParamValue<P>) => {
+  if (isRecording.value) {
+    record(null, param, value)
+    return
   }
-
-  masterState.elapsed = 0
-
-  stopWaveformUpdates()
+  commit({ ...mix.value, master: { ...mix.value.master, [param]: value } })
 }
 
-// Play a single track from a specific position
-const playTrack = (label: string, offset: number) => {
-  const buffer = audioBuffers.value[label]
-  const state = trackStates[label]
+// Loading
 
-  if (sourceNodes.value[label]) {
-    sourceNodes.value[label]?.stop()
-    sourceNodes.value[label] = null
-  }
+const initialised = ref(false)
 
-  const source = context.createBufferSource()
-  source.buffer = buffer
+const loadProgress = computed(() => {
+  const statuses = Object.values(channelStatus)
+  if (statuses.length === 0) return 100
+  return (statuses.filter((status) => status !== 'loading').length / statuses.length) * 100
+})
 
-  // Connect source to the gain node
-  source.connect(gainNodes[label])
+watchEffect(() => {
+  if (initialised.value) return
+  if (Object.values(channelStatus).some((status) => status === 'loading')) return
+  initialised.value = true
+  emit('loaded')
+})
 
-  // Set gain and pan values
-  gainNodes[label].gain.value = state.muted ? 0 : state.volume
-  panNodes[label].pan.value = state.pan
-
-  source.start(0, offset)
-  sourceNodes.value[label] = source
-}
-
-const seekAll = (percentage: number) => {
-  const newElapsed = percentage * masterState.duration;
-  masterState.elapsed = newElapsed;
-
-  console.log(`⏩ Seeking to ${newElapsed}s`);
-
-  // Stop all sources and restart playback at new time
-  for (const label of Object.keys(trackStates)) {
-    trackStates[label].elapsed = newElapsed;
-    playTrack(label, newElapsed);
-  }
-
-  // ✅ Apply automation state at the new seek position
-  applyLatestAutomationState(newElapsed);
-
-  // 🚀 Reschedule future automation events
-  rescheduleAutomation(newElapsed);
-
-  // Update recording time references
-  startTime = context.currentTime - newElapsed;
-
-  updateProgress();
-};
-
-
-
-
-
-
-
-
-const updateMasterTrackVolume = (value: number) => {
-  masterState.volume = value
-  masterGainNode.gain.value = value
-}
-
-const updateMasterTrackPan = (value: number) => {
-  masterState.pan = value
-  masterPanNode.pan.value = value
-}
-
-// Update individual track controls
-const updateTrackVolume = (label: string, value: number) => {
-  const state = trackStates[label]
-  if (state) {
-    state.volume = value
-    gainNodes[label].gain.value = state.muted ? 0 : value
-
-
-    logAutomationEvent("volume", label, value);
-
-
-  }
-}
-
-const updateTrackPan = (label: string, value: number) => {
-  const state = trackStates[label]
-  if (state) {
-    state.pan = value
-    panNodes[label].pan.value = value
-    logAutomationEvent("pan", label, value);
-  }
-}
-
-
-
-const setMuteState = (label: string, isMuted: boolean) => {
-  const state = trackStates[label];
-  if (state) {
-    state.muted = isMuted; // ✅ Directly set mute state
-    gainNodes[label].gain.value = isMuted ? 0 : state.volume; // Adjust gain
-
-    logAutomationEvent("muted", label, isMuted); // ✅ Store exact mute state
-  }
-};
-
-
-
-const setSoloState = (label: string, isSoloed: boolean) => {
-  const state = trackStates[label];
-  if (state) {
-    state.soloed = isSoloed; // ✅ Explicitly set solo state
-    playbackState.soloActive = Object.values(trackStates).some((s) => s.soloed);
-
-    // Update all track gains based on solo state
-    Object.entries(trackStates).forEach(([otherLabel, otherState]) => {
-      gainNodes[otherLabel].gain.value = playbackState.soloActive
-        ? otherState.soloed
-          ? otherState.volume
-          : 0
-        : otherState.muted
-          ? 0
-          : otherState.volume;
-    });
-
-    // Log automation event for solo (only if recording is active)
-    logAutomationEvent("soloed", label, isSoloed);
-  }
-};
-
-
-const masterVolumeCanvas = ref<HTMLCanvasElement | null>(null)
-
-const volumeMonitorPeaks = reactive<
-  Record<string, { left: number; right: number; leftColor: string; rightColor: string }>
->(
-  Object.fromEntries(
-    mp3Files.map((file) => [
-      file.label,
-      { left: 0, right: 0, leftColor: 'white', rightColor: 'white' },
-    ]),
-  ),
+const visibleTracks = computed(() =>
+  mix.value.tracks.filter((track) => !track.hidden && channelStatus[track.id] === 'ready'),
 )
 
-const masterMonitorPeaks = reactive({
-  left: 0,
-  right: 0,
-  leftColor: 'white',
-  rightColor: 'white',
-})
+const analysersFor = (id: string) => channels.get(id)!.analysers
 
-onMounted(() => {
-  preloadMP3s().then(() => {
-    //drawWaveform() // Initial waveform render
+const transportState = computed(() => ({ elapsed: transport.elapsed, duration: duration.value }))
 
-
-  })
-
-})
+const mixerContainerWidth = computed(() => ({
+  width: `${(visibleTracks.value.length + 1) * 110}px`,
+}))
 
 onUnmounted(() => {
-  if (intervalId) {
-    clearInterval(intervalId)
-  }
+  clearInterval(tickTimer)
+  for (const id of [...channels.keys()]) destroyChannel(id)
+  void context.close()
 })
 </script>
 
 <template>
-
   <div class="vue-audio-mixer-container-mask">
-    {{ recording }}
-
-
     <div class="vue-audio-mixer-transport-buttons">
-  <button @click="startRecording" :disabled="isRecording">Start Recording</button>
-  <button @click="stopRecording" :disabled="!isRecording">Stop Recording</button>
-</div>
-
-
-  <div class="vue-audio-mixer-mixer-container" :style="mixerContainerWidth">
-
-    <Loader :progress="loadingState.progress" v-if="loadingState.isLoading" />
-
-    <h1 class="vue-audio-mixer-mixer-title" v-if="!loadingState.isLoading">Audio Mixer</h1>
-
-    <!-- Tracks and Master -->
-    <div class="vue-audio-mixer-tracks" v-if="!loadingState.isLoading">
-      <!-- Individual Tracks -->
-      <div v-for="file in mp3Files" :key="file.label">
-        <MixerChannel
-        v-if="context"
-          :context="context"
-          :masterState="masterState"
-          :trackState="trackStates[file.label]"
-          :label="file.label"
-          :analyserNodes="analyserNodes[file.label]"
-          @mute="setMuteState(file.label, $event)"
-          @solo="setSoloState(file.label, $event)"
-          @updateTrackPan="updateTrackPan(file.label, $event)"
-          @updateTrackVolume="updateTrackVolume(file.label, $event)"
-
-        />
-
-      </div>
-
-      <!-- Master Controls -->
-
-      <MixerChannel
-      :context="context"
-        :masterState="masterState"
-        :trackState="masterState"
-        :master="true"
-        :label="'master'"
-        :analyserNodes="masterAnalyserNodes"
-        @updateTrackPan="updateMasterTrackPan($event)"
-        @updateTrackVolume="updateMasterTrackVolume($event)"
-      />
+      <button @click="startRecording" :disabled="isRecording">Start Recording</button>
+      <button @click="stopRecording" :disabled="!isRecording">Stop Recording</button>
     </div>
 
-    <!-- Waveform and Transport Controls -->
-    <div class="vue-audio-mixer-master-controls" v-if="!loadingState.isLoading">
-      <Transport
-        :masterState="masterState"
-        :audioBuffers="audioBuffers"
-        :trackStates="trackStates"
-        :playbackState="playbackState"
-        :context="context"
-        @seek="seekAll"
-      />
-      <!--<div class="recording-controls">
-        <button @click="trackMix" :disabled="isRecording">Track Mix</button>
-      </div>-->
-      <div class="vue-audio-mixer-transport-buttons">
-        <button @click="playAll" :disabled="loadingState.isLoading || playbackState.isPlaying">
-          Play
-        </button>
-        <button @click="pauseAll" :disabled="loadingState.isLoading || !playbackState.isPlaying">
-          Pause
-        </button>
-        <button @click="stopAll" :disabled="loadingState.isLoading">Stop</button>
+    <div class="vue-audio-mixer-mixer-container" :style="mixerContainerWidth">
+      <Loader :progress="loadProgress" v-if="!initialised" />
+
+      <h1 class="vue-audio-mixer-mixer-title" v-if="initialised">Audio Mixer</h1>
+
+      <!-- Tracks and Master -->
+      <div class="vue-audio-mixer-tracks" v-if="initialised">
+        <!-- Individual Tracks -->
+        <div v-for="track in visibleTracks" :key="track.id">
+          <MixerChannel
+            :trackState="liveParams.tracks[track.id]"
+            :label="track.name"
+            :analyserNodes="analysersFor(track.id)"
+            @mute="setTrackParam(track.id, 'muted', $event)"
+            @solo="setTrackParam(track.id, 'soloed', $event)"
+            @updateTrackPan="setTrackParam(track.id, 'pan', $event)"
+            @updateTrackGain="setTrackParam(track.id, 'gain', $event)"
+            @updateTrackReverb="setTrackParam(track.id, 'reverb', $event)"
+          />
+        </div>
+
+        <!-- Master Controls -->
+        <MixerChannel
+          :trackState="liveParams.master"
+          :master="true"
+          :label="'master'"
+          :analyserNodes="masterAnalysers"
+          @updateTrackPan="setMasterParam('pan', $event)"
+          @updateTrackGain="setMasterParam('gain', $event)"
+        />
       </div>
 
-      <div class="vue-audio-mixer-recording-status">
-        <span class="vue-audio-mixer-recording-indicator" :class="{ hidden: !isRecording }"></span>
-        {{ isRecording ? 'Recording...' : '' }}
+      <!-- Waveform and Transport Controls -->
+      <div class="vue-audio-mixer-master-controls" v-if="initialised">
+        <Transport
+          :masterState="transportState"
+          :audioBuffers="buffers"
+          :trackStates="liveParams.tracks"
+          :context="context"
+          @seek="seek"
+        />
+        <div class="vue-audio-mixer-transport-buttons">
+          <button @click="play" :disabled="transport.isPlaying">Play</button>
+          <button @click="pause" :disabled="!transport.isPlaying">Pause</button>
+          <button @click="stop">Stop</button>
+        </div>
+
+        <div class="vue-audio-mixer-recording-status">
+          <span class="vue-audio-mixer-recording-indicator" :class="{ hidden: !isRecording }"></span>
+          {{ isRecording ? 'Recording...' : '' }}
+        </div>
       </div>
     </div>
   </div>
-</div>
 </template>
 
 <style scoped>

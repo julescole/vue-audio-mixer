@@ -10,8 +10,9 @@ import {
 
 import Knob from './Knob.vue'
 import ReverbEffect from './ReverbEffect.vue'
+import { faderToGain, gainToFader } from '../fader'
 
-const emit = defineEmits(['mute', 'solo', 'updateTrackPan', 'updateTrackVolume', 'effectEnabled'])
+const emit = defineEmits(['mute', 'solo', 'updateTrackPan', 'updateTrackGain', 'updateTrackReverb'])
 
 const isDragging = ref(false)
 const faderTrackRef = ref<HTMLElement | null>(null)
@@ -24,9 +25,8 @@ const faderStyle = computed(() => {
   const trackHeight = faderTrackRef.value.clientHeight // Get the height of the fader track
   const faderHeight = 60 // Height of the fader itself (in px, matching the CSS)
 
-  // Calculate the position in pixels based on volume
-  const volume = props.trackState.volume || 0 // Volume is normalized (0 to 1)
-  const position = (1 - volume) * (trackHeight - faderHeight) // Scale position within the track
+  // Calculate the position in pixels based on gain
+  const position = (1 - gainToFader(props.trackState.gain)) * (trackHeight - faderHeight) // Scale position within the track
 
   return {
     transform: `translate( -50%,${position}px)`,
@@ -89,10 +89,8 @@ const updateVolume = (event: { clientY: number }) => {
   // Calculate touch/mouse position clamped between 0 and trackHeight
   const pointerY = Math.min(Math.max(event.clientY - trackTop, 0), trackHeight);
 
-  // Map touch/mouse position to volume (0 to 1)
-  const newVolume = 1 - pointerY / trackHeight;
-
-  emit("updateTrackVolume", newVolume);
+  // Map touch/mouse position to fader travel (0 to 1), then to gain
+  emit("updateTrackGain", faderToGain(1 - pointerY / trackHeight));
 };
 
 const updateVolumeCanvasHeight = () => {
@@ -121,28 +119,22 @@ if (volumeCanvas.value) {
 
 const props = withDefaults(
   defineProps<{
-    masterState: {
-      duration: number
-      elapsed: number
-    }
     master?: boolean // Mark as optional
     analyserNodes: {
       left: AnalyserNode
       right: AnalyserNode
     }
-    context: AudioContext
     playbackState?: {
       isPlaying: boolean
       soloActive: boolean
     }
     label: string
     trackState: {
-      muted: boolean | null
-      soloed: boolean | null
+      gain: number
       pan: number
-      volume: number
-      elapsed: number | null
-      duration: number | null
+      muted: boolean
+      soloed?: boolean
+      reverb?: number
     }
   }>(),
   {
@@ -278,19 +270,6 @@ const drawVolumeMonitors = () => {
 
 <template>
   <div class="vue-audio-mixer-track-controls">
-    <input
-      v-show="false"
-      type="range"
-      min="0"
-      max="1"
-      step="0.01"
-      orient="vertical"
-      @input="
-        (event) => emit('updateTrackVolume', parseFloat((event.target as HTMLInputElement).value))
-      "
-      :value="trackState?.volume || 1"
-    />
-
     <!-- Track Label -->
 
     <div class="vue-audio-mixer-channel" :class="{ master: master }">
@@ -307,8 +286,8 @@ const drawVolumeMonitors = () => {
 
        <div class="vue-audio-mixer-effect-pannel"  v-if="!master">
         <ReverbEffect
-          :context="context"
-          :analyserNodes="analyserNodes"
+          :modelValue="trackState.reverb ?? 0"
+          @update:modelValue="emit('updateTrackReverb', $event)"
         />
       </div>
       <div class="vue-audio-mixer-bus-control" v-if="!master">
@@ -336,7 +315,7 @@ const drawVolumeMonitors = () => {
       </div>
       <div class="vue-audio-mixer-knob knob--pan"></div>
       <div class="vue-audio-mixer-slider-value">
-        {{ (typeof trackState?.volume === 'number' ? trackState.volume : 0).toFixed(2) }}
+        {{ trackState.gain.toFixed(2) }}
       </div>
       <div class="vue-audio-mixer-slider">
         <div class="vue-audio-mixer-vca">

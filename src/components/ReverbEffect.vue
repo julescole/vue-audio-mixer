@@ -1,119 +1,43 @@
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted, defineProps, watch } from 'vue'
-import hallWavPath from '../assets/audio/Hall.wav';
+import { ref } from 'vue'
 
+// Send level to the mixer's shared reverb bus, 0 to 1
 const props = defineProps<{
-  context: AudioContext
-  analyserNodes: { left: AnalyserNode; right: AnalyserNode }
+  modelValue: number
 }>()
 
-const reverbLevel = ref(0) // Default reverb level (50% wet, 50% dry)
-const convolverNode = ref<ConvolverNode | null>(null)
-const wetGainNode = ref<GainNode | null>(null)
-const dryGainNode = ref<GainNode | null>(null)
+const emit = defineEmits<{
+  'update:modelValue': [value: number]
+}>()
 
+// Show the percentage briefly while the slider is being moved
 const updating = ref(false)
+let updatingTimer: ReturnType<typeof setTimeout> | undefined
 
-watch(updating, (newVal) => {
-  if (!newVal) return
-  setTimeout(() => {
+const onInput = (event: Event) => {
+  emit('update:modelValue', (event.target as HTMLInputElement).valueAsNumber)
+  updating.value = true
+  clearTimeout(updatingTimer)
+  updatingTimer = setTimeout(() => {
     updating.value = false
   }, 2000)
-})
-
-const isConnected = ref(false) // Track connection state
-
-const loadImpulseResponse = async () => {
-  try {
-    const response = await fetch(hallWavPath);
-    const arrayBuffer = await response.arrayBuffer();
-
-    if (!convolverNode.value) {
-      convolverNode.value = props.context.createConvolver();
-    }
-
-    // ✅ Safari fix for Web Audio API decoding
-    props.context.decodeAudioData(
-      arrayBuffer,
-      (buffer) => {
-        convolverNode.value!.buffer = buffer;
-        wetGainNode.value = props.context.createGain();
-        dryGainNode.value = props.context.createGain();
-        connectNodes();
-      },
-      (error) => console.error("Error decoding audio:", error)
-    );
-  } catch (error) {
-    console.error('Error loading impulse response:', error);
-  }
 }
-
-const connectNodes = () => {
-  if (!isConnected.value && wetGainNode.value && dryGainNode.value && convolverNode.value) {
-    props.analyserNodes.left.connect(dryGainNode.value)
-    props.analyserNodes.right.connect(dryGainNode.value)
-    dryGainNode.value.connect(props.context.destination)
-
-    props.analyserNodes.left.connect(convolverNode.value)
-    props.analyserNodes.right.connect(convolverNode.value)
-    convolverNode.value.connect(wetGainNode.value)
-    wetGainNode.value.connect(props.context.destination)
-
-    isConnected.value = true
-  }
-}
-
-const updateReverbLevel = (level: number) => {
-  updating.value = true
-  if (wetGainNode.value && dryGainNode.value) {
-    wetGainNode.value.gain.value = level
-    dryGainNode.value.gain.value = 1 - level
-  }
-}
-
-const disconnectNodes = () => {
-  if (isConnected.value && wetGainNode.value && dryGainNode.value && convolverNode.value) {
-    try {
-      props.analyserNodes.left.disconnect(dryGainNode.value)
-      props.analyserNodes.right.disconnect(dryGainNode.value)
-      dryGainNode.value.disconnect(props.context.destination)
-
-      props.analyserNodes.left.disconnect(convolverNode.value)
-      props.analyserNodes.right.disconnect(convolverNode.value)
-      convolverNode.value.disconnect(wetGainNode.value)
-      wetGainNode.value.disconnect(props.context.destination)
-
-      isConnected.value = false
-    } catch (error) {
-      console.error('Error disconnecting nodes:', error)
-    }
-  }
-}
-
-onMounted(() => {
-  loadImpulseResponse()
-})
-
-onUnmounted(() => {
-  disconnectNodes()
-})
 </script>
 
 <template>
   <div class="vue-audio-mixer-effects-control">
     <div class="effects-slider">
       <span class="effects-label" v-if="!updating">Reverb</span>
-      <span class="effects-label updating" v-else>{{ (reverbLevel * 100).toFixed(0) }}%</span>
+      <span class="effects-label updating" v-else>{{ (props.modelValue * 100).toFixed(0) }}%</span>
 
       <input
-        id="reverb-slider"
         type="range"
         min="0"
         max="1"
         step="0.01"
-        v-model="reverbLevel"
-        @input="updateReverbLevel(($event.target as HTMLInputElement).valueAsNumber)"
-        :style="{ '--fill': (reverbLevel * 100) + '%' }"
+        :value="props.modelValue"
+        @input="onInput"
+        :style="{ '--fill': props.modelValue * 100 + '%' }"
       />
 
       <span class="effects-percentage"></span>

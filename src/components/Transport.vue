@@ -8,19 +8,12 @@ const props = defineProps<{
   }
   context: AudioContext
   audioBuffers: Record<string, AudioBuffer>
-  playbackState: {
-    isPlaying: boolean
-    soloActive: boolean
-  }
   trackStates: Record<
     string,
     {
-      muted: boolean
-      soloed: boolean
+      audible: boolean
+      gain: number
       pan: number
-      volume: number
-      elapsed: number
-      duration: number
     }
   >
 }>()
@@ -54,6 +47,12 @@ watch(
   },
 )
 
+// Redraw when mix levels change while paused
+watch(() => props.trackStates, () => drawWaveform())
+
+// Recompute when tracks are added, removed or reloaded
+watch(() => props.audioBuffers, () => updateWaveformWidth())
+
 const waveformCanvas = ref<HTMLCanvasElement | null>(null)
 
 
@@ -84,11 +83,11 @@ const drawWaveform = () => {
   // Combine precomputed waveform data with real-time adjustments
   Object.entries(waveforms).forEach(([label, waveform]) => {
     const state = props.trackStates[label]
-    if (!state || state.muted || (props.playbackState.soloActive && !state.soloed)) return
+    if (!state || !state.audible) return
 
     for (let i = 0; i < waveform.length; i++) {
       const adjustedAmplitude =
-        waveform[i] * state.volume * (state.pan === 0 ? 1 : 1 - Math.abs(state.pan))
+        waveform[i] * state.gain * (state.pan === 0 ? 1 : 1 - Math.abs(state.pan))
       combinedData[i] += adjustedAmplitude
     }
 
